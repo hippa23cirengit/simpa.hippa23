@@ -123,3 +123,10 @@ model WaTemplate {
 
   @@map("wa_template")
 }
+
+model SystemSetting {
+  key   String @id
+  value String @db.Text
+
+  @@map("system_setting")
+}

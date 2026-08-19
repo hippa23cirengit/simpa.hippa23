@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
-import { readServerDb, writeServerDb } from "@/common/lib/db-server"
 import { prisma } from "@/infrastructure/prisma/prisma-client"
+import fs from "fs"
+import path from "path"
 
 export async function GET() {
   try {
@@ -20,142 +21,166 @@ export async function GET() {
 
     // 2. Self-healing / Seeding: If the Supabase database is completely empty, populate it using db.json
     if (dbAnggota.length === 0) {
-      console.log("Supabase database is empty. Auto-seeding from local db.json...")
-      const seedData = readServerDb()
+      console.log("Supabase database is empty. Auto-seeding from local db.json file...")
+      const seedFilePath = path.join(process.cwd(), "src/common/lib/db.json")
+      
+      if (fs.existsSync(seedFilePath)) {
+        try {
+          const fileContent = fs.readFileSync(seedFilePath, "utf8")
+          const seedData = JSON.parse(fileContent)
 
-      // Seed RoleAkses
-      if (seedData.simpa_acl_rules) {
-        for (const r of seedData.simpa_acl_rules) {
-          await prisma.roleAkses.upsert({
-            where: { roleName: r.role },
-            update: {},
-            create: {
-              roleName: r.role,
-              allowDashboard: typeof r.permissions.dashboard !== "undefined" ? r.permissions.dashboard : r.permissions.allowDashboard,
-              viewDataAnggota: r.permissions.viewDataAnggota,
-              manageDataAnggota: r.permissions.manageDataAnggota,
-              viewTasykil: r.permissions.viewTasykil,
-              manageTasykil: r.permissions.manageTasykil,
-              viewCalonAnggota: r.permissions.viewCalonAnggota,
-              manageCalonAnggota: r.permissions.manageCalonAnggota,
-              viewJadwalKegiatan: r.permissions.viewJadwalKegiatan,
-              manageJadwalKegiatan: r.permissions.manageJadwalKegiatan,
-              viewPengaturan: r.permissions.viewPengaturan,
-              managePengaturan: r.permissions.managePengaturan
-            }
-          })
-        }
-      }
-
-      // Seed Anggota
-      if (seedData.simpa_members_state) {
-        for (const m of seedData.simpa_members_state) {
-          await prisma.anggota.upsert({
-            where: { id: m.id },
-            update: {},
-            create: {
-              id: m.id,
-              name: m.name,
-              status: m.status,
-              tempatLahir: m.tempatLahir || null,
-              tanggalLahir: m.tanggalLahir || null,
-              alamat: m.alamat || null,
-              pekerjaan: m.pekerjaan || null,
-              whatsapp: m.whatsapp || null,
-              email: m.email || "",
-              profilePhoto: m.profilePhoto || null
-            }
-          })
-        }
-      }
-
-      // Seed AkunLogin
-      if (seedData.simpa_login_accounts) {
-        for (const a of seedData.simpa_login_accounts) {
-          await prisma.akunLogin.upsert({
-            where: { npa: a.npa },
-            update: {},
-            create: {
-              npa: a.npa,
-              name: a.name,
-              role: a.role,
-              passwordHash: a.passwordHash,
-              linkedAnggotaId: a.linkedAnggotaId
-            }
-          })
-        }
-      }
-
-      // Seed ScheduledEvent
-      if (seedData.simpa_scheduled_events) {
-        for (const e of seedData.simpa_scheduled_events) {
-          await prisma.scheduledEvent.upsert({
-            where: { id: e.id },
-            update: {},
-            create: {
-              id: e.id,
-              title: e.title,
-              date: e.date,
-              time: e.time,
-              location: e.location,
-              color: e.color,
-              type: e.type || "umum",
-              speaker: e.speaker || null,
-              theme: e.theme || null
-            }
-          })
-        }
-      }
-
-      // Seed Tasykil structure
-      if (seedData.simpa_tasykil) {
-        const tas = seedData.simpa_tasykil
-        
-        // penasehat
-        if (tas.penasehat) {
-          await prisma.penasehat.deleteMany({})
-          for (let i = 0; i < tas.penasehat.length; i++) {
-            await prisma.penasehat.create({
-              data: { name: tas.penasehat[i], sortOrder: i }
-            })
-          }
-        }
-
-        // pimhar
-        if (tas.pimhar) {
-          await prisma.pimhar.deleteMany({})
-          const keys = Object.keys(tas.pimhar)
-          for (const key of keys) {
-            let dbKey = key
-            if (key === "wakilKetua") dbKey = "wakil_ketua"
-            if (key === "wakilSekretaris") dbKey = "wakil_sekretaris"
-            if (key === "wakilBendahara") dbKey = "wakil_bendahara"
-            const val = tas.pimhar[key]
-            if (val) {
-              await prisma.pimhar.create({
-                data: { roleKey: dbKey, anggotaId: val }
+          // Seed RoleAkses
+          if (seedData.simpa_acl_rules) {
+            for (const r of seedData.simpa_acl_rules) {
+              await prisma.roleAkses.upsert({
+                where: { roleName: r.role },
+                update: {},
+                create: {
+                  roleName: r.role,
+                  allowDashboard: typeof r.permissions.dashboard !== "undefined" ? r.permissions.dashboard : r.permissions.allowDashboard,
+                  viewDataAnggota: r.permissions.viewDataAnggota,
+                  manageDataAnggota: r.permissions.manageDataAnggota,
+                  viewTasykil: r.permissions.viewTasykil,
+                  manageTasykil: r.permissions.manageTasykil,
+                  viewCalonAnggota: r.permissions.viewCalonAnggota,
+                  manageCalonAnggota: r.permissions.manageCalonAnggota,
+                  viewJadwalKegiatan: r.permissions.viewJadwalKegiatan,
+                  manageJadwalKegiatan: r.permissions.manageJadwalKegiatan,
+                  viewPengaturan: r.permissions.viewPengaturan,
+                  managePengaturan: r.permissions.managePengaturan
+                }
               })
             }
           }
-        }
 
-        // bidang
-        if (tas.bidang) {
-          await prisma.bidang.deleteMany({})
-          for (const b of tas.bidang) {
-            const newBidang = await prisma.bidang.create({
-              data: { id: b.id, name: b.name }
-            })
-            for (const mId of b.members) {
-              // Ensure members exist
-              const exists = await prisma.anggota.findUnique({ where: { id: mId } })
-              if (exists) {
-                await prisma.anggotaBidang.create({
-                  data: { bidangId: newBidang.id, anggotaId: mId }
+          // Seed Anggota
+          if (seedData.simpa_members_state) {
+            for (const m of seedData.simpa_members_state) {
+              await prisma.anggota.upsert({
+                where: { id: m.id },
+                update: {},
+                create: {
+                  id: m.id,
+                  name: m.name,
+                  status: m.status,
+                  tempatLahir: m.tempatLahir || null,
+                  tanggalLahir: m.tanggalLahir || null,
+                  alamat: m.alamat || null,
+                  pekerjaan: m.pekerjaan || null,
+                  whatsapp: m.whatsapp || null,
+                  email: m.email || "",
+                  profilePhoto: m.profilePhoto || null
+                }
+              })
+            }
+          }
+
+          // Seed AkunLogin
+          if (seedData.simpa_login_accounts) {
+            for (const a of seedData.simpa_login_accounts) {
+              await prisma.akunLogin.upsert({
+                where: { npa: a.npa },
+                update: {},
+                create: {
+                  npa: a.npa,
+                  name: a.name,
+                  role: a.role,
+                  passwordHash: a.passwordHash,
+                  linkedAnggotaId: a.linkedAnggotaId
+                }
+              })
+            }
+          }
+
+          // Seed ScheduledEvent
+          if (seedData.simpa_scheduled_events) {
+            for (const e of seedData.simpa_scheduled_events) {
+              await prisma.scheduledEvent.upsert({
+                where: { id: e.id },
+                update: {},
+                create: {
+                  id: e.id,
+                  title: e.title,
+                  date: e.date,
+                  time: e.time,
+                  location: e.location,
+                  color: e.color,
+                  type: e.type || "umum",
+                  speaker: e.speaker || null,
+                  theme: e.theme || null
+                }
+              })
+            }
+          }
+
+          // Seed Tasykil structure
+          if (seedData.simpa_tasykil) {
+            const tas = seedData.simpa_tasykil
+            
+            // penasehat
+            if (tas.penasehat) {
+              await prisma.penasehat.deleteMany({})
+              for (let i = 0; i < tas.penasehat.length; i++) {
+                await prisma.penasehat.create({
+                  data: { name: tas.penasehat[i], sortOrder: i }
                 })
               }
             }
+
+            // pimhar
+            if (tas.pimhar) {
+              await prisma.pimhar.deleteMany({})
+              const keys = Object.keys(tas.pimhar)
+              for (const key of keys) {
+                let dbKey = key
+                if (key === "wakilKetua") dbKey = "wakil_ketua"
+                if (key === "wakilSekretaris") dbKey = "wakil_sekretaris"
+                if (key === "wakilBendahara") dbKey = "wakil_bendahara"
+                const val = tas.pimhar[key]
+                if (val) {
+                  await prisma.pimhar.create({
+                    data: { roleKey: dbKey, anggotaId: val }
+                  })
+                }
+              }
+            }
+
+            // bidang
+            if (tas.bidang) {
+              await prisma.bidang.deleteMany({})
+              for (const b of tas.bidang) {
+                const newBidang = await prisma.bidang.create({
+                  data: { id: b.id, name: b.name }
+                })
+                for (const mId of b.members) {
+                  const exists = await prisma.anggota.findUnique({ where: { id: mId } })
+                  if (exists) {
+                    await prisma.anggotaBidang.create({
+                      data: { bidangId: newBidang.id, anggotaId: mId }
+                    })
+                  }
+                }
+              }
+            }
           }
+
+          // Seed System Settings
+          const settingsToSeed = ["simpa_wa_config", "simpa_periode_jabatan", "simpa_wa_template_kajian", "simpa_wa_template_umum"]
+          for (const key of settingsToSeed) {
+            if (seedData[key]) {
+              await prisma.systemSetting.upsert({
+                where: { key },
+                update: {},
+                create: {
+                  key,
+                  value: typeof seedData[key] === "string" ? seedData[key] : JSON.stringify(seedData[key])
+                }
+              })
+            }
+          }
+
+        } catch (e) {
+          console.error("Failed to parse or seed local db.json file:", e)
         }
       }
 
@@ -164,8 +189,8 @@ export async function GET() {
       return NextResponse.json({ status: true, data })
     }
 
-    // 3. Compile output from Supabase relational tables
-    const compiledData = compilePayload(
+    // 3. Compile output from Supabase relational tables & settings
+    const compiledData = await compilePayload(
       dbAnggota,
       dbAkun,
       dbEvent,
@@ -194,17 +219,20 @@ export async function POST(req: Request) {
 
     console.log(`POST /api/db-sync: Updating key "${key}" in Supabase...`)
 
-    // Write to server disk db.json as a fallback/mirror
-    try {
-      const currentDb = readServerDb()
-      currentDb[key] = value
-      writeServerDb(currentDb)
-    } catch (e) {
-      console.warn("Could not write local db.json backup (normal on Vercel):", e)
-    }
-
-    // Sync to Supabase relational tables based on the key
-    if (key === "simpa_members_state") {
+    // Sync to Supabase relational tables or system setting table based on the key
+    if (["simpa_wa_config", "simpa_periode_jabatan", "simpa_wa_template_kajian", "simpa_wa_template_umum"].includes(key)) {
+      await prisma.systemSetting.upsert({
+        where: { key },
+        update: {
+          value: typeof value === "string" ? value : JSON.stringify(value)
+        },
+        create: {
+          key,
+          value: typeof value === "string" ? value : JSON.stringify(value)
+        }
+      })
+    } 
+    else if (key === "simpa_members_state") {
       const members = value as any[]
       const currentIds = members.map(m => m.id)
 
@@ -263,7 +291,6 @@ export async function POST(req: Request) {
 
       // Upsert current accounts
       for (const a of accounts) {
-        // Ensure the linkedAnggotaId exists in anggota table
         let validLinkedId = null
         if (a.linkedAnggotaId) {
           const mExists = await prisma.anggota.findUnique({ where: { id: a.linkedAnggotaId } })
@@ -390,7 +417,6 @@ export async function POST(req: Request) {
           if (key === "wakilBendahara") dbKey = "wakil_bendahara"
           const val = tas.pimhar[key]
           if (val) {
-            // Verify anggota exists
             const mExists = await prisma.anggota.findUnique({ where: { id: val } })
             if (mExists) {
               await prisma.pimhar.create({
@@ -465,7 +491,7 @@ async function fetchFreshData() {
 }
 
 // Map relational tables back to frontend mock-db format
-function compilePayload(
+async function compilePayload(
   dbAnggota: any[],
   dbAkun: any[],
   dbEvent: any[],
@@ -582,11 +608,24 @@ function compilePayload(
     }
   }))
 
-  // Local settings backup fallback if any
-  let localDb: any = {}
+  // Fetch settings from Supabase
+  const settingsMap: Record<string, string> = {}
   try {
-    localDb = readServerDb()
-  } catch (err) {}
+    const dbSettings = await prisma.systemSetting.findMany()
+    dbSettings.forEach(s => {
+      settingsMap[s.key] = s.value
+    })
+  } catch (e) {
+    console.error("Error fetching system settings from Supabase:", e)
+  }
+
+  // Parse config safely
+  let waConfig = null
+  if (settingsMap["simpa_wa_config"]) {
+    try {
+      waConfig = JSON.parse(settingsMap["simpa_wa_config"])
+    } catch (e) {}
+  }
 
   return {
     simpa_members_state,
@@ -595,7 +634,9 @@ function compilePayload(
     simpa_tasykil,
     simpa_acl_rules,
     simpa_wa_template: dbTemplate?.content || "",
-    simpa_wa_config: localDb.simpa_wa_config || null,
-    simpa_periode_jabatan: localDb.simpa_periode_jabatan || ""
+    simpa_wa_config: waConfig,
+    simpa_periode_jabatan: settingsMap["simpa_periode_jabatan"] || "",
+    simpa_wa_template_kajian: settingsMap["simpa_wa_template_kajian"] || "",
+    simpa_wa_template_umum: settingsMap["simpa_wa_template_umum"] || ""
   }
 }

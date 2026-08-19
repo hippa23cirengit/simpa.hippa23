@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { readServerDb } from "@/common/lib/db-server"
+import { prisma } from "@/infrastructure/prisma/prisma-client"
 import {
   DEFAULT_WA_CONFIG,
   DEFAULT_WA_TEMPLATE_KAJIAN,
@@ -16,28 +16,24 @@ export async function GET(req: Request) {
       return NextResponse.json({ status: false, reason: "Unauthorized" }, { status: 401 })
     }
 
-    const dbData = readServerDb()
+    // 1. Fetch WA configurations and templates from Supabase
+    const settingsList = await prisma.systemSetting.findMany()
+    const settingsMap: Record<string, string> = {}
+    settingsList.forEach(s => {
+      settingsMap[s.key] = s.value
+    })
 
-    // 1. Get current date in WIB (UTC+7)
-    const nowUtc = new Date()
-    const wibOffsetMs = 7 * 60 * 60 * 1000
-    const nowWib = new Date(nowUtc.getTime() + wibOffsetMs)
-    const todayStr = nowWib.toISOString().split("T")[0] // Format YYYY-MM-DD
-
-    // 2. Fetch events from server-side database
-    const events: any[] = dbData["simpa_scheduled_events"] || []
-    const todayEvents = events.filter((evt) => evt.date === todayStr)
-
-    // Early exit if no events scheduled today
-    if (todayEvents.length === 0) {
-      return NextResponse.json({
-        status: "no_events",
-        message: `Tidak ada kegiatan dijadwalkan untuk hari ini (${todayStr}). Supabase Keep-Alive: OK`
-      })
+    let waConfig = DEFAULT_WA_CONFIG
+    if (settingsMap["simpa_wa_config"]) {
+      try {
+        waConfig = JSON.parse(settingsMap["simpa_wa_config"])
+      } catch (e) {}
     }
 
-    // 3. Load WA configurations
-    const waConfig = dbData["simpa_wa_config"] || DEFAULT_WA_CONFIG
+    const templateKajian = settingsMap["simpa_wa_template_kajian"] || DEFAULT_WA_TEMPLATE_KAJIAN
+    const templateUmum = settingsMap["simpa_wa_template_umum"] || DEFAULT_WA_TEMPLATE_UMUM
+
+    // 2. Load WA configurations check
     if (!waConfig.token || waConfig.token === "t0k3n-s3cr3t-fonnt3-c1r3ng1t") {
       return NextResponse.json({
         status: false,
@@ -45,10 +41,14 @@ export async function GET(req: Request) {
       }, { status: 400 })
     }
 
-    // 4. Load members list
-    const members: any[] = dbData["simpa_members_state"] || []
-    const membersWithWa = members.filter(
-      (m) => m.status === "Aktif" && m.whatsapp && m.whatsapp.trim() !== ""
+    // 3. Load active members list from Supabase
+    const dbMembers = await prisma.anggota.findMany({
+      where: {
+        status: "Aktif"
+      }
+    })
+    const membersWithWa = dbMembers.filter(
+      (m) => m.whatsapp && m.whatsapp.trim() !== ""
     )
 
     if (membersWithWa.length === 0) {
@@ -58,11 +58,23 @@ export async function GET(req: Request) {
       })
     }
 
-    // Load templates
-    const templateKajian = dbData["simpa_wa_template_kajian"] || DEFAULT_WA_TEMPLATE_KAJIAN
-    const templateUmum = dbData["simpa_wa_template_umum"] || DEFAULT_WA_TEMPLATE_UMUM
+    // 4. Get current date in WIB (UTC+7)
+    const nowUtc = new Date()
+    const wibOffsetMs = 7 * 60 * 60 * 1000
+    const nowWib = new Date(nowUtc.getTime() + wibOffsetMs)
+    const todayStr = nowWib.toISOString().split("T")[0] // Format YYYY-MM-DD
 
-    // Date formatting helper
+    // 5. Fetch events from Supabase
+    const dbEvents = await prisma.scheduledEvent.findMany()
+    const todayEvents = dbEvents.filter((evt) => evt.date === todayStr)
+
+    // Early exit if no events scheduled today
+    if (todayEvents.length === 0) {
+      return NextResponse.json({
+        status: "no_events",
+        message: `Tidak ada kegiatan dijadwalkan untuk hari ini (${todayStr}). Supabase Keep-Alive: OK`
+      })
+    }
     const months = [
       "Januari", "Februari", "Maret", "April", "Mei", "Juni",
       "Juli", "Agustus", "September", "Oktober", "November", "Desember"
@@ -94,7 +106,7 @@ export async function GET(req: Request) {
           .replace(/\{\{LOKASI\}\}/g, event.location || "-")
 
         // Format recipient phone number
-        let cleanPhone = member.whatsapp.trim().replace(/[^0-9]/g, "")
+        let cleanPhone = (member.whatsapp || "").trim().replace(/[^0-9]/g, "")
         if (cleanPhone.startsWith("0")) {
           cleanPhone = "62" + cleanPhone.slice(1)
         }
