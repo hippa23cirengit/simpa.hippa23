@@ -57,18 +57,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
     if (!activeAcl) return true;
     if (item.url === "/dashboard") return activeAcl.permissions.dashboard;
-    if (item.url === "/dashboard/data-anggota") return activeAcl.permissions.dataAnggota;
-    if (item.url === "/dashboard/tasykil") return activeAcl.permissions.tasykil;
-    if (item.url === "/dashboard/calon-anggota") return activeAcl.permissions.calonAnggota;
-    if (item.url === "/dashboard/jadwal-kegiatan") return activeAcl.permissions.jadwalKegiatan;
-    if (item.url === "/dashboard/pengaturan") return activeAcl.permissions.pengaturan;
+    if (item.url === "/dashboard/data-anggota") return activeAcl.permissions.viewDataAnggota;
+    if (item.url === "/dashboard/tasykil") return activeAcl.permissions.viewTasykil;
+    if (item.url === "/dashboard/calon-anggota") return activeAcl.permissions.viewCalonAnggota;
+    if (item.url === "/dashboard/jadwal-kegiatan") return activeAcl.permissions.viewJadwalKegiatan;
+    if (item.url === "/dashboard/pengaturan") return activeAcl.permissions.viewPengaturan;
     return true;
   });
 
   const getSubLabel = () => {
     if (currentRole === "Super Admin") return "Administrator";
     if (currentRole === "PIMHAR") return "Ketua Harian";
-    if (currentRole === "Bidang") return "Pengurus Bidang";
+    if (currentRole.startsWith("Bidang")) return currentRole;
     return "Anggota Biasa";
   };
 

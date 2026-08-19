@@ -11,7 +11,8 @@ import {
   Member,
   TasykilState,
   Bidang,
-  getCurrentRole
+  getCurrentRole,
+  getStoredAcl
 } from "@/common/lib/mock-db"
 
 export default function Tasykil() {
@@ -19,7 +20,6 @@ export default function Tasykil() {
   const [tasykil, setTasykil] = useState<TasykilState | null>(null)
   const [currentRole, setCurrentRole] = useState("Super Admin")
   
-  // Modal states
   const [pimharModalOpen, setPimharModalOpen] = useState(false)
   const [selectedPimharRole, setSelectedPimharRole] = useState<string | null>(null)
   
@@ -27,6 +27,7 @@ export default function Tasykil() {
   const [selectedBidangId, setSelectedBidangId] = useState<string | null>(null)
   
   const [newBidangName, setNewBidangName] = useState("")
+
   const [addBidangModalOpen, setAddBidangModalOpen] = useState(false)
   
   const [addPenasehatModalOpen, setAddPenasehatModalOpen] = useState(false)
@@ -53,7 +54,8 @@ export default function Tasykil() {
     }
   }, [])
 
-  const isReadOnly = currentRole === "Anggota" || currentRole === "Bidang"
+  const activeAcl = getStoredAcl().find(r => r.role === currentRole)
+  const isReadOnly = !activeAcl?.permissions.manageTasykil
 
   // Sync state helpers
   const updateTasykilState = (newTasykil: TasykilState) => {

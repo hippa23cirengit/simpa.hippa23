@@ -75,18 +75,16 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const filteredMenuItems = menuItems.filter(item => {
     if (!activeAcl) return true;
     if (item.href === "/dashboard") return activeAcl.permissions.dashboard;
-    if (item.href === "/dashboard/data-anggota") return activeAcl.permissions.dataAnggota;
-    if (item.href === "/dashboard/tasykil") return activeAcl.permissions.tasykil;
-    if (item.href === "/dashboard/jadwal-kegiatan") return activeAcl.permissions.jadwalKegiatan;
+    if (item.href === "/dashboard/data-anggota") return activeAcl.permissions.viewDataAnggota;
+    if (item.href === "/dashboard/tasykil") return activeAcl.permissions.viewTasykil;
+    if (item.href === "/dashboard/jadwal-kegiatan") return activeAcl.permissions.viewJadwalKegiatan;
     return true;
   });
-
-
 
   const getSubLabel = () => {
     if (currentRole === "Super Admin") return "Administrator";
     if (currentRole === "PIMHAR") return "Ketua Harian";
-    if (currentRole === "Bidang") return "Pengurus Bidang";
+    if (currentRole.startsWith("Bidang")) return currentRole;
     return "Anggota Biasa";
   };
 

@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { getStoredMembers, saveStoredMembers, getStoredTasykil, syncRoles, Member, getCurrentRole } from "@/common/lib/mock-db"
+import { getStoredMembers, saveStoredMembers, getStoredTasykil, syncRoles, Member, getCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
 
 export default function DataAnggota() {
   const [members, setMembers] = useState<Member[]>([])
@@ -30,7 +30,8 @@ export default function DataAnggota() {
     }
   }, [])
 
-  const isReadOnly = currentRole === "Anggota"
+  const activeAcl = getStoredAcl().find(r => r.role === currentRole)
+  const isReadOnly = !activeAcl?.permissions.manageDataAnggota
 
   // Sort members A-Z by name
   const sortedMembers = [...members].sort((a, b) => a.name.localeCompare(b.name))

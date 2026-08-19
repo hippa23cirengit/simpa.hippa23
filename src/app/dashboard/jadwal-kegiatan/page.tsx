@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { getStoredEvents, saveStoredEvents, ScheduledEvent, getCurrentRole } from "@/common/lib/mock-db"
+import { getStoredEvents, saveStoredEvents, ScheduledEvent, getCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
 
 export default function JadwalKegiatan() {
   const daysOfWeek = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"]
@@ -46,7 +46,8 @@ export default function JadwalKegiatan() {
     }
   }, [])
 
-  const isReadOnly = currentRole === "Anggota"
+  const activeAcl = getStoredAcl().find(r => r.role === currentRole)
+  const isReadOnly = !activeAcl?.permissions.manageJadwalKegiatan
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()

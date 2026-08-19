@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { getStoredMembers, saveStoredMembers, getCurrentRole, Member } from "@/common/lib/mock-db"
+import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl } from "@/common/lib/mock-db"
 
 interface Applicant {
   id: string
@@ -108,7 +108,8 @@ export default function CalonAnggota() {
     }
   }
 
-  const isReadOnly = currentRole === "Anggota"
+  const activeAcl = getStoredAcl().find(r => r.role === currentRole)
+  const isReadOnly = !activeAcl?.permissions.manageCalonAnggota
 
   // Calculate statistics based on state
   const totalCount = applicants.length

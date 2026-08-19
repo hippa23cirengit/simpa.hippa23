@@ -4,7 +4,7 @@ import * as React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { getStoredMembers, saveStoredMembers, getCurrentRole, Member } from "@/common/lib/mock-db"
+import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl } from "@/common/lib/mock-db"
 
 export default function TambahAnggotaPage() {
   const router = useRouter()
@@ -25,7 +25,14 @@ export default function TambahAnggotaPage() {
 
 
   useEffect(() => {
-    setCurrentRole(getCurrentRole())
+    const role = getCurrentRole()
+    setCurrentRole(role)
+    const activeAcl = getStoredAcl().find(r => r.role === role)
+    if (activeAcl && !activeAcl.permissions.manageDataAnggota) {
+      router.replace("/dashboard/data-anggota")
+      return
+    }
+
     const members = getStoredMembers()
     setExistingMembers(members)
     
