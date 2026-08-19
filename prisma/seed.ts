@@ -9,7 +9,16 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("Starting database seed...");
+  // Clean up all tables first to avoid duplicates or legacy records
+  console.log("Cleaning up existing database records...");
+  await prisma.pimhar.deleteMany({});
+  await prisma.anggotaBidang.deleteMany({});
+  await prisma.akunLogin.deleteMany({});
+  await prisma.anggota.deleteMany({});
+  await prisma.bidang.deleteMany({});
+  await prisma.penasehat.deleteMany({});
+  await prisma.scheduledEvent.deleteMany({});
+  await prisma.applicant.deleteMany({});
 
   // 1. Seed Role Akses (ACL)
   console.log("Seeding RoleAkses...");
@@ -101,7 +110,7 @@ async function main() {
 
   const mockMembers = [
     {
-      id: "23.0001",
+      id: "23.001",
       name: "Ahmad Fauzan",
       status: "Aktif",
       tempatLahir: "Bandung",
@@ -113,7 +122,7 @@ async function main() {
       loginRole: "Super Admin",
     },
     {
-      id: "23.0002",
+      id: "23.002",
       name: "Rizky Ibrahim",
       status: "Aktif",
       tempatLahir: "Garut",
@@ -125,7 +134,7 @@ async function main() {
       loginRole: "PIMHAR",
     },
     {
-      id: "23.0003",
+      id: "23.003",
       name: "Muhammad Ali",
       status: "Aktif",
       tempatLahir: "Bandung",
@@ -137,7 +146,7 @@ async function main() {
       loginRole: "PIMHAR",
     },
     {
-      id: "23.0004",
+      id: "23.004",
       name: "Fajar Ramadhan",
       status: "Aktif",
       tempatLahir: "Sumedang",
@@ -149,7 +158,7 @@ async function main() {
       loginRole: "Bidang",
     },
     {
-      id: "23.0005",
+      id: "23.005",
       name: "Ilham Saputra",
       status: "Aktif",
       tempatLahir: "Bandung",
@@ -161,7 +170,7 @@ async function main() {
       loginRole: "Bidang",
     },
     {
-      id: "23.0006",
+      id: "23.006",
       name: "Budi Santoso",
       status: "Aktif",
       tempatLahir: "Bandung",
@@ -173,7 +182,7 @@ async function main() {
       loginRole: "Bidang",
     },
     {
-      id: "23.0007",
+      id: "23.007",
       name: "Ridwan Kamil",
       status: "Aktif",
       tempatLahir: "Bandung",
@@ -185,7 +194,7 @@ async function main() {
       loginRole: "Bidang",
     },
     {
-      id: "23.0008",
+      id: "23.008",
       name: "Hasanuddin",
       status: "Aktif",
       tempatLahir: "Cianjur",
@@ -197,7 +206,7 @@ async function main() {
       loginRole: "Anggota",
     },
     {
-      id: "23.0009",
+      id: "23.009",
       name: "Cecep Solihin",
       status: "Tidak Aktif",
       tempatLahir: "Bandung",
@@ -209,7 +218,7 @@ async function main() {
       loginRole: "Anggota",
     },
     {
-      id: "23.0010",
+      id: "23.010",
       name: "Dadang Hermawan",
       status: "Aktif",
       tempatLahir: "Bandung",
@@ -221,7 +230,7 @@ async function main() {
       loginRole: "Anggota",
     },
     {
-      id: "23.0011",
+      id: "23.011",
       name: "Eman Sulaeman",
       status: "Aktif",
       tempatLahir: "Tasikmalaya",
@@ -233,7 +242,7 @@ async function main() {
       loginRole: "Anggota",
     },
     {
-      id: "23.0012",
+      id: "23.012",
       name: "Fikri Ramadhan",
       status: "Alumni",
       tempatLahir: "Bandung",
@@ -245,7 +254,7 @@ async function main() {
       loginRole: "Anggota",
     },
     {
-      id: "23.0013",
+      id: "23.013",
       name: "Ginanjar Kartasasmita",
       status: "Aktif",
       tempatLahir: "Bandung",
@@ -257,7 +266,7 @@ async function main() {
       loginRole: "Anggota",
     },
     {
-      id: "23.0014",
+      id: "23.014",
       name: "Heri Hermawan",
       status: "Tidak Aktif",
       tempatLahir: "Bandung",
@@ -269,7 +278,7 @@ async function main() {
       loginRole: "Anggota",
     },
     {
-      id: "23.0015",
+      id: "23.015",
       name: "Irfan Hakim",
       status: "Aktif",
       tempatLahir: "Sukabumi",
@@ -314,46 +323,46 @@ async function main() {
   console.log("Seeding Pimhar...");
   await prisma.pimhar.upsert({
     where: { roleKey: "ketua" },
-    update: { anggotaId: "23.0001" },
-    create: { roleKey: "ketua", anggotaId: "23.0001" },
+    update: { anggotaId: "23.001" },
+    create: { roleKey: "ketua", anggotaId: "23.001" },
   });
 
   await prisma.pimhar.upsert({
     where: { roleKey: "sekretaris" },
-    update: { anggotaId: "23.0002" },
-    create: { roleKey: "sekretaris", anggotaId: "23.0002" },
+    update: { anggotaId: "23.002" },
+    create: { roleKey: "sekretaris", anggotaId: "23.002" },
   });
 
   await prisma.pimhar.upsert({
     where: { roleKey: "bendahara" },
-    update: { anggotaId: "23.0003" },
-    create: { roleKey: "bendahara", anggotaId: "23.0003" },
+    update: { anggotaId: "23.003" },
+    create: { roleKey: "bendahara", anggotaId: "23.003" },
   });
 
   // 5. Seed AnggotaBidang
   console.log("Seeding AnggotaBidang...");
   await prisma.anggotaBidang.upsert({
-    where: { anggotaId: "23.0004" },
+    where: { anggotaId: "23.004" },
     update: { bidangId: "bidang-kaderisasi" },
-    create: { anggotaId: "23.0004", bidangId: "bidang-kaderisasi" },
+    create: { anggotaId: "23.004", bidangId: "bidang-kaderisasi" },
   });
 
   await prisma.anggotaBidang.upsert({
-    where: { anggotaId: "23.0005" },
+    where: { anggotaId: "23.005" },
     update: { bidangId: "bidang-pendidikan" },
-    create: { anggotaId: "23.0005", bidangId: "bidang-pendidikan" },
+    create: { anggotaId: "23.005", bidangId: "bidang-pendidikan" },
   });
 
   await prisma.anggotaBidang.upsert({
-    where: { anggotaId: "23.0006" },
+    where: { anggotaId: "23.006" },
     update: { bidangId: "bidang-organisasi" },
-    create: { anggotaId: "23.0006", bidangId: "bidang-organisasi" },
+    create: { anggotaId: "23.006", bidangId: "bidang-organisasi" },
   });
 
   await prisma.anggotaBidang.upsert({
-    where: { anggotaId: "23.0007" },
+    where: { anggotaId: "23.007" },
     update: { bidangId: "bidang-sosial" },
-    create: { anggotaId: "23.0007", bidangId: "bidang-sosial" },
+    create: { anggotaId: "23.007", bidangId: "bidang-sosial" },
   });
 
   // 6. Seed Penasehat

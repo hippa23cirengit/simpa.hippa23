@@ -12,7 +12,7 @@ export default function AdminDashboard() {
   const recentMembers = [
     {
       name: "Budi Santoso",
-      id: "23.0142",
+      id: "23.142",
       role: "Ketua Divisi Dakwah",
       status: "Aktif",
       statusBg: "bg-emerald-100 text-emerald-800",
@@ -21,7 +21,7 @@ export default function AdminDashboard() {
     },
     {
       name: "Siti Aminah",
-      id: "23.0143",
+      id: "23.143",
       role: "Bendahara Umum",
       status: "Aktif",
       statusBg: "bg-emerald-100 text-emerald-800",
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
     },
     {
       name: "Rizky Aditya",
-      id: "23.0144",
+      id: "23.144",
       role: "Anggota Biasa",
       status: "Pending",
       statusBg: "bg-amber-100 text-amber-800",

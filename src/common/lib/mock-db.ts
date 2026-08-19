@@ -53,7 +53,7 @@ export interface AclRule {
 
 export const DEFAULT_MEMBERS: Member[] = [
   {
-    id: "23.0001",
+    id: "23.001",
     name: "Ahmad Fauzan",
     role: "Ketua",
     status: "Aktif",
@@ -65,7 +65,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "ahmad.fauzan@gmail.com"
   },
   {
-    id: "23.0002",
+    id: "23.002",
     name: "Rizky Ibrahim",
     role: "Sekretaris",
     status: "Aktif",
@@ -77,7 +77,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "rizky.ibrahim@gmail.com"
   },
   {
-    id: "23.0003",
+    id: "23.003",
     name: "Muhammad Ali",
     role: "Bendahara",
     status: "Aktif",
@@ -89,7 +89,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "muhammad.ali@gmail.com"
   },
   {
-    id: "23.0004",
+    id: "23.004",
     name: "Fajar Ramadhan",
     role: "Bidang Kaderisasi",
     status: "Aktif",
@@ -101,7 +101,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "fajar.ramadhan@gmail.com"
   },
   {
-    id: "23.0005",
+    id: "23.005",
     name: "Ilham Saputra",
     role: "Bidang Pendidikan",
     status: "Aktif",
@@ -113,7 +113,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "ilham.saputra@gmail.com"
   },
   {
-    id: "23.0006",
+    id: "23.006",
     name: "Budi Santoso",
     role: "Bidang Organisasi",
     status: "Aktif",
@@ -125,7 +125,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "budi.santoso@gmail.com"
   },
   {
-    id: "23.0007",
+    id: "23.007",
     name: "Ridwan Kamil",
     role: "Bidang Sosial",
     status: "Aktif",
@@ -137,7 +137,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "ridwan.kamil@gmail.com"
   },
   {
-    id: "23.0008",
+    id: "23.008",
     name: "Hasanuddin",
     role: "-",
     status: "Aktif",
@@ -149,7 +149,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "hasanuddin@gmail.com"
   },
   {
-    id: "23.0009",
+    id: "23.009",
     name: "Cecep Solihin",
     role: "-",
     status: "Tidak Aktif",
@@ -161,7 +161,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "cecep.solihin@gmail.com"
   },
   {
-    id: "23.0010",
+    id: "23.010",
     name: "Dadang Hermawan",
     role: "-",
     status: "Aktif",
@@ -173,7 +173,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "dadang.hermawan@gmail.com"
   },
   {
-    id: "23.0011",
+    id: "23.011",
     name: "Eman Sulaeman",
     role: "-",
     status: "Aktif",
@@ -185,7 +185,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "eman.sulaeman@gmail.com"
   },
   {
-    id: "23.0012",
+    id: "23.012",
     name: "Fikri Ramadhan",
     role: "-",
     status: "Alumni",
@@ -197,7 +197,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "fikri.ramadhan@gmail.com"
   },
   {
-    id: "23.0013",
+    id: "23.013",
     name: "Ginanjar Kartasasmita",
     role: "-",
     status: "Aktif",
@@ -209,7 +209,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "ginanjar.kartasasmita@gmail.com"
   },
   {
-    id: "23.0014",
+    id: "23.014",
     name: "Heri Hermawan",
     role: "-",
     status: "Tidak Aktif",
@@ -221,7 +221,7 @@ export const DEFAULT_MEMBERS: Member[] = [
     email: "heri.hermawan@gmail.com"
   },
   {
-    id: "23.0015",
+    id: "23.015",
     name: "Irfan Hakim",
     role: "-",
     status: "Aktif",
@@ -237,18 +237,18 @@ export const DEFAULT_MEMBERS: Member[] = [
 export const DEFAULT_TASYKIL: TasykilState = {
   penasehat: ["Ust. H. Ahmad Gozali", "Ust. KH. Aceng Zakaria"],
   pimhar: {
-    ketua: "23.0001", // Ahmad Fauzan
+    ketua: "23.001", // Ahmad Fauzan
     wakilKetua: "",
-    sekretaris: "23.0002", // Rizky Ibrahim
+    sekretaris: "23.002", // Rizky Ibrahim
     wakilSekretaris: "",
-    bendahara: "23.0003", // Muhammad Ali
+    bendahara: "23.003", // Muhammad Ali
     wakilBendahara: ""
   },
   bidang: [
-    { id: "bidang-kaderisasi", name: "Bidang Kaderisasi", members: ["23.0004"] },
-    { id: "bidang-pendidikan", name: "Bidang Pendidikan", members: ["23.0005"] },
-    { id: "bidang-organisasi", name: "Bidang Organisasi", members: ["23.0006"] },
-    { id: "bidang-sosial", name: "Bidang Sosial", members: ["23.0007"] }
+    { id: "bidang-kaderisasi", name: "Bidang Kaderisasi", members: ["23.004"] },
+    { id: "bidang-pendidikan", name: "Bidang Pendidikan", members: ["23.005"] },
+    { id: "bidang-organisasi", name: "Bidang Organisasi", members: ["23.006"] },
+    { id: "bidang-sosial", name: "Bidang Sosial", members: ["23.007"] }
   ]
 }
 
@@ -264,8 +264,8 @@ export function getStoredMembers(): Member[] {
   }
   try {
     const parsed = JSON.parse(stored) as Member[]
-    // Migration: Reset if legacy HPA format is found in first entry
-    if (parsed.length > 0 && (parsed[0].id.startsWith("HPA") || !parsed[0].hasOwnProperty("email"))) {
+    // Migration: Reset if legacy HPA format or 4-digit sequence format is found
+    if (parsed.length > 0 && (parsed[0].id.startsWith("HPA") || parsed[0].id.includes(".000") || !parsed[0].hasOwnProperty("email"))) {
       localStorage.setItem(MEMBERS_KEY, JSON.stringify(DEFAULT_MEMBERS))
       return DEFAULT_MEMBERS
     }

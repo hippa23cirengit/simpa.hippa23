@@ -22,39 +22,26 @@ export default function TambahAnggotaPage() {
   const [pekerjaan, setPekerjaan] = useState("")
   const [whatsapp, setWhatsapp] = useState("")
 
-  // Validation State
-  const [npaError, setNpaError] = useState("")
+
 
   useEffect(() => {
     setCurrentRole(getCurrentRole())
     const members = getStoredMembers()
     setExistingMembers(members)
     
-    // Pre-fill a suggested unique ID/NPA (YY.XXXX format)
+    // Pre-fill a suggested unique ID/NPA (YY.XXX format)
     const year2Digits = String(new Date().getFullYear()).slice(-2)
     const thisYearPrefix = `${year2Digits}.`
     const countThisYear = members.filter(m => m.id.startsWith(thisYearPrefix)).length
-    const seq = String(countThisYear + 1).padStart(4, "0")
+    const seq = String(countThisYear + 1).padStart(3, "0")
     setNpa(`${year2Digits}.${seq}`)
   }, [])
 
-  // Check unique NPA in real-time
-  useEffect(() => {
-    if (!npa.trim()) {
-      setNpaError("")
-      return
-    }
-    const exists = existingMembers.some(m => m.id.toLowerCase() === npa.trim().toLowerCase())
-    if (exists) {
-      setNpaError("⚠️ NPA ini sudah terdaftar untuk anggota lain!")
-    } else {
-      setNpaError("")
-    }
-  }, [npa, existingMembers])
+
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim() || !npa.trim() || !email.trim() || npaError) return
+    if (!name.trim() || !npa.trim() || !email.trim()) return
 
     const newMember: Member = {
       id: npa.trim().toUpperCase(),
@@ -135,17 +122,10 @@ export default function TambahAnggotaPage() {
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">NPA (Nomor Pokok Anggota) *</label>
               <input
                 type="text"
-                required
+                disabled
                 value={npa}
-                onChange={(e) => setNpa(e.target.value)}
-                placeholder="Contoh: 26.0013"
-                className={`w-full border rounded-lg px-3.5 py-2 font-body-md text-sm focus:outline-none transition-colors ${
-                  npaError 
-                    ? "border-red-300 focus:border-red-500 bg-red-50/10" 
-                    : "border-slate-200 focus:border-[#F7A440]"
-                }`}
+                className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-500 bg-slate-50 cursor-not-allowed"
               />
-              {npaError && <p className="text-[10px] text-red-600 font-bold mt-0.5">{npaError}</p>}
             </div>
 
             {/* Email */}
@@ -245,12 +225,7 @@ export default function TambahAnggotaPage() {
             </Link>
             <button
               type="submit"
-              disabled={!!npaError}
-              className={`px-6 py-2.5 text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm ${
-                npaError 
-                  ? "bg-slate-300 cursor-not-allowed" 
-                  : "bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25]"
-              }`}
+              className="px-6 py-2.5 text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25]"
             >
               Daftarkan Anggota
             </button>

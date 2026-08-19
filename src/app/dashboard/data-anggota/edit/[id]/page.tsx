@@ -26,8 +26,7 @@ export default function EditAnggotaPage() {
   const [pekerjaan, setPekerjaan] = useState("")
   const [whatsapp, setWhatsapp] = useState("")
 
-  // Validation State
-  const [npaError, setNpaError] = useState("")
+
 
   useEffect(() => {
     setCurrentRole(getCurrentRole())
@@ -49,29 +48,11 @@ export default function EditAnggotaPage() {
     }
   }, [memberId])
 
-  // Check unique NPA in real-time (excluding this member's own original ID)
-  useEffect(() => {
-    if (!npa.trim() || !memberId) {
-      setNpaError("")
-      return
-    }
-    // If the entered NPA is the same as the original ID, it's valid
-    if (npa.trim().toLowerCase() === memberId.toLowerCase()) {
-      setNpaError("")
-      return
-    }
 
-    const exists = existingMembers.some(m => m.id.toLowerCase() === npa.trim().toLowerCase())
-    if (exists) {
-      setNpaError("⚠️ NPA ini sudah terdaftar untuk anggota lain!")
-    } else {
-      setNpaError("")
-    }
-  }, [npa, existingMembers, memberId])
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim() || !npa.trim() || !email.trim() || npaError) return
+    if (!name.trim() || !npa.trim() || !email.trim()) return
 
     const updatedMembers = existingMembers.map(m => {
       if (m.id === memberId) {
@@ -168,17 +149,10 @@ export default function EditAnggotaPage() {
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">NPA (Nomor Pokok Anggota) *</label>
               <input
                 type="text"
-                required
+                disabled
                 value={npa}
-                onChange={(e) => setNpa(e.target.value)}
-                placeholder="Contoh: 23.0016"
-                className={`w-full border rounded-lg px-3.5 py-2 font-body-md text-sm focus:outline-none transition-colors ${
-                  npaError 
-                    ? "border-red-300 focus:border-red-500 bg-red-50/10" 
-                    : "border-slate-200 focus:border-[#F7A440]"
-                }`}
+                className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-500 bg-slate-50 cursor-not-allowed"
               />
-              {npaError && <p className="text-[10px] text-red-600 font-bold mt-0.5">{npaError}</p>}
             </div>
 
             {/* Email */}
@@ -278,12 +252,7 @@ export default function EditAnggotaPage() {
             </Link>
             <button
               type="submit"
-              disabled={!!npaError}
-              className={`px-6 py-2.5 text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm ${
-                npaError 
-                  ? "bg-slate-300 cursor-not-allowed" 
-                  : "bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25]"
-              }`}
+              className="px-6 py-2.5 text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25]"
             >
               Simpan Perubahan
             </button>

@@ -182,7 +182,7 @@ export default function CalonAnggota() {
     const year2Digits = String(new Date().getFullYear()).slice(-2)
     const thisYearPrefix = `${year2Digits}.`
     const countThisYear = rawMembers.filter(m => m.id.startsWith(thisYearPrefix)).length
-    const seq = String(countThisYear + 1).padStart(4, "0")
+    const seq = String(countThisYear + 1).padStart(3, "0")
     const newId = `${year2Digits}.${seq}`
 
     const newMember: Member = {
