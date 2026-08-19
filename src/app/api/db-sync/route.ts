@@ -18,6 +18,7 @@ export async function GET() {
         members: true
       }
     })
+    const dbApplicants = await prisma.applicant.findMany()
 
     // 2. Self-healing / Seeding: If the Supabase database is completely empty, populate it using db.json
     if (dbAnggota.length === 0) {
@@ -198,7 +199,8 @@ export async function GET() {
       dbTemplate,
       dbPenasehat,
       dbPimhar,
-      dbBidang
+      dbBidang,
+      dbApplicants
     )
 
     return NextResponse.json({ status: true, data: compiledData })
@@ -358,6 +360,47 @@ export async function POST(req: Request) {
         })
       }
     } 
+    else if (key === "simpa_calon_anggota") {
+      const applicants = value as any[]
+      const currentIds = applicants.map(a => a.id)
+
+      // Delete removed applicants
+      await prisma.applicant.deleteMany({
+        where: {
+          id: {
+            notIn: currentIds
+          }
+        }
+      })
+
+      // Upsert current applicants
+      for (const a of applicants) {
+        await prisma.applicant.upsert({
+          where: { id: a.id },
+          update: {
+            name: a.name,
+            date: a.date,
+            contact: a.contact,
+            status: a.status,
+            tempatLahir: a.tempatLahir,
+            tanggalLahir: a.tanggalLahir,
+            alamat: a.alamat,
+            pekerjaan: a.pekerjaan
+          },
+          create: {
+            id: a.id,
+            name: a.name,
+            date: a.date,
+            contact: a.contact,
+            status: a.status,
+            tempatLahir: a.tempatLahir,
+            tanggalLahir: a.tanggalLahir,
+            alamat: a.alamat,
+            pekerjaan: a.pekerjaan
+          }
+        })
+      }
+    }
     else if (key === "simpa_acl_rules") {
       const acls = value as any[]
       for (const r of acls) {
@@ -477,6 +520,7 @@ async function fetchFreshData() {
   const dbPenasehat = await prisma.penasehat.findMany({ orderBy: { sortOrder: "asc" } })
   const dbPimhar = await prisma.pimhar.findMany()
   const dbBidang = await prisma.bidang.findMany({ include: { members: true } })
+  const dbApplicants = await prisma.applicant.findMany()
 
   return compilePayload(
     dbAnggota,
@@ -486,7 +530,8 @@ async function fetchFreshData() {
     dbTemplate,
     dbPenasehat,
     dbPimhar,
-    dbBidang
+    dbBidang,
+    dbApplicants
   )
 }
 
@@ -499,7 +544,8 @@ async function compilePayload(
   dbTemplate: any | null,
   dbPenasehat: any[],
   dbPimhar: any[],
-  dbBidang: any[]
+  dbBidang: any[],
+  dbApplicants: any[]
 ) {
   // tasykil.pimhar
   const pimharMap = {
@@ -627,12 +673,26 @@ async function compilePayload(
     } catch (e) {}
   }
 
+  // Applicants
+  const simpa_calon_anggota = dbApplicants.map(a => ({
+    id: a.id,
+    name: a.name,
+    date: a.date,
+    contact: a.contact,
+    status: a.status,
+    tempatLahir: a.tempatLahir,
+    tanggalLahir: a.tanggalLahir,
+    alamat: a.alamat,
+    pekerjaan: a.pekerjaan
+  }))
+
   return {
     simpa_members_state,
     simpa_login_accounts,
     simpa_scheduled_events,
     simpa_tasykil,
     simpa_acl_rules,
+    simpa_calon_anggota,
     simpa_wa_template: dbTemplate?.content || "",
     simpa_wa_config: waConfig,
     simpa_periode_jabatan: settingsMap["simpa_periode_jabatan"] || "",

@@ -2,58 +2,21 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl, createMemberAccount } from "@/common/lib/mock-db"
+import {
+  getStoredMembers,
+  saveStoredMembers,
+  getCurrentRole,
+  Member,
+  getStoredAcl,
+  createMemberAccount,
+  getStoredApplicants,
+  saveStoredApplicants,
+  Applicant
+} from "@/common/lib/mock-db"
 import { customAlert, customConfirm } from "@/common/lib/alert"
 
-interface Applicant {
-  id: string
-  name: string
-  date: string
-  contact: string
-  status: "Menunggu" | "Proses" | "Diterima" | "Ditolak"
-  tempatLahir: string
-  tanggalLahir: string
-  alamat: string
-  pekerjaan: string
-}
-
 const APPLICANTS_KEY = "simpa_calon_anggota"
-
-const DEFAULT_APPLICANTS: Applicant[] = [
-  {
-    id: "REG-2026-001",
-    name: "Budi Santoso",
-    date: "12 Agt 2026",
-    contact: "081234567890",
-    status: "Menunggu",
-    tempatLahir: "Bandung",
-    tanggalLahir: "2002-04-12",
-    alamat: "Kp. Cirengit RT 02/RW 05, Desa Cirengit",
-    pekerjaan: "Pelajar"
-  },
-  {
-    id: "REG-2026-002",
-    name: "Siti Aminah",
-    date: "11 Agt 2026",
-    contact: "085678901234",
-    status: "Proses",
-    tempatLahir: "Sumedang",
-    tanggalLahir: "2001-08-20",
-    alamat: "Perum Cirengit Indah Blok C No. 4",
-    pekerjaan: "Mahasiswa"
-  },
-  {
-    id: "REG-2026-003",
-    name: "Andi Wijaya",
-    date: "10 Agt 2026",
-    contact: "081987654321",
-    status: "Diterima",
-    tempatLahir: "Bandung",
-    tanggalLahir: "2000-11-05",
-    alamat: "Jl. Raya Cirengit No. 42",
-    pekerjaan: "Wirausaha"
-  }
-]
+const DEFAULT_APPLICANTS: Applicant[] = []
 
 export default function CalonAnggota() {
   const [currentRole, setCurrentRole] = useState("Super Admin")
@@ -75,19 +38,7 @@ export default function CalonAnggota() {
 
   const loadData = () => {
     setCurrentRole(getCurrentRole())
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(APPLICANTS_KEY)
-      if (!stored) {
-        localStorage.setItem(APPLICANTS_KEY, JSON.stringify(DEFAULT_APPLICANTS))
-        setApplicants(DEFAULT_APPLICANTS)
-      } else {
-        try {
-          setApplicants(JSON.parse(stored))
-        } catch (e) {
-          setApplicants(DEFAULT_APPLICANTS)
-        }
-      }
-    }
+    setApplicants(getStoredApplicants())
   }
 
   useEffect(() => {
@@ -104,9 +55,7 @@ export default function CalonAnggota() {
 
   const saveApplicantsState = (newApps: Applicant[]) => {
     setApplicants(newApps)
-    if (typeof window !== "undefined") {
-      localStorage.setItem(APPLICANTS_KEY, JSON.stringify(newApps))
-    }
+    saveStoredApplicants(newApps)
   }
 
   const activeAcl = getStoredAcl().find(r => r.role === currentRole)

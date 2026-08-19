@@ -732,3 +732,35 @@ export function saveWaTemplateUmum(template: string) {
     syncToServer(WA_TEMPLATE_UMUM_KEY, template)
   }
 }
+
+export interface Applicant {
+  id: string;
+  name: string;
+  date: string;
+  contact: string;
+  status: "Menunggu" | "Proses" | "Diterima" | "Ditolak";
+  tempatLahir: string;
+  tanggalLahir: string;
+  alamat: string;
+  pekerjaan: string;
+}
+
+const APPLICANTS_KEY = "simpa_calon_anggota";
+
+export function getStoredApplicants(): Applicant[] {
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem(APPLICANTS_KEY);
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored);
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveStoredApplicants(applicants: Applicant[]) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(APPLICANTS_KEY, JSON.stringify(applicants));
+    syncToServer(APPLICANTS_KEY, applicants)
+  }
+}
