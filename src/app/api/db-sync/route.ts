@@ -31,7 +31,7 @@ export async function GET() {
             update: {},
             create: {
               roleName: r.role,
-              allowDashboard: r.permissions.allowDashboard,
+              allowDashboard: typeof r.permissions.dashboard !== "undefined" ? r.permissions.dashboard : r.permissions.allowDashboard,
               viewDataAnggota: r.permissions.viewDataAnggota,
               manageDataAnggota: r.permissions.manageDataAnggota,
               viewTasykil: r.permissions.viewTasykil,
@@ -337,7 +337,7 @@ export async function POST(req: Request) {
         await prisma.roleAkses.upsert({
           where: { roleName: r.role },
           update: {
-            allowDashboard: r.permissions.allowDashboard,
+            allowDashboard: typeof r.permissions.dashboard !== "undefined" ? r.permissions.dashboard : r.permissions.allowDashboard,
             viewDataAnggota: r.permissions.viewDataAnggota,
             manageDataAnggota: r.permissions.manageDataAnggota,
             viewTasykil: r.permissions.viewTasykil,
@@ -351,7 +351,7 @@ export async function POST(req: Request) {
           },
           create: {
             roleName: r.role,
-            allowDashboard: r.permissions.allowDashboard,
+            allowDashboard: typeof r.permissions.dashboard !== "undefined" ? r.permissions.dashboard : r.permissions.allowDashboard,
             viewDataAnggota: r.permissions.viewDataAnggota,
             manageDataAnggota: r.permissions.manageDataAnggota,
             viewTasykil: r.permissions.viewTasykil,
@@ -568,7 +568,7 @@ function compilePayload(
   const simpa_acl_rules = dbAcl.map(a => ({
     role: a.roleName,
     permissions: {
-      allowDashboard: a.allowDashboard,
+      dashboard: a.allowDashboard,
       viewDataAnggota: a.viewDataAnggota,
       manageDataAnggota: a.manageDataAnggota,
       viewTasykil: a.viewTasykil,
