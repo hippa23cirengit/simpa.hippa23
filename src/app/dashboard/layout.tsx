@@ -15,7 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { getCurrentRole, setCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
+import { getCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
+import { isLoggedIn, getSessionUser, clearSession } from "@/common/lib/auth"
 
 // Child content wrapper to access useSidebar safely
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
@@ -25,12 +26,33 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   const [currentRole, setCurrentRoleState] = React.useState("Super Admin");
   const [aclRules, setAclRules] = React.useState<any[]>([]);
+  const [authorized, setAuthorized] = React.useState(false);
+  const [userName, setUserName] = React.useState("");
 
   React.useEffect(() => {
+    if (!isLoggedIn()) {
+      router.replace("/login");
+      return;
+    }
+    setAuthorized(true);
+
+    const user = getSessionUser();
+    if (user && user.name) {
+      setUserName(user.name);
+    }
+
     setCurrentRoleState(getCurrentRole());
     setAclRules(getStoredAcl());
 
     const handleRoleChange = () => {
+      if (!isLoggedIn()) {
+        router.replace("/login");
+        return;
+      }
+      const user = getSessionUser();
+      if (user && user.name) {
+        setUserName(user.name);
+      }
       setCurrentRoleState(getCurrentRole());
       setAclRules(getStoredAcl());
     };
@@ -39,7 +61,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener("simpa_role_changed", handleRoleChange);
     };
-  }, []);
+  }, [router]);
 
   const activeAcl = aclRules.find(r => r.role === currentRole);
 
@@ -59,9 +81,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     return true;
   });
 
-  const handleRoleChange = (newRole: string) => {
-    setCurrentRole(newRole);
-  };
+
 
   const getSubLabel = () => {
     if (currentRole === "Super Admin") return "Administrator";
@@ -69,6 +89,15 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     if (currentRole === "Bidang") return "Pengurus Bidang";
     return "Anggota Biasa";
   };
+
+  if (!authorized) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-bold text-slate-400 gap-3">
+        <div className="w-8 h-8 border-4 border-[#F7A440] border-t-transparent rounded-full animate-spin"></div>
+        <span className="text-xs tracking-wider text-slate-400 font-semibold uppercase">Memuat SIMPA...</span>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -87,19 +116,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
             <h1 className="font-title-lg text-base font-bold text-[#F7A440] leading-none">SIMPA</h1>
           </div>
           <div className="flex items-center gap-2">
-            {/* Mobile Role Switcher */}
-            <div className="flex items-center bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-0.5 text-[10px] font-bold">
-              <select
-                value={currentRole}
-                onChange={(e) => handleRoleChange(e.target.value)}
-                className="bg-transparent border-none text-slate-700 focus:outline-none cursor-pointer text-xs"
-              >
-                <option value="Super Admin">S.Admin</option>
-                <option value="PIMHAR">PIMHAR</option>
-                <option value="Bidang">Bidang</option>
-                <option value="Anggota">Anggota</option>
-              </select>
-            </div>
             
             <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 hover:bg-[#F2F4F6]">
               <span className="material-symbols-outlined text-[20px]">notifications</span>
@@ -128,21 +144,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           
           {/* Header Actions */}
           <div className="flex items-center gap-4">
-            {/* Desktop Role Switcher */}
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs font-semibold shadow-sm">
-              <span className="material-symbols-outlined text-[16px] text-[#F7A440]">manage_accounts</span>
-              <span className="text-slate-400">Simulasi:</span>
-              <select
-                value={currentRole}
-                onChange={(e) => handleRoleChange(e.target.value)}
-                className="bg-transparent border-none text-slate-700 font-bold focus:outline-none cursor-pointer pr-1"
-              >
-                <option value="Super Admin">Super Admin</option>
-                <option value="PIMHAR">PIMHAR</option>
-                <option value="Bidang">Bidang</option>
-                <option value="Anggota">Anggota</option>
-              </select>
-            </div>
 
             <button className="text-slate-500 hover:text-[#F7A440] transition-colors p-2 rounded-full hover:bg-slate-50 relative">
               <span className="material-symbols-outlined text-[20px]">notifications</span>
@@ -157,11 +158,11 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                   }
                 >
                   <div className="text-right">
-                    <p className="font-label-md text-xs text-slate-800 font-bold leading-none">Ahmad Fauzan</p>
+                    <p className="font-label-md text-xs text-slate-800 font-bold leading-none">{userName}</p>
                     <p className="text-[10px] text-[#F7A440] font-bold leading-none mt-1">{getSubLabel()}</p>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-200 flex items-center justify-center text-xs font-bold text-[#895200]">
-                    AF
+                    {userName ? userName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "AF"}
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-48 rounded-xl shadow-lg border border-slate-200/80 p-1.5 mt-2" align="end">
@@ -174,7 +175,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="my-1.5" />
                   <DropdownMenuItem
-                    onClick={() => router.push("/login")}
+                    onClick={() => {
+                      clearSession();
+                      router.replace("/login");
+                    }}
                     className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 cursor-pointer transition-colors"
                   >
                     <span className="material-symbols-outlined text-[16px]">logout</span>

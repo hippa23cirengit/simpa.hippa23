@@ -456,6 +456,13 @@ export function saveStoredAcl(acl: AclRule[]) {
 
 export function getCurrentRole(): string {
   if (typeof window === "undefined") return "Super Admin";
+  const sessionStored = localStorage.getItem("simpa_session");
+  if (sessionStored) {
+    try {
+      const session = JSON.parse(sessionStored);
+      if (session && session.role) return session.role;
+    } catch(e) {}
+  }
   const stored = localStorage.getItem(CURRENT_ROLE_KEY);
   if (!stored) {
     localStorage.setItem(CURRENT_ROLE_KEY, "Super Admin");

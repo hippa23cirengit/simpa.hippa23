@@ -1,30 +1,83 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { getStoredMembers } from "@/common/lib/mock-db";
+import { setSession, isLoggedIn, clearSession } from "@/common/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [npa, setNpa] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Clear session on mount to act as a logout guard
+  useEffect(() => {
+    clearSession();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // Static login check
+    const trimmedNpa = npa.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedNpa || !trimmedPassword) {
+      setLoading(false);
+      setError("NPA dan Password wajib diisi.");
+      return;
+    }
+
     setTimeout(() => {
-      if (email === "admin" || email === "admin@simpa.com" || email === "") {
-        router.push("/dashboard");
-      } else {
+      // Find member in mock db
+      const members = getStoredMembers();
+      const member = members.find(
+        (m) => m.id.toLowerCase() === trimmedNpa.toLowerCase()
+      );
+
+      if (!member) {
         setLoading(false);
-        setError("Email atau password yang Anda masukkan salah.");
+        setError("NPA tidak terdaftar di database.");
+        return;
       }
+
+      // Check password (default password: cirengit23)
+      if (trimmedPassword !== "cirengit23") {
+        setLoading(false);
+        setError("Password yang Anda masukkan salah.");
+        return;
+      }
+
+      // Determine role based on NPA
+      let role = "Anggota";
+      if (member.id === "23.001") {
+        role = "Super Admin";
+      } else if (member.id === "23.002" || member.id === "23.003") {
+        role = "PIMHAR";
+      } else {
+        // Check if member is part of a Bidang in the seeded IDs
+        const num = parseFloat(member.id);
+        if (num >= 23.004 && num <= 23.007) {
+          role = "Bidang";
+        }
+      }
+
+      // Save user session
+      setSession({
+        isLoggedIn: true,
+        npa: member.id,
+        name: member.name,
+        role: role,
+        loginAt: Date.now(),
+      });
+
+      // Redirect to dashboard (using replace so back history doesn't return to login)
+      router.replace("/dashboard");
     }, 800);
   };
 
@@ -50,7 +103,7 @@ export default function LoginPage() {
 
         <div className="mb-6">
           <h2 className="text-lg font-bold text-slate-900">Masuk ke Dashboard</h2>
-          <p className="text-xs text-slate-500 mt-1">Silakan masukkan akun pengurus atau administrator Anda.</p>
+          <p className="text-xs text-slate-500 mt-1">Silakan masukkan NPA dan password Anda.</p>
         </div>
 
         {error && (
@@ -64,17 +117,17 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-              Username atau Email
+              NPA (Nomor Pokok Anggota)
             </label>
             <div className="relative">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">
-                mail
+                badge
               </span>
               <input
                 type="text"
-                placeholder="admin@simpa.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Contoh: 23.001"
+                value={npa}
+                onChange={(e) => setNpa(e.target.value)}
                 className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-lg font-body-md text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] focus:ring-2 focus:ring-[#f7a440]/10 transition-all bg-transparent"
               />
             </div>
@@ -90,7 +143,7 @@ export default function LoginPage() {
               </span>
               <input
                 type="password"
-                placeholder="••••••••"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-lg font-body-md text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] focus:ring-2 focus:ring-[#f7a440]/10 transition-all bg-transparent"
