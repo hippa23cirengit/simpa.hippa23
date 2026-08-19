@@ -90,6 +90,8 @@ export default function PengaturanPage() {
     }, 3000)
   }
 
+  const [showToken, setShowToken] = useState(false)
+
   const handleSendTest = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!testPhone.trim()) return
@@ -111,14 +113,15 @@ export default function PengaturanPage() {
       const resData = await response.json()
       setTestSent(false)
 
-      if (resData.status) {
-        alert(`Pesan WhatsApp BERHASIL dikirim ke nomor ${testPhone}!`)
+      if (resData.status === true || resData.status === "true") {
+        alert(`✅ Pesan WhatsApp BERHASIL dikirim ke nomor ${testPhone}!\n\nStatus Fonnte: OK`)
       } else {
-        alert(`Gagal mengirim WhatsApp: ${resData.reason || resData.detail || JSON.stringify(resData)}`)
+        const errorDetail = resData.reason || resData.detail || resData.message || JSON.stringify(resData)
+        alert(`⚠️ Respon dari Fonnte WA Gateway: GAGAL\n\nAlasan: ${errorDetail}\n\nPastikan:\n1. Token Fonnte di atas sudah sesuai dan diklik 'Simpan Konfigurasi'\n2. Status Device di Fonnte (md.fonnte.com) sudah 'Connected' (hijau)`)
       }
     } catch (err: any) {
       setTestSent(false)
-      alert(`Terjadi kesalahan koneksi: ${err.message || err}`)
+      alert(`Terjadi kesalahan koneksi server: ${err.message || err}`)
     }
   }
 
@@ -315,14 +318,26 @@ export default function PengaturanPage() {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">API Token / Secret Key</label>
-                  <input
-                    type="password"
-                    required
-                    disabled={!canManage}
-                    value={waConfig.token}
-                    onChange={(e) => setWaConfig({ ...waConfig, token: e.target.value })}
-                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showToken ? "text" : "password"}
+                      required
+                      disabled={!canManage}
+                      value={waConfig.token}
+                      onChange={(e) => setWaConfig({ ...waConfig, token: e.target.value })}
+                      placeholder="Masukkan Token dari md.fonnte.com"
+                      className="w-full border border-slate-200 rounded-lg pl-3.5 pr-10 py-2 font-body-md text-sm text-slate-800 font-mono focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowToken(!showToken)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">
+                        {showToken ? "visibility_off" : "visibility"}
+                      </span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
