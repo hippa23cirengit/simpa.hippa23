@@ -13,12 +13,15 @@ import {
   Member,
   getCurrentRole
 } from "@/common/lib/mock-db"
+import { customAlert } from "@/common/lib/alert"
 
 export default function ProfilPage() {
   const router = useRouter()
   const [account, setAccount] = useState<LoginAccount | null>(null)
   const [member, setMember] = useState<Member | null>(null)
   const [currentRole, setCurrentRole] = useState("")
+  const [userPhoto, setUserPhoto] = useState("")
+  const [uploading, setUploading] = useState(false)
 
   // Form State
   const [name, setName] = useState("")
@@ -56,6 +59,7 @@ export default function ProfilPage() {
           setEmail(mem.email || "")
           setWhatsapp(mem.whatsapp || "")
           setAlamat(mem.alamat || "")
+          setUserPhoto(mem.profilePhoto || "")
         }
       }
     }
@@ -64,6 +68,82 @@ export default function ProfilPage() {
   useEffect(() => {
     loadProfile()
   }, [])
+
+  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !account) return
+
+    setUploading(true)
+    setInfoMsg(null)
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://buylslyfndjjyqhqvpyk.supabase.co"
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_KgKMdTFKj6yO9gvwHdHARw_Ot_3N8Dd"
+      const bucketName = "profilephoto"
+      const fileExt = file.name.split(".").pop()
+      const filePath = `avatar_${account.npa}_${Date.now()}.${fileExt}`
+
+      const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucketName}/${filePath}`
+
+      const res = await fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`,
+          "Content-Type": file.type
+        },
+        body: file
+      })
+
+      const resData = await res.json()
+      if (!res.ok) {
+        const errMsg = resData.message || resData.error || JSON.stringify(resData)
+        throw new Error(errMsg)
+      }
+
+      // Public URL
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`
+
+      // Save URL to mock database
+      if (account.linkedAnggotaId) {
+        const storedMembers = getStoredMembers()
+        const updatedMembers = storedMembers.map((m) => {
+          if (m.id === account.linkedAnggotaId) {
+            return { ...m, profilePhoto: publicUrl }
+          }
+          return m
+        })
+        saveStoredMembers(updatedMembers)
+        
+        const updatedMem = updatedMembers.find((m) => m.id === account.linkedAnggotaId)
+        if (updatedMem) {
+          setMember(updatedMem)
+          setUserPhoto(publicUrl)
+        }
+      }
+
+      // Dispatch event to sync Layout & Sidebar
+      window.dispatchEvent(new Event("simpa_role_changed"))
+      
+      await customAlert({
+        type: "success",
+        title: "Unggah Sukses",
+        message: "Foto profil berhasil diperbarui!"
+      })
+      setInfoMsg({ type: "success", text: "Foto profil berhasil diperbarui!" })
+      setTimeout(() => setInfoMsg(null), 3000)
+    } catch (err: any) {
+      console.error(err)
+      await customAlert({
+        type: "error",
+        title: "Gagal Mengunggah",
+        message: "Gagal upload: " + err.message
+      })
+      setInfoMsg({ type: "error", text: err.message || "Gagal memperbarui foto profil." })
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const initials = (name || "User")
     .split(" ")
@@ -179,8 +259,36 @@ export default function ProfilPage() {
           <h3 className="font-title-lg text-sm font-bold text-slate-800 self-start mb-4">
             Foto & Identitas Akun
           </h3>
-          <div className="w-24 h-24 rounded-full bg-amber-500/10 border-2 border-amber-200 flex items-center justify-center text-3xl font-bold text-[#895200] shadow-inner mb-3">
-            {initials}
+          {/* Avatar Area with upload trigger */}
+          <div className="relative group w-24 h-24 mb-4 select-none cursor-pointer rounded-full overflow-hidden border-2 border-amber-200 shadow-inner bg-amber-500/10 flex items-center justify-center">
+            {uploading ? (
+              <div className="flex flex-col items-center justify-center gap-1">
+                <div className="w-6 h-6 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">Uploading</span>
+              </div>
+            ) : userPhoto ? (
+              <img
+                src={userPhoto}
+                alt="Profile Photo"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-3xl font-bold text-[#895200]">{initials}</span>
+            )}
+            
+            {/* Hover overlay for changing picture */}
+            {!uploading && (
+              <label className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-0.5 text-white transition-opacity duration-200 cursor-pointer">
+                <span className="material-symbols-outlined text-[20px]">photo_camera</span>
+                <span className="text-[8px] font-bold uppercase tracking-widest">Ubah Foto</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUploadPhoto}
+                  className="hidden"
+                />
+              </label>
+            )}
           </div>
           <h4 className="font-bold text-slate-800 text-base leading-snug">{name}</h4>
           <p className="text-xs text-slate-400 font-mono mt-0.5 font-semibold">

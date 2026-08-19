@@ -81,8 +81,16 @@ export default function DetailAnggota() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left Column - Card Profile */}
         <div className="md:col-span-1 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col items-center text-center">
-          <div className="w-24 h-24 rounded-full bg-amber-500/10 border-2 border-amber-200 flex items-center justify-center font-bold text-3xl text-[#895200] shadow-inner mb-4">
-            {initials}
+          <div className="w-24 h-24 rounded-full bg-amber-500/10 border-2 border-amber-200 flex items-center justify-center font-bold text-3xl text-[#895200] shadow-inner mb-4 overflow-hidden shrink-0">
+            {member.profilePhoto ? (
+              <img
+                src={member.profilePhoto}
+                alt={member.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              initials
+            )}
           </div>
           
           <h3 className="font-bold text-slate-800 text-base leading-snug">{member.name}</h3>

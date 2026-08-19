@@ -90,7 +90,7 @@ export default function Tasykil() {
     tasykil.bidang.forEach(b => {
       b.members.forEach(id => assignedIds.add(id))
     })
-    return members.filter(m => !assignedIds.has(m.id))
+    return members.filter(m => !assignedIds.has(m.id) && m.id !== "26.0000")
   }
 
   // Handle assigning PIMHAR role
@@ -582,6 +582,9 @@ export default function Tasykil() {
             <div className="flex-1 overflow-y-auto p-4 divide-y divide-slate-100 max-h-[350px]">
               {members
                 .filter(m => {
+                  // Hide Super Admin
+                  if (m.id === "26.0000") return false
+
                   // Hide members already assigned to PIMHAR
                   const assignedPimharIds = new Set(Object.values(tasykil.pimhar).filter(id => !!id))
                   if (assignedPimharIds.has(m.id)) return false

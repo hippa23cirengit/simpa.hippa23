@@ -9,6 +9,7 @@ export interface Member {
   pekerjaan: string;
   whatsapp: string;
   email: string; // Added for password reset
+  profilePhoto?: string; // Supabase Storage public URL
 }
 
 export interface Bidang {
@@ -37,6 +38,9 @@ export interface ScheduledEvent {
   time: string; // format HH:mm
   location: string;
   color: string; // Tailwind representation e.g. "blue", "amber", "emerald", "purple", "red"
+  type?: "kajian" | "umum"; // Tipe kegiatan
+  speaker?: string;        // Nama pemateri (opsional)
+  theme?: string;          // Tema kajian (opsional)
 }
 
 export interface AclRule {
@@ -92,11 +96,42 @@ export const DEFAULT_TASYKIL: TasykilState = {
 const MEMBERS_KEY = "simpa_members_state"
 const TASYKIL_KEY = "simpa_tasykil_state"
 
+// Backend sync helper
+function syncToServer(key: string, value: any) {
+  if (typeof window !== "undefined") {
+    fetch("/api/db-sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, value })
+    }).catch(e => console.error("Gagal sinkronisasi data ke server:", e))
+  }
+}
+
+export async function syncDatabaseFromServer() {
+  if (typeof window === "undefined") return
+  try {
+    const res = await fetch("/api/db-sync")
+    const resData = await res.json()
+    if (resData.status && resData.data) {
+      const data = resData.data
+      Object.keys(data).forEach(key => {
+        const valStr = typeof data[key] === "string" ? data[key] : JSON.stringify(data[key])
+        localStorage.setItem(key, valStr)
+      })
+      // Dispatch event to sync UI
+      window.dispatchEvent(new Event("simpa_role_changed"))
+    }
+  } catch (e) {
+    console.error("Gagal sinkronisasi data dari server:", e)
+  }
+}
+
 export function getStoredMembers(): Member[] {
   if (typeof window === "undefined") return DEFAULT_MEMBERS
   const stored = localStorage.getItem(MEMBERS_KEY)
   if (!stored) {
     localStorage.setItem(MEMBERS_KEY, JSON.stringify(DEFAULT_MEMBERS))
+    syncToServer(MEMBERS_KEY, DEFAULT_MEMBERS)
     return DEFAULT_MEMBERS
   }
   try {
@@ -105,6 +140,8 @@ export function getStoredMembers(): Member[] {
     if (parsed.length === 0 || parsed[0].id !== "26.0000" || parsed[0].name !== "Najmi Shofwan Al-Azhar") {
       localStorage.setItem(MEMBERS_KEY, JSON.stringify(DEFAULT_MEMBERS))
       localStorage.setItem(TASYKIL_KEY, JSON.stringify(DEFAULT_TASYKIL))
+      syncToServer(MEMBERS_KEY, DEFAULT_MEMBERS)
+      syncToServer(TASYKIL_KEY, DEFAULT_TASYKIL)
       return DEFAULT_MEMBERS
     }
     return parsed
@@ -116,6 +153,7 @@ export function getStoredMembers(): Member[] {
 export function saveStoredMembers(members: Member[]) {
   if (typeof window !== "undefined") {
     localStorage.setItem(MEMBERS_KEY, JSON.stringify(members));
+    syncToServer(MEMBERS_KEY, members)
   }
 }
 
@@ -124,6 +162,7 @@ export function getStoredTasykil(): TasykilState {
   const stored = localStorage.getItem(TASYKIL_KEY);
   if (!stored) {
     localStorage.setItem(TASYKIL_KEY, JSON.stringify(DEFAULT_TASYKIL));
+    syncToServer(TASYKIL_KEY, DEFAULT_TASYKIL)
     return DEFAULT_TASYKIL;
   }
   try {
@@ -132,6 +171,7 @@ export function getStoredTasykil(): TasykilState {
     if (typeof parsed.penasehat === "string") {
       parsed.penasehat = parsed.penasehat ? [parsed.penasehat] : [];
       localStorage.setItem(TASYKIL_KEY, JSON.stringify(parsed));
+      syncToServer(TASYKIL_KEY, parsed)
     }
     return parsed;
   } catch (e) {
@@ -139,11 +179,6 @@ export function getStoredTasykil(): TasykilState {
   }
 }
 
-export function saveStoredTasykil(state: TasykilState) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(TASYKIL_KEY, JSON.stringify(state));
-  }
-}
 
 export function syncRoles(members: Member[], tasykil: TasykilState): Member[] {
   return members.map(m => {
@@ -173,27 +208,32 @@ const WA_TEMPLATE_KEY = "simpa_wa_template";
 export const DEFAULT_EVENTS: ScheduledEvent[] = [
   {
     id: "evt-1",
-    title: "Rapat Rutin Pengurus",
-    date: "2026-08-02",
+    title: "Kajian Rutin Pemuda: Peran Pemuda di Era Digital",
+    date: "2026-08-22",
     time: "19:30",
-    location: "Masjid Al-Hikmah Cirengit",
-    color: "blue"
+    location: "Masjid Al-Ikhlas Cirengit",
+    color: "blue",
+    type: "kajian",
+    speaker: "Ustadz Evie Effendi",
+    theme: "Pemuda Hijrah"
   },
   {
     id: "evt-2",
-    title: "Pelatihan Kader Digital",
-    date: "2026-08-09",
-    time: "09:00",
-    location: "Aula Desa Cirengit",
-    color: "amber"
+    title: "Olahraga Futsal Rutin Pemuda",
+    date: "2026-08-23",
+    time: "16:00",
+    location: "Futsal Center Cirengit",
+    color: "emerald",
+    type: "umum"
   },
   {
     id: "evt-3",
-    title: "Bakti Sosial & Pembagian Air",
-    date: "2026-08-22",
-    time: "08:00",
-    location: "Kawasan RW 05 Desa Cirengit",
-    color: "emerald"
+    title: "Rapat Pleno Pengurus Bulanan",
+    date: "2026-08-28",
+    time: "09:00",
+    location: "Sekretariat HIPPA Cirengit",
+    color: "amber",
+    type: "umum"
   }
 ];
 
@@ -262,6 +302,7 @@ export function getStoredEvents(): ScheduledEvent[] {
   const stored = localStorage.getItem(EVENTS_KEY);
   if (!stored) {
     localStorage.setItem(EVENTS_KEY, JSON.stringify(DEFAULT_EVENTS));
+    syncToServer(EVENTS_KEY, DEFAULT_EVENTS)
     return DEFAULT_EVENTS;
   }
   try {
@@ -274,6 +315,7 @@ export function getStoredEvents(): ScheduledEvent[] {
 export function saveStoredEvents(events: ScheduledEvent[]) {
   if (typeof window !== "undefined") {
     localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
+    syncToServer(EVENTS_KEY, events)
   }
 }
 
@@ -340,6 +382,7 @@ export function getStoredAcl(): AclRule[] {
 
   if (changed) {
     localStorage.setItem(ACL_KEY, JSON.stringify(parsed));
+    syncToServer(ACL_KEY, parsed)
   }
 
   return parsed;
@@ -358,8 +401,8 @@ export const DEFAULT_LOGIN_ACCOUNTS: LoginAccount[] = [
     npa: "26.0000",
     name: "Najmi Shofwan Al-Azhar",
     role: "Super Admin",
-    passwordHash: "cirengit23",
-    linkedAnggotaId: null
+    passwordHash: "#h1ppa23",
+    linkedAnggotaId: "26.0000"
   }
 ];
 
@@ -370,6 +413,7 @@ export function getStoredAccounts(): LoginAccount[] {
   const stored = localStorage.getItem(ACCOUNTS_KEY);
   if (!stored) {
     localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(DEFAULT_LOGIN_ACCOUNTS));
+    syncToServer(ACCOUNTS_KEY, DEFAULT_LOGIN_ACCOUNTS)
     return DEFAULT_LOGIN_ACCOUNTS;
   }
   try {
@@ -377,7 +421,15 @@ export function getStoredAccounts(): LoginAccount[] {
     // Migration: If Najmi is not the first account, reset to ensure sync
     if (parsed.length === 0 || parsed[0].npa !== "26.0000") {
       localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(DEFAULT_LOGIN_ACCOUNTS));
+      syncToServer(ACCOUNTS_KEY, DEFAULT_LOGIN_ACCOUNTS)
       return DEFAULT_LOGIN_ACCOUNTS;
+    }
+    // Auto-migrate: Ensure Super Admin is linked to the member record and has new password
+    if (parsed[0].npa === "26.0000" && (!parsed[0].linkedAnggotaId || parsed[0].passwordHash === "cirengit23")) {
+      parsed[0].linkedAnggotaId = "26.0000";
+      parsed[0].passwordHash = "#h1ppa23";
+      localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(parsed));
+      syncToServer(ACCOUNTS_KEY, parsed);
     }
     return parsed;
   } catch (e) {
@@ -388,12 +440,130 @@ export function getStoredAccounts(): LoginAccount[] {
 export function saveStoredAccounts(accounts: LoginAccount[]) {
   if (typeof window !== "undefined") {
     localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+    syncToServer(ACCOUNTS_KEY, accounts)
   }
+}
+
+export function saveStoredTasykil(state: TasykilState) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(TASYKIL_KEY, JSON.stringify(state));
+    syncToServer(TASYKIL_KEY, state)
+    // Automatically synchronize account roles
+    syncAccountRolesFromTasykil(state);
+  }
+}
+
+export function syncAccountRolesFromTasykil(tasykil: TasykilState) {
+  if (typeof window === "undefined") return;
+
+  const accounts = getStoredAccounts();
+  const updatedAccounts = accounts.map(acc => {
+    // Keep Super Admin role untouched
+    if (acc.npa === "26.0000") {
+      return { ...acc, role: "Super Admin" };
+    }
+
+    const memberId = acc.linkedAnggotaId;
+    if (!memberId) {
+      return acc;
+    }
+
+    // Check if the member is in PIMHAR roles
+    const isPimhar = 
+      tasykil.pimhar.ketua === memberId ||
+      tasykil.pimhar.wakilKetua === memberId ||
+      tasykil.pimhar.sekretaris === memberId ||
+      tasykil.pimhar.wakilSekretaris === memberId ||
+      tasykil.pimhar.bendahara === memberId ||
+      tasykil.pimhar.wakilBendahara === memberId;
+
+    if (isPimhar) {
+      return { ...acc, role: "PIMHAR" };
+    }
+
+    // Check if in any Bidang
+    for (const b of tasykil.bidang) {
+      if (b.members.includes(memberId)) {
+        return { ...acc, role: b.name };
+      }
+    }
+
+    // Default to Anggota
+    return { ...acc, role: "Anggota" };
+  });
+
+  saveStoredAccounts(updatedAccounts);
+}
+
+export function createMemberAccount(newMember: Member, adminWa: string) {
+  if (typeof window === "undefined") return;
+
+  const accounts = getStoredAccounts();
+  const existing = accounts.find(a => a.npa === newMember.id || a.linkedAnggotaId === newMember.id);
+  if (existing) {
+    console.log("Account already exists for member: " + newMember.id);
+    return;
+  }
+
+  // Create new account
+  const newAccount: LoginAccount = {
+    npa: newMember.id,
+    name: newMember.name,
+    role: "Anggota", // Default role
+    passwordHash: "#h1ppa23", // Default password
+    linkedAnggotaId: newMember.id
+  };
+
+  const updatedAccounts = [...accounts, newAccount];
+  saveStoredAccounts(updatedAccounts);
+
+  // Send WhatsApp notification
+  const waConfig = getWaConfig();
+  if (!waConfig || !waConfig.token || waConfig.token === DEFAULT_WA_CONFIG.token) {
+    console.log("Fonnte WA Config is not set or using placeholder token, skip sending notification.");
+    return;
+  }
+
+  const hasMemberWa = newMember.whatsapp && newMember.whatsapp.trim() !== "";
+  const targetNumber = hasMemberWa ? newMember.whatsapp.trim() : adminWa;
+
+  if (!targetNumber || targetNumber.trim() === "") {
+    console.log("No valid WA number to send to.");
+    return;
+  }
+
+  let message = "";
+  if (hasMemberWa) {
+    message = `Assalamu'alaikum, *${newMember.name}*.\n\nSelamat datang di Pemuda Persis Cirengit! Akun SIMPA Anda telah aktif.\n\n🔑 *NPA Login:* ${newMember.id}\n🔒 *Password:* #h1ppa23\n\nSilakan login untuk melengkapi profil dan mengecek jadwal kegiatan.\n\nWassalamu'alaikum.`;
+  } else {
+    message = `[INFO AKUN BARU]\n\nAnggota: *${newMember.name}*\nNPA: ${newMember.id}\nPassword: #h1ppa23\n\nNomor WA anggota tidak terdaftar / kosong. Sampaikan info login ini secara langsung kepada yang bersangkutan.`;
+  }
+
+  fetch("/api/send-wa", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      target: targetNumber,
+      message: message,
+      token: waConfig.token,
+      endpoint: waConfig.endpoint
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("Notification send result:", data);
+  })
+  .catch(e => {
+    console.error("Gagal mengirim WA notifikasi:", e);
+  });
 }
 
 export function saveStoredAcl(acl: AclRule[]) {
   if (typeof window !== "undefined") {
     localStorage.setItem(ACL_KEY, JSON.stringify(acl));
+    syncToServer(ACL_KEY, acl)
   }
 }
 
@@ -409,6 +579,7 @@ export function getCurrentRole(): string {
   const stored = localStorage.getItem(CURRENT_ROLE_KEY);
   if (!stored) {
     localStorage.setItem(CURRENT_ROLE_KEY, "Super Admin");
+    syncToServer(CURRENT_ROLE_KEY, "Super Admin")
     return "Super Admin";
   }
   return stored;
@@ -417,6 +588,7 @@ export function getCurrentRole(): string {
 export function setCurrentRole(role: string) {
   if (typeof window !== "undefined") {
     localStorage.setItem(CURRENT_ROLE_KEY, role);
+    syncToServer(CURRENT_ROLE_KEY, role)
     // Dispatch a custom event to notify other components of the role change
     window.dispatchEvent(new Event("simpa_role_changed"));
   }
@@ -427,6 +599,7 @@ export function getWaTemplate(): string {
   const stored = localStorage.getItem(WA_TEMPLATE_KEY);
   if (!stored) {
     localStorage.setItem(WA_TEMPLATE_KEY, DEFAULT_WA_TEMPLATE);
+    syncToServer(WA_TEMPLATE_KEY, DEFAULT_WA_TEMPLATE)
     return DEFAULT_WA_TEMPLATE;
   }
   return stored;
@@ -452,6 +625,7 @@ export function getWaConfig(): WaConfig {
   const stored = localStorage.getItem(WA_CONFIG_KEY);
   if (!stored) {
     localStorage.setItem(WA_CONFIG_KEY, JSON.stringify(DEFAULT_WA_CONFIG));
+    syncToServer(WA_CONFIG_KEY, DEFAULT_WA_CONFIG)
     return DEFAULT_WA_CONFIG;
   }
   try {
@@ -464,6 +638,7 @@ export function getWaConfig(): WaConfig {
 export function saveWaConfig(config: WaConfig) {
   if (typeof window !== "undefined") {
     localStorage.setItem(WA_CONFIG_KEY, JSON.stringify(config));
+    syncToServer(WA_CONFIG_KEY, config)
   }
 }
 
@@ -472,6 +647,7 @@ export function getPeriodeJabatan(): string {
   const stored = localStorage.getItem(PERIODE_JABATAN_KEY);
   if (!stored) {
     localStorage.setItem(PERIODE_JABATAN_KEY, "2026 - 2028");
+    syncToServer(PERIODE_JABATAN_KEY, "2026 - 2028")
     return "2026 - 2028";
   }
   return stored;
@@ -480,6 +656,7 @@ export function getPeriodeJabatan(): string {
 export function savePeriodeJabatan(periode: string) {
   if (typeof window !== "undefined") {
     localStorage.setItem(PERIODE_JABATAN_KEY, periode);
+    syncToServer(PERIODE_JABATAN_KEY, periode)
     window.dispatchEvent(new Event("simpa_role_changed"));
   }
 }
@@ -487,5 +664,69 @@ export function savePeriodeJabatan(periode: string) {
 export function saveWaTemplate(template: string) {
   if (typeof window !== "undefined") {
     localStorage.setItem(WA_TEMPLATE_KEY, template);
+    syncToServer(WA_TEMPLATE_KEY, template)
+  }
+}
+
+const WA_TEMPLATE_KAJIAN_KEY = "simpa_wa_template_kajian";
+const WA_TEMPLATE_UMUM_KEY = "simpa_wa_template_umum";
+
+export const DEFAULT_WA_TEMPLATE_KAJIAN = `*Pengingat Kajian HIPPA Cirengit*
+
+Halo {{NAMA}},
+
+Hadirilah kajian dengan tema *{{TEMA}}* dan judul *{{KEGIATAN}}* bersama ustadz/pemateri *{{PEMATERI}}*.
+
+📅 Tanggal: {{TANGGAL}}
+🕒 Jam: {{JAM}} WIB
+📍 Lokasi: {{LOKASI}}
+
+Semoga Allah memudahkan langkah kita ke majelis ilmu.`;
+
+export const DEFAULT_WA_TEMPLATE_UMUM = `*Pengingat Agenda Pemuda HIPPA*
+
+Halo {{NAMA}},
+
+Diingatkan kembali bahwa ada agenda *{{KEGIATAN}}* yang akan dilaksanakan pada:
+
+📅 Tanggal: {{TANGGAL}}
+🕒 Jam: {{JAM}} WIB
+📍 Lokasi: {{LOKASI}}
+
+Kehadiran dan kontribusi rekan-rekan sangat diharapkan.`;
+
+export function getWaTemplateKajian(): string {
+  if (typeof window === "undefined") return DEFAULT_WA_TEMPLATE_KAJIAN;
+  const stored = localStorage.getItem(WA_TEMPLATE_KAJIAN_KEY);
+  if (!stored) {
+    localStorage.setItem(WA_TEMPLATE_KAJIAN_KEY, DEFAULT_WA_TEMPLATE_KAJIAN);
+    syncToServer(WA_TEMPLATE_KAJIAN_KEY, DEFAULT_WA_TEMPLATE_KAJIAN)
+    return DEFAULT_WA_TEMPLATE_KAJIAN;
+  }
+  return stored;
+}
+
+export function saveWaTemplateKajian(template: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(WA_TEMPLATE_KAJIAN_KEY, template);
+    syncToServer(WA_TEMPLATE_KAJIAN_KEY, template)
+  }
+}
+
+export function getWaTemplateUmum(): string {
+  if (typeof window === "undefined") return DEFAULT_WA_TEMPLATE_UMUM;
+  const stored = localStorage.getItem(WA_TEMPLATE_UMUM_KEY);
+  if (!stored) {
+    localStorage.setItem(WA_TEMPLATE_UMUM_KEY, DEFAULT_WA_TEMPLATE_UMUM);
+    syncToServer(WA_TEMPLATE_UMUM_KEY, DEFAULT_WA_TEMPLATE_UMUM)
+    return DEFAULT_WA_TEMPLATE_UMUM;
+  }
+  return stored;
+}
+
+export function saveWaTemplateUmum(template: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(WA_TEMPLATE_UMUM_KEY, template);
+    syncToServer(WA_TEMPLATE_UMUM_KEY, template)
   }
 }

@@ -2,7 +2,16 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { getStoredEvents, saveStoredEvents, ScheduledEvent, getCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
+import {
+  getStoredEvents,
+  saveStoredEvents,
+  ScheduledEvent,
+  getCurrentRole,
+  getStoredAcl,
+  getWaTemplateKajian,
+  getWaTemplateUmum,
+  getWaConfig
+} from "@/common/lib/mock-db"
 
 export default function JadwalKegiatan() {
   const daysOfWeek = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"]
@@ -28,6 +37,12 @@ export default function JadwalKegiatan() {
   const [formTime, setFormTime] = useState("")
   const [formLocation, setFormLocation] = useState("")
   const [formColor, setFormColor] = useState("blue")
+  const [formType, setFormType] = useState<"kajian" | "umum">("umum")
+  const [formSpeaker, setFormSpeaker] = useState("")
+  const [formTheme, setFormTheme] = useState("")
+
+  // Broadcast state
+  const [broadcastingId, setBroadcastingId] = useState<string | null>(null)
 
   const loadData = () => {
     setEvents(getStoredEvents())
@@ -128,7 +143,7 @@ export default function JadwalKegiatan() {
       case "purple": return "bg-purple-500"
       case "red": return "bg-red-500"
       case "blue":
-      default: return "bg-blue-500"
+      default: return "bg-blue-505"
     }
   }
 
@@ -154,6 +169,9 @@ export default function JadwalKegiatan() {
     setFormTime("")
     setFormLocation("")
     setFormColor("blue")
+    setFormType("umum")
+    setFormSpeaker("")
+    setFormTheme("")
     setIsModalOpen(true)
   }
 
@@ -164,6 +182,9 @@ export default function JadwalKegiatan() {
     setFormTime(event.time)
     setFormLocation(event.location)
     setFormColor(event.color)
+    setFormType(event.type || "umum")
+    setFormSpeaker(event.speaker || "")
+    setFormTheme(event.theme || "")
     setIsModalOpen(true)
   }
 
@@ -182,7 +203,10 @@ export default function JadwalKegiatan() {
             date: formDate,
             time: formTime,
             location: formLocation,
-            color: formColor
+            color: formColor,
+            type: formType,
+            speaker: formType === "kajian" ? formSpeaker : "",
+            theme: formType === "kajian" ? formTheme : ""
           }
         }
         return evt
@@ -195,7 +219,10 @@ export default function JadwalKegiatan() {
         date: formDate,
         time: formTime,
         location: formLocation,
-        color: formColor
+        color: formColor,
+        type: formType,
+        speaker: formType === "kajian" ? formSpeaker : "",
+        theme: formType === "kajian" ? formTheme : ""
       }
       saveStoredEvents([...rawEvents, newEvent])
     }
@@ -210,6 +237,58 @@ export default function JadwalKegiatan() {
       const filtered = rawEvents.filter(evt => evt.id !== eventId)
       saveStoredEvents(filtered)
       loadData()
+    }
+  }
+
+  // Broadcast simulation to WA Gateway
+  const handleBroadcastEvent = async (event: ScheduledEvent) => {
+    const config = getWaConfig()
+    if (!config.token || config.token === "t0k3n-s3cr3t-fonnt3-c1r3ng1t") {
+      alert("⚠️ Konfigurasi API Fonnte belum dipasang! Harap isi API Token Anda terlebih dahulu di menu Pengaturan.")
+      return
+    }
+
+    const testNumber = prompt("Masukkan Nomor WhatsApp Penerima Uji Coba:", "081234567890")
+    if (!testNumber || !testNumber.trim()) return
+
+    setBroadcastingId(event.id)
+
+    // Load correct template
+    const template = event.type === "kajian" ? getWaTemplateKajian() : getWaTemplateUmum()
+    
+    // Replace variables
+    const formattedMessage = template
+      .replace(/\{\{NAMA\}\}/g, "Najmi Shofwan")
+      .replace(/\{\{KEGIATAN\}\}/g, event.title)
+      .replace(/\{\{PEMATERI\}\}/g, event.speaker || "-")
+      .replace(/\{\{TEMA\}\}/g, event.theme || "-")
+      .replace(/\{\{TANGGAL\}\}/g, formatDateDisplay(event.date))
+      .replace(/\{\{JAM\}\}/g, event.time)
+      .replace(/\{\{LOKASI\}\}/g, event.location || "-")
+
+    try {
+      const response = await fetch("/api/send-wa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target: testNumber.trim(),
+          message: formattedMessage,
+          token: config.token,
+          endpoint: config.endpoint
+        })
+      })
+
+      const data = await response.json()
+      setBroadcastingId(null)
+
+      if (data.status === true || data.status === "true") {
+        alert(`✅ Notifikasi berhasil terkirim ke ${testNumber}!\n\nPreview Pesan:\n----------------\n${formattedMessage}`)
+      } else {
+        alert(`❌ Gagal mengirim notifikasi: ${data.reason || data.detail || JSON.stringify(data)}`)
+      }
+    } catch (err: any) {
+      setBroadcastingId(null)
+      alert(`Terjadi kesalahan jaringan: ${err.message || err}`)
     }
   }
 
@@ -280,34 +359,62 @@ export default function JadwalKegiatan() {
           {/* Dates Grid */}
           <div className="grid grid-cols-7 gap-1 border-t border-l border-slate-200/80">
             {calendarCells.map((cell, idx) => {
-              const cellBg = !cell.isCurrentMonth
-                ? "bg-slate-50 opacity-40"
-                : cell.isToday
-                ? "bg-[#F7A440]/5"
-                : selectedDateStr === cell.dateStr
-                ? "bg-amber-50"
-                : "bg-white"
-
+              const isSelected = selectedDateStr === cell.dateStr
               const cellEvents = events.filter(evt => evt.date === cell.dateStr)
+
+              let cellBg = "bg-white hover:bg-slate-50/50"
+              if (!cell.isCurrentMonth) {
+                cellBg = "bg-slate-50 opacity-40"
+              } else if (cellEvents.length > 0) {
+                // Color the cell background according to the first event's color category
+                const firstColor = cellEvents[0].color
+                switch (firstColor) {
+                  case "amber":
+                    cellBg = "bg-amber-50/80 text-amber-900 hover:bg-amber-100/80"
+                    break
+                  case "emerald":
+                    cellBg = "bg-emerald-50/80 text-emerald-900 hover:bg-emerald-100/80"
+                    break
+                  case "purple":
+                    cellBg = "bg-purple-50/80 text-purple-900 hover:bg-purple-100/80"
+                    break
+                  case "red":
+                    cellBg = "bg-red-50/80 text-red-900 hover:bg-red-100/80"
+                    break
+                  case "blue":
+                  default:
+                    cellBg = "bg-blue-50/80 text-blue-900 hover:bg-blue-100/80"
+                    break
+                }
+              } else if (cell.isToday) {
+                cellBg = "bg-amber-500/10 font-bold"
+              } else if (isSelected) {
+                cellBg = "bg-amber-50/90 font-bold"
+              }
+
+              let borderOutline = "hover:ring-1 hover:ring-inset hover:ring-amber-300"
+              if (isSelected) {
+                borderOutline = "ring-2 ring-inset ring-[#F7A440] shadow-sm z-10 rounded-sm"
+              }
 
               return (
                 <div
                   key={idx}
                   onClick={() => setSelectedDateStr(cell.dateStr)}
-                  className={`min-h-[90px] md:min-h-[110px] p-1 border-r border-b border-slate-200/80 ${cellBg} flex flex-col justify-between cursor-pointer hover:bg-slate-50/50 transition-colors`}
+                  className={`min-h-[90px] md:min-h-[110px] p-1.5 border-r border-b border-slate-200/80 ${cellBg} ${borderOutline} flex flex-col justify-between cursor-pointer transition-all duration-150`}
                 >
                   <div className="flex justify-between items-start">
                     {cell.isToday ? (
-                      <span className="font-bold text-xs bg-[#F7A440] text-white rounded-full w-6 h-6 flex items-center justify-center shadow-sm">
+                      <span className="font-extrabold text-xs bg-[#1A1A1A] text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md ring-2 ring-amber-400">
                         {cell.day}
                       </span>
                     ) : (
-                      <span className={`font-semibold text-xs p-1 ${cell.isSunday ? "text-red-600 font-bold" : "text-slate-700"}`}>
+                      <span className={`font-semibold text-xs p-0.5 ${cell.isSunday ? "text-red-600 font-bold" : "text-slate-700"}`}>
                         {cell.day}
                       </span>
                     )}
                     {cellEvents.length > 0 && (
-                      <div className="flex gap-0.5 p-1">
+                      <div className="flex gap-0.5 p-0.5">
                         {cellEvents.slice(0, 3).map(e => (
                           <span key={e.id} className={`w-1.5 h-1.5 rounded-full ${getDotsColor(e.color)}`} />
                         ))}
@@ -316,19 +423,19 @@ export default function JadwalKegiatan() {
                   </div>
                   
                   {/* Event labels inside cell (Desktop) */}
-                  <div className="mt-1 flex flex-col gap-1 overflow-hidden">
+                  <div className="mt-1 flex flex-col gap-0.5 overflow-hidden">
                     {cellEvents.slice(0, 2).map((event) => (
                       <div
                         key={event.id}
-                        className={`hidden md:block px-1.5 py-0.5 rounded text-[9px] font-bold truncate leading-tight border ${getColorClass(event.color)}`}
+                        className="hidden md:block text-[9px] font-bold truncate leading-snug px-1 text-slate-800"
                         title={event.title}
                       >
-                        {event.title}
+                        • {event.title}
                       </div>
                     ))}
                     {cellEvents.length > 2 && (
-                      <div className="hidden md:block text-[8px] text-slate-400 font-bold px-1.5">
-                        +{cellEvents.length - 2} Lainnya
+                      <div className="hidden md:block text-[8px] text-slate-500 font-bold px-1 mt-0.5">
+                        +{cellEvents.length - 2} lainnya
                       </div>
                     )}
                   </div>
@@ -385,7 +492,12 @@ export default function JadwalKegiatan() {
                 className={`p-4 border border-slate-200/80 hover:border-amber-400 rounded-xl bg-slate-50/30 transition-all duration-300 flex flex-col`}
               >
                 <div className="flex justify-between items-start mb-3 gap-2">
-                  <h4 className="font-bold text-slate-800 text-sm leading-snug">{event.title}</h4>
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm leading-snug">{event.title}</h4>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">
+                      {event.type === "kajian" ? "📚 Kajian/Seminar" : "🏃‍♂️ Acara Umum"}
+                    </span>
+                  </div>
                   <span className={`px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider whitespace-nowrap ${getColorClass(event.color)}`}>
                     {event.color}
                   </span>
@@ -406,27 +518,54 @@ export default function JadwalKegiatan() {
                       <span className="text-slate-700">{event.location}</span>
                     </div>
                   )}
+                  {event.type === "kajian" && (
+                    <div className="flex flex-col gap-1 mt-1.5 py-1.5 px-2.5 bg-amber-500/5 border border-amber-200/50 rounded-lg text-[#895200]">
+                      {event.theme && (
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[15px]">topic</span>
+                          <span>Tema: <strong className="font-bold">{event.theme}</strong></span>
+                        </div>
+                      )}
+                      {event.speaker && (
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[15px]">record_voice_over</span>
+                          <span>Ustadz/Pemateri: <strong className="font-bold">{event.speaker}</strong></span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {/* Edit/Delete Actions */}
-                {!isReadOnly && (
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end gap-2">
-                    <button
-                      onClick={() => handleOpenEdit(event)}
-                      className="text-slate-400 hover:text-[#F7A440] transition-colors p-1 flex items-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">edit</span>
-                      <span className="text-[10px] font-bold">Edit</span>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteEvent(event.id, event.title)}
-                      className="text-slate-400 hover:text-red-600 transition-colors p-1 flex items-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">delete</span>
-                      <span className="text-[10px] font-bold">Hapus</span>
-                    </button>
-                  </div>
-                )}
+                {/* Actions */}
+                <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
+                  <button
+                    onClick={() => handleBroadcastEvent(event)}
+                    disabled={broadcastingId === event.id}
+                    className="text-blue-600 hover:text-blue-700 disabled:text-slate-400 transition-colors flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">send_to_mobile</span>
+                    <span className="text-[10px] font-bold">{broadcastingId === event.id ? "Mengirim..." : "Kirim WA"}</span>
+                  </button>
+
+                  {!isReadOnly && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleOpenEdit(event)}
+                        className="text-slate-400 hover:text-[#F7A440] transition-colors p-1 flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">edit</span>
+                        <span className="text-[10px] font-bold">Edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEvent(event.id, event.title)}
+                        className="text-slate-400 hover:text-red-600 transition-colors p-1 flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                        <span className="text-[10px] font-bold">Hapus</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -436,8 +575,8 @@ export default function JadwalKegiatan() {
       {/* Modal Form Tambah / Edit Event */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-xl border border-slate-100 overflow-hidden animate-scaleIn">
-            <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-xl border border-slate-100 overflow-hidden animate-scaleIn flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
               <h3 className="font-title-lg text-base font-bold text-slate-800">
                 {editingEvent ? "Edit Agenda Kegiatan" : "Tambah Agenda Baru"}
               </h3>
@@ -449,8 +588,45 @@ export default function JadwalKegiatan() {
               </button>
             </div>
             
-            <form onSubmit={handleSaveEvent}>
-              <div className="p-6 space-y-4">
+            <form onSubmit={handleSaveEvent} className="flex flex-col overflow-hidden">
+              <div className="p-6 space-y-4 overflow-y-auto flex-grow max-h-[calc(90vh-130px)] scrollbar-thin">
+                {/* Type Selection */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Tipe Kegiatan *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormType("umum")
+                        setFormColor("amber")
+                      }}
+                      className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
+                        formType === "umum"
+                          ? "bg-slate-800 text-white border-slate-800"
+                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">groups</span>
+                      Umum / Rapat
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormType("kajian")
+                        setFormColor("blue")
+                      }}
+                      className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
+                        formType === "kajian"
+                          ? "bg-amber-500 text-white border-amber-500"
+                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">menu_book</span>
+                      Kajian / Seminar
+                    </button>
+                  </div>
+                </div>
+
                 {/* Title */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Nama / Judul Kegiatan *</label>
@@ -459,10 +635,37 @@ export default function JadwalKegiatan() {
                     required
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
-                    placeholder="Contoh: Rapat Pleno Mingguan"
+                    placeholder={formType === "kajian" ? "Contoh: Peran Pemuda di Era Digital" : "Contoh: Rapat Pleno Mingguan"}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#F7A440] transition-colors"
                   />
                 </div>
+
+                {/* Speaker & Theme fields (Dynamic for Kajian) */}
+                {formType === "kajian" && (
+                  <div className="space-y-4 animate-fadeIn">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Tema Kajian (Opsional)</label>
+                      <input
+                        type="text"
+                        value={formTheme}
+                        onChange={(e) => setFormTheme(e.target.value)}
+                        placeholder="Contoh: Fikih Dakwah Pemuda"
+                        className="w-full px-3 py-2 border border-[#F7A440]/60 rounded-lg text-sm focus:outline-none focus:border-[#F7A440] transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Nama Pemateri / Ustadz *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formSpeaker}
+                        onChange={(e) => setFormSpeaker(e.target.value)}
+                        placeholder="Contoh: Ustadz Adi Hidayat, Lc."
+                        className="w-full px-3 py-2 border border-[#F7A440]/60 rounded-lg text-sm focus:outline-none focus:border-[#F7A440] transition-colors"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Date & Time */}
                 <div className="grid grid-cols-2 gap-4">
@@ -521,7 +724,7 @@ export default function JadwalKegiatan() {
                 </div>
               </div>
               
-              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}

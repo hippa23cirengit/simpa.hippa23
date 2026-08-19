@@ -1,0 +1,217 @@
+{
+  "simpa_login_accounts": [
+    {
+      "npa": "26.0000",
+      "name": "Najmi Shofwan Al-Azhar",
+      "role": "Super Admin",
+      "passwordHash": "#h1ppa23",
+      "linkedAnggotaId": "26.0000"
+    },
+    {
+      "npa": "26.0001",
+      "name": "Falih Dzakwan",
+      "role": "PIMHAR",
+      "passwordHash": "cirengit23",
+      "linkedAnggotaId": "26.0001"
+    },
+    {
+      "npa": "26.0002",
+      "name": "Alviyana Gusti",
+      "role": "Anggota",
+      "passwordHash": "#h1ppa23",
+      "linkedAnggotaId": "26.0002"
+    }
+  ],
+  "simpa_members_state": [
+    {
+      "id": "26.0000",
+      "name": "Najmi Shofwan Al-Azhar",
+      "role": "Super Admin",
+      "status": "Aktif",
+      "tempatLahir": "Bandung",
+      "tanggalLahir": "2004-04-12",
+      "alamat": "Bandung",
+      "pekerjaan": "Mahasiswa",
+      "whatsapp": "083832376353",
+      "email": "najmishfwn@gmail.com",
+      "profilePhoto": "https://buylslyfndjjyqhqvpyk.supabase.co/storage/v1/object/public/profilephoto/avatar_26.0000_1787141929157.JPG"
+    },
+    {
+      "id": "26.0001",
+      "name": "Falih Dzakwan",
+      "role": "Ketua",
+      "status": "Aktif",
+      "tempatLahir": "Bandung",
+      "tanggalLahir": "2001-01-01",
+      "alamat": "Jl Cirengit RT3 RW3",
+      "pekerjaan": "Karyawan Swasta",
+      "whatsapp": "083832376353",
+      "email": "dzakwanfalih05@gmail.com",
+      "profilePhoto": "https://buylslyfndjjyqhqvpyk.supabase.co/storage/v1/object/public/profilephoto/avatar_26.0001_1787143954820.png"
+    },
+    {
+      "id": "26.0002",
+      "name": "Alviyana Gusti",
+      "role": "-",
+      "status": "Aktif",
+      "tempatLahir": "Bandung",
+      "tanggalLahir": "2001-01-01",
+      "alamat": "Jl. Cirengit No.82 RT03 RW03, Desa Tanjungsari, Kecamatan Cangkuang, Kabupaten Bandung, Provinsi Jawa Barat",
+      "pekerjaan": "Pelajar",
+      "whatsapp": "083832376353",
+      "email": "alviyanagusti@gmail.com"
+    }
+  ],
+  "simpa_wa_template_kajian": "*SIMPA-HIPPA Cirengit*\n_Sistem Informasi Manajemen Pengurus & Anggota_\n\nHalo {{NAMA}},\n\nMengingatkan untuk Agenda Hari/Malam ini;\n\n*{{KEGIATAN}}*\n👳🏻‍♂️ Pemateri: *{{PEMATERI}}*\n📅 Tanggal: {{TANGGAL}}\n🕒 Jam: {{JAM}} WIB\n📍 Lokasi: {{LOKASI}}\n\nHayu nu aya Waktos urang sami-sami ngakaji kaelmuan anu pastina bakal diterapkeun kanu pangamalan. Nu gaduh patarosan seputar tema/materi nu baris di guar tiasa di bekel kangge ditaroskeun ka al-ustadz.\n#hippacirengit\n#pelajarpersis",
+  "simpa_wa_template_umum": "*SIMPA-HIPPA Cirengit*\n_Sistem Informasi Manajemen Pengurus & Anggota_\n\nHalo {{NAMA}},\n\nMengingatkan untuk Agenda Hari/Malam ini;\n\n*{{KEGIATAN}}*\n📅 Tanggal: {{TANGGAL}}\n🕒 Jam: {{JAM}} WIB\n📍 Lokasi: {{LOKASI}}\n\nHayu nu aya Waktos urang sami-sami eyeuban sagala rupi kegiatan HIPPA Cirengit.\n#hippacirengit\n#pelajarpersis",
+  "simpa_tasykil_state": {
+    "penasehat": [
+      "PJ. Pemuda Persis Cirengit",
+      "Ust. Fadlan Fadlur Rohman, S.Pd."
+    ],
+    "pimhar": {
+      "ketua": "26.0001",
+      "wakilKetua": "",
+      "sekretaris": "",
+      "wakilSekretaris": "",
+      "bendahara": "",
+      "wakilBendahara": ""
+    },
+    "bidang": [
+      {
+        "id": "bidang-1787143479637",
+        "name": "Bidang Dakwah",
+        "members": []
+      },
+      {
+        "id": "bidang-1787143493965",
+        "name": "Bidang Pendidikan",
+        "members": []
+      },
+      {
+        "id": "bidang-1787143501630",
+        "name": "Publikasi",
+        "members": []
+      },
+      {
+        "id": "bidang-1787143510181",
+        "name": "Olahraga",
+        "members": []
+      }
+    ]
+  },
+  "simpa_acl_rules": [
+    {
+      "role": "Super Admin",
+      "permissions": {
+        "dashboard": true,
+        "viewDataAnggota": true,
+        "manageDataAnggota": true,
+        "viewTasykil": true,
+        "manageTasykil": true,
+        "viewCalonAnggota": true,
+        "manageCalonAnggota": true,
+        "viewJadwalKegiatan": true,
+        "manageJadwalKegiatan": true,
+        "viewPengaturan": true,
+        "managePengaturan": true
+      }
+    },
+    {
+      "role": "PIMHAR",
+      "permissions": {
+        "dashboard": true,
+        "viewDataAnggota": true,
+        "manageDataAnggota": true,
+        "viewTasykil": true,
+        "manageTasykil": true,
+        "viewCalonAnggota": true,
+        "manageCalonAnggota": true,
+        "viewJadwalKegiatan": true,
+        "manageJadwalKegiatan": true,
+        "viewPengaturan": false,
+        "managePengaturan": false
+      }
+    },
+    {
+      "role": "Anggota",
+      "permissions": {
+        "dashboard": true,
+        "viewDataAnggota": true,
+        "manageDataAnggota": false,
+        "viewTasykil": true,
+        "manageTasykil": false,
+        "viewCalonAnggota": true,
+        "manageCalonAnggota": false,
+        "viewJadwalKegiatan": true,
+        "manageJadwalKegiatan": false,
+        "viewPengaturan": false,
+        "managePengaturan": false
+      }
+    },
+    {
+      "role": "Bidang Dakwah",
+      "permissions": {
+        "dashboard": true,
+        "viewDataAnggota": false,
+        "manageDataAnggota": false,
+        "viewTasykil": false,
+        "manageTasykil": false,
+        "viewCalonAnggota": false,
+        "manageCalonAnggota": false,
+        "viewJadwalKegiatan": true,
+        "manageJadwalKegiatan": false,
+        "viewPengaturan": false,
+        "managePengaturan": false
+      }
+    },
+    {
+      "role": "Bidang Pendidikan",
+      "permissions": {
+        "dashboard": true,
+        "viewDataAnggota": false,
+        "manageDataAnggota": false,
+        "viewTasykil": false,
+        "manageTasykil": false,
+        "viewCalonAnggota": false,
+        "manageCalonAnggota": false,
+        "viewJadwalKegiatan": true,
+        "manageJadwalKegiatan": false,
+        "viewPengaturan": false,
+        "managePengaturan": false
+      }
+    },
+    {
+      "role": "Publikasi",
+      "permissions": {
+        "dashboard": true,
+        "viewDataAnggota": false,
+        "manageDataAnggota": false,
+        "viewTasykil": false,
+        "manageTasykil": false,
+        "viewCalonAnggota": false,
+        "manageCalonAnggota": false,
+        "viewJadwalKegiatan": true,
+        "manageJadwalKegiatan": false,
+        "viewPengaturan": false,
+        "managePengaturan": false
+      }
+    },
+    {
+      "role": "Olahraga",
+      "permissions": {
+        "dashboard": true,
+        "viewDataAnggota": false,
+        "manageDataAnggota": false,
+        "viewTasykil": false,
+        "manageTasykil": false,
+        "viewCalonAnggota": false,
+        "manageCalonAnggota": false,
+        "viewJadwalKegiatan": true,
+        "manageJadwalKegiatan": false,
+        "viewPengaturan": false,
+        "managePengaturan": false
+      }
+    }
+  ]
+}

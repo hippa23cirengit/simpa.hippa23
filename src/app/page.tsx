@@ -1,39 +1,67 @@
-import Image from "next/image";
-import Link from "next/link";
+"use client"
+
+import * as React from "react"
+import { useState, useEffect } from "react"
+import Image from "next/image"
+import Link from "next/link"
+import { getStoredEvents, ScheduledEvent } from "@/common/lib/mock-db"
 
 export default function PublicPortal() {
-  const upcomingEvents = [
-    {
-      id: 1,
-      title: "Musyawarah Anggota & Rencana Kerja Himpunan",
-      date: "Sabtu, 22 Agustus 2026",
-      time: "09:00 - 12:00 WIB",
-      location: "Sekretariat HIPPA Cirengit",
-      description: "Koordinasi program kerja kepengurusan baru serta penyusunan anggaran kegiatan kepemudaan.",
-      category: "Musyawarah",
-      badgeColor: "bg-amber-100 text-amber-800"
-    },
-    {
-      id: 2,
-      title: "Kajian Rutin Mingguan: Pemuda Akhir Zaman",
-      date: "Jumat, 28 Agustus 2026",
-      time: "16:00 WIB - Selesai",
-      location: "Masjid Al-Ikhlas Cirengit",
-      description: "Kajian keislaman rutin membahas peran pemuda dalam menjaga nilai-nilai dakwah di era modern.",
-      category: "Kajian",
-      badgeColor: "bg-blue-100 text-blue-800"
-    },
-    {
-      id: 3,
-      title: "Latihan Kepemimpinan Pelajar (LKP) Mandiri",
-      date: "Rabu, 2 September 2026",
-      time: "13:30 - 15:30 WIB",
-      location: "Aula Gedung Serbaguna Cirengit",
-      description: "Pelatihan kepemimpinan dan manajemen organisasi untuk mencetak kader tasykil yang militan.",
-      category: "Kaderisasi",
-      badgeColor: "bg-emerald-100 text-emerald-800"
+  const [upcomingEvents, setUpcomingEvents] = useState<ScheduledEvent[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Load events from database
+    const rawEvents = getStoredEvents()
+    
+    // Filter for today onwards and sort chronologically
+    const todayStr = new Date().toISOString().split("T")[0]
+    const filtered = rawEvents
+      .filter(evt => evt.date >= todayStr)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
+      .slice(0, 3)
+
+    setUpcomingEvents(filtered)
+    setLoading(false)
+  }, [])
+
+  const getDayName = (dateStr: string) => {
+    const dateObj = new Date(dateStr)
+    const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
+    return days[dateObj.getDay()] || "Sabtu"
+  }
+
+  const months = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ]
+
+  const formatDateIndonesian = (dateStr: string) => {
+    const parts = dateStr.split("-")
+    if (parts.length !== 3) return dateStr
+    const day = parseInt(parts[2], 10)
+    const monthIdx = parseInt(parts[1], 10) - 1
+    const year = parts[0]
+    const dayName = getDayName(dateStr)
+    return `${dayName}, ${day} ${months[monthIdx]} ${year}`
+  }
+
+  const getBadgeStyles = (color: string) => {
+    switch (color) {
+      case "blue":
+        return { category: "Kajian", bg: "bg-blue-100 text-blue-800" }
+      case "amber":
+        return { category: "Musyawarah", bg: "bg-amber-100 text-amber-800" }
+      case "emerald":
+        return { category: "Kaderisasi", bg: "bg-emerald-100 text-emerald-800" }
+      case "purple":
+        return { category: "Sosial", bg: "bg-purple-100 text-purple-800" }
+      case "red":
+        return { category: "Rapat", bg: "bg-red-100 text-red-800" }
+      default:
+        return { category: "Kegiatan", bg: "bg-slate-100 text-slate-800" }
     }
-  ];
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -77,12 +105,12 @@ export default function PublicPortal() {
             Selamat datang di portal SIMPA Himpunan Pelajar Persatuan Islam (HIPPA) Cirengit. Kami hadir untuk mewujudkan tata kelola organisasi yang tertib, modern, transparan, dan berkelanjutan.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link
+            <a
               href="#kegiatan"
               className="px-6 py-3 bg-white/10 hover:bg-white/15 text-white font-semibold rounded-lg border border-slate-700 transition duration-300"
             >
               Lihat Kegiatan Terdekat
-            </Link>
+            </a>
             <Link
               href="/login"
               className="px-6 py-3 bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold rounded-lg shadow-lg hover:shadow-amber-500/10 transition duration-300"
@@ -104,40 +132,68 @@ export default function PublicPortal() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {upcomingEvents.map((event) => (
-            <div
-              key={event.id}
-              className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
-            >
-              <div>
-                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${event.badgeColor} mb-4`}>
-                  {event.category}
-                </span>
-                <h3 className="text-lg font-bold text-slate-900 leading-snug mb-3">
-                  {event.title}
-                </h3>
-                <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                  {event.description}
-                </p>
-              </div>
-              <div className="border-t border-slate-100 pt-4 flex flex-col gap-2 font-medium text-xs text-slate-500">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[16px] text-slate-400">calendar_today</span>
-                  <span>{event.date}</span>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-12 text-slate-400 gap-2">
+            <div className="w-6 h-6 border-2 border-slate-300 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-xs font-semibold">Memuat kegiatan terdekat...</span>
+          </div>
+        ) : upcomingEvents.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {upcomingEvents.map((event) => {
+              return (
+                <div
+                  key={event.id}
+                  className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col"
+                >
+                  <div>
+                    {/* Name/Title (No Icon) */}
+                    <h3 className="text-base font-bold text-slate-900 leading-snug mb-4 uppercase">
+                      {event.title}
+                    </h3>
+
+                    {/* Details List (All with Icons except Title) */}
+                    <div className="flex flex-col gap-3.5 font-semibold text-xs text-slate-600">
+                      {event.type === "kajian" && event.speaker && (
+                        <>
+                          <div className="flex items-center gap-2.5">
+                            <span className="material-symbols-outlined text-[18px] text-slate-400">record_voice_over</span>
+                            <span>PEMATERI: <strong className="font-bold text-slate-800">{event.speaker}</strong></span>
+                          </div>
+                          {event.theme && (
+                            <div className="flex items-center gap-2.5">
+                              <span className="material-symbols-outlined text-[18px] text-slate-400">topic</span>
+                              <span>TEMA: <strong className="font-bold text-slate-800">{event.theme}</strong></span>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      <div className="flex items-center gap-2.5">
+                        <span className="material-symbols-outlined text-[18px] text-slate-400">calendar_today</span>
+                        <span>{formatDateIndonesian(event.date)}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2.5">
+                        <span className="material-symbols-outlined text-[18px] text-slate-400">schedule</span>
+                        <span>{event.time} WIB</span>
+                      </div>
+
+                      <div className="flex items-center gap-2.5">
+                        <span className="material-symbols-outlined text-[18px] text-slate-400">location_on</span>
+                        <span>{event.location}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[16px] text-slate-400">schedule</span>
-                  <span>{event.time}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[16px] text-slate-400">location_on</span>
-                  <span className="text-slate-700 font-semibold">{event.location}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center shadow-sm max-w-md mx-auto">
+            <span className="material-symbols-outlined text-slate-300 text-[48px] mb-3">event_busy</span>
+            <p className="text-sm text-slate-500 font-bold">Tidak ada agenda kegiatan terdekat saat ini.</p>
+          </div>
+        )}
       </main>
 
       {/* Footer */}
@@ -162,5 +218,5 @@ export default function PublicPortal() {
         </div>
       </footer>
     </div>
-  );
+  )
 }

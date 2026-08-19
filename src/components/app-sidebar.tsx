@@ -88,7 +88,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
             <span className="truncate font-bold text-slate-800">SIMPA HIPPA</span>
-            <span className="truncate text-[10px] font-semibold text-[#F7A440] uppercase tracking-wide">{getSubLabel()}</span>
+            <span className="block text-[9px] font-semibold text-[#F7A440] uppercase tracking-wider leading-tight whitespace-normal break-words mt-0.5">Sistem Informasi Manajemen Pengurus & Anggota</span>
           </div>
         </div>
       </SidebarHeader>

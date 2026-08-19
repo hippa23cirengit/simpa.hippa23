@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { getCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
+import { getCurrentRole, getStoredAcl, syncDatabaseFromServer, getStoredAccounts, getStoredMembers } from "@/common/lib/mock-db"
 import { isLoggedIn, getSessionUser, clearSession } from "@/common/lib/auth"
 
 // Child content wrapper to access useSidebar safely
@@ -28,6 +28,25 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [aclRules, setAclRules] = React.useState<any[]>([]);
   const [authorized, setAuthorized] = React.useState(false);
   const [userName, setUserName] = React.useState("");
+  const [userPhoto, setUserPhoto] = React.useState("");
+
+  const loadUserData = () => {
+    const user = getSessionUser();
+    if (user && user.name) {
+      setUserName(user.name);
+      const accounts = getStoredAccounts();
+      const acc = accounts.find(a => a.npa === user.npa);
+      if (acc && acc.linkedAnggotaId) {
+        const members = getStoredMembers();
+        const mem = members.find(m => m.id === acc.linkedAnggotaId);
+        if (mem && mem.profilePhoto) {
+          setUserPhoto(mem.profilePhoto);
+        } else {
+          setUserPhoto("");
+        }
+      }
+    }
+  }
 
   React.useEffect(() => {
     if (!isLoggedIn()) {
@@ -36,10 +55,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     }
     setAuthorized(true);
 
-    const user = getSessionUser();
-    if (user && user.name) {
-      setUserName(user.name);
-    }
+    // Initial database synchronization from server disk
+    syncDatabaseFromServer()
+
+    loadUserData();
 
     setCurrentRoleState(getCurrentRole());
     setAclRules(getStoredAcl());
@@ -49,10 +68,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         router.replace("/login");
         return;
       }
-      const user = getSessionUser();
-      if (user && user.name) {
-        setUserName(user.name);
-      }
+      loadUserData();
       setCurrentRoleState(getCurrentRole());
       setAclRules(getStoredAcl());
     };
@@ -159,8 +175,16 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                     <p className="font-label-md text-xs text-slate-800 font-bold leading-none">{userName}</p>
                     <p className="text-[10px] text-[#F7A440] font-bold leading-none mt-1">{getSubLabel()}</p>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-200 flex items-center justify-center text-xs font-bold text-[#895200]">
-                    {userName ? userName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "AF"}
+                  <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-200 flex items-center justify-center text-xs font-bold text-[#895200] overflow-hidden shrink-0">
+                    {userPhoto ? (
+                      <img
+                        src={userPhoto}
+                        alt="Profile Photo"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      userName ? userName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "AF"
+                    )}
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-48 rounded-xl shadow-lg border border-slate-200/80 p-1.5 mt-2" align="end">

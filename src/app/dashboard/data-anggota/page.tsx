@@ -4,6 +4,7 @@ import * as React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { getStoredMembers, saveStoredMembers, getStoredTasykil, syncRoles, Member, getCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
+import { customAlert, customConfirm } from "@/common/lib/alert"
 
 export default function DataAnggota() {
   const [members, setMembers] = useState<Member[]>([])
@@ -53,8 +54,23 @@ export default function DataAnggota() {
   }
 
   // Delete Member
-  const handleDeleteMember = (memberId: string, memberName: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus data anggota "${memberName}"?`)) {
+  const handleDeleteMember = async (memberId: string, memberName: string) => {
+    if (memberId === "26.0000") {
+      await customAlert({
+        type: "error",
+        title: "Aksi Ditolak",
+        message: "Akun Super Admin utama tidak dapat dihapus!"
+      })
+      return
+    }
+
+    const confirmed = await customConfirm({
+      type: "warning",
+      title: "Hapus Anggota",
+      message: `Apakah Anda yakin ingin menghapus data anggota "${memberName}"?`
+    })
+
+    if (confirmed) {
       const rawMembers = getStoredMembers()
       const filtered = rawMembers.filter(m => m.id !== memberId)
       saveStoredMembers(filtered)
@@ -184,8 +200,16 @@ export default function DataAnggota() {
                   <tr key={member.id} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="py-4 px-4 text-center text-slate-400 pl-6">{idx + 1}</td>
                     <td className="py-4 px-4">
-                      <div className={`w-10 h-10 rounded-full border flex items-center justify-center font-bold text-xs ${avatarColor}`}>
-                        {initials}
+                      <div className={`w-10 h-10 rounded-full border flex items-center justify-center font-bold text-xs overflow-hidden shrink-0 ${avatarColor}`}>
+                        {member.profilePhoto ? (
+                          <img
+                            src={member.profilePhoto}
+                            alt={member.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          initials
+                        )}
                       </div>
                     </td>
                     <td className="py-4 px-4">
@@ -219,12 +243,14 @@ export default function DataAnggota() {
                           >
                             <span className="material-symbols-outlined text-[18px]">edit</span>
                           </Link>
-                          <button
-                            onClick={() => handleDeleteMember(member.id, member.name)}
-                            className="text-slate-400 hover:text-red-600 transition-colors p-1"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
-                          </button>
+                          {member.id !== "26.0000" && (
+                            <button
+                              onClick={() => handleDeleteMember(member.id, member.name)}
+                              className="text-slate-400 hover:text-red-600 transition-colors p-1"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                          )}
                         </div>
                       </td>
                     )}

@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/send-daily-wa?secret=cirengit23-secret-token",
+      "schedule": "0 23 * * *"
+    }
+  ]
+}

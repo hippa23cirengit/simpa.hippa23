@@ -47,7 +47,7 @@ export default function AdminDashboard() {
     if (storedApplicants) {
       try {
         setApplicants(JSON.parse(storedApplicants));
-      } catch (e) {}
+      } catch (e) { }
     }
 
     setEvents(getStoredEvents());
@@ -158,7 +158,7 @@ export default function AdminDashboard() {
       {/* Header Section */}
       <div>
         <h2 className="font-headline-lg text-2xl md:text-3xl font-extrabold text-[#1A1A1A] leading-tight">
-          Assalamu'alaikum, Selamat Datang di SIMPA 👋
+          Assalamu'alaikum Pelajar!, Selamat Datang di SIMPA 👋
         </h2>
         <p className="text-sm md:text-base text-slate-500 mt-1 font-medium">
           Sistem Informasi Manajemen Pengurus dan Anggota HIPPA

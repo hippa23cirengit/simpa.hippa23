@@ -55,7 +55,9 @@ export default function LoginPage() {
 
       // Determine role dynamically based on member Tasykil assignment
       let resolvedRole = account.role;
-      if (account.linkedAnggotaId) {
+      if (account.npa === "26.0000") {
+        resolvedRole = "Super Admin";
+      } else if (account.linkedAnggotaId) {
         const tasykil = getStoredTasykil();
         const isPimhar = Object.values(tasykil.pimhar).includes(account.linkedAnggotaId);
         if (isPimhar) {

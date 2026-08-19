@@ -19,6 +19,17 @@ export default function RoleAksesPage() {
   const [members, setMembers] = React.useState<Member[]>([])
   const [availableRoles, setAvailableRoles] = React.useState<string[]>([])
   
+  const [expandedRoles, setExpandedRoles] = React.useState<Record<string, boolean>>({
+    "Super Admin": true
+  })
+
+  const toggleExpandRole = (role: string) => {
+    setExpandedRoles(prev => ({
+      ...prev,
+      [role]: !prev[role]
+    }))
+  }
+  
   const [isModified, setIsModified] = React.useState(false)
   const [saveSuccess, setSaveSuccess] = React.useState(false)
   
@@ -54,17 +65,54 @@ export default function RoleAksesPage() {
     loadData()
   }, [])
 
-  const handleToggle = (roleName: string, permissionKey: keyof AclRule["permissions"]) => {
-    if (roleName === "Super Admin") return // Super Admin is locked
+  const handleToggleView = (
+    roleName: string,
+    viewKey: keyof AclRule["permissions"],
+    manageKey: keyof AclRule["permissions"] | null
+  ) => {
+    if (roleName === "Super Admin") return
 
-    setAclList(prev => {
-      const updated = prev.map(item => {
+    setAclList((prev) => {
+      const updated = prev.map((item) => {
         if (item.role === roleName) {
+          const newViewVal = !item.permissions[viewKey]
+          const newManageVal = !newViewVal && manageKey ? false : item.permissions[manageKey as keyof AclRule["permissions"]]
+
           return {
             ...item,
             permissions: {
               ...item.permissions,
-              [permissionKey]: !item.permissions[permissionKey]
+              [viewKey]: newViewVal,
+              ...(manageKey ? { [manageKey]: newManageVal } : {})
+            }
+          }
+        }
+        return item
+      })
+      setIsModified(true)
+      return updated
+    })
+  }
+
+  const handleToggleManage = (
+    roleName: string,
+    manageKey: keyof AclRule["permissions"],
+    viewKey: keyof AclRule["permissions"]
+  ) => {
+    if (roleName === "Super Admin") return
+
+    setAclList((prev) => {
+      const updated = prev.map((item) => {
+        if (item.role === roleName) {
+          const newManageVal = !item.permissions[manageKey]
+          const newViewVal = newManageVal ? true : item.permissions[viewKey]
+
+          return {
+            ...item,
+            permissions: {
+              ...item.permissions,
+              [manageKey]: newManageVal,
+              [viewKey]: newViewVal
             }
           }
         }
@@ -141,11 +189,11 @@ export default function RoleAksesPage() {
     }
   }
 
-  const handleResetPassword = (npa: string) => {
-    const newPass = prompt("Masukkan password baru untuk akun ini:", "cirengit23")
-    if (newPass === null) return // Canceled
+  const handleResetUserPassword = (npa: string, memberName: string) => {
+    const newPass = prompt(`Masukkan password baru untuk ${memberName}:`, "cirengit23")
+    if (newPass === null) return
     if (!newPass.trim()) {
-      alert("Password tidak boleh kosong.")
+      alert("Password tidak boleh kosong!")
       return
     }
     
@@ -186,18 +234,49 @@ export default function RoleAksesPage() {
     m => !accounts.some(acc => acc.npa === m.id)
   )
 
-  const pageLabels: { key: keyof AclRule["permissions"]; label: string; icon: string }[] = [
-    { key: "dashboard", label: "Dashboard Utama", icon: "dashboard" },
-    { key: "viewDataAnggota", label: "Lihat Data Anggota", icon: "database" },
-    { key: "manageDataAnggota", label: "Kelola/Edit Anggota", icon: "edit_square" },
-    { key: "viewTasykil", label: "Lihat Bagan Tasykil", icon: "groups" },
-    { key: "manageTasykil", label: "Kelola Struktur Tasykil", icon: "manage_accounts" },
-    { key: "viewCalonAnggota", label: "Lihat Calon Anggota", icon: "person_search" },
-    { key: "manageCalonAnggota", label: "Kelola (ACC/Tolak) Calon", icon: "how_to_reg" },
-    { key: "viewJadwalKegiatan", label: "Lihat Jadwal Kegiatan", icon: "calendar_month" },
-    { key: "manageJadwalKegiatan", label: "Kelola Jadwal/Kegiatan", icon: "edit_calendar" },
-    { key: "viewPengaturan", label: "Lihat Pengaturan WA", icon: "settings" },
-    { key: "managePengaturan", label: "Ubah Pengaturan WA", icon: "settings_suggest" },
+  const featureMatrix = [
+    {
+      label: "Data Anggota",
+      description: "Tambah, edit, dan hapus data anggota himpunan",
+      icon: "database",
+      viewKey: "viewDataAnggota" as keyof AclRule["permissions"],
+      manageKey: "manageDataAnggota" as keyof AclRule["permissions"],
+    },
+    {
+      label: "Struktur Tasykil",
+      description: "Atur susunan dan penugasan kepengurusan",
+      icon: "groups",
+      viewKey: "viewTasykil" as keyof AclRule["permissions"],
+      manageKey: "manageTasykil" as keyof AclRule["permissions"],
+    },
+    {
+      label: "Calon Anggota",
+      description: "Verifikasi dan ACC / Tolak pendaftar baru",
+      icon: "how_to_reg",
+      viewKey: "viewCalonAnggota" as keyof AclRule["permissions"],
+      manageKey: "manageCalonAnggota" as keyof AclRule["permissions"],
+    },
+    {
+      label: "Jadwal Kegiatan",
+      description: "Tambah, edit, dan hapus agenda kalender",
+      icon: "edit_calendar",
+      viewKey: "viewJadwalKegiatan" as keyof AclRule["permissions"],
+      manageKey: "manageJadwalKegiatan" as keyof AclRule["permissions"],
+    },
+    {
+      label: "Pengaturan WA",
+      description: "Konfigurasi API Gateway & template notifikasi",
+      icon: "settings",
+      viewKey: "viewPengaturan" as keyof AclRule["permissions"],
+      manageKey: "managePengaturan" as keyof AclRule["permissions"],
+    },
+    {
+      label: "Dashboard Utama",
+      description: "Halaman ringkasan statistik HIPPA",
+      icon: "dashboard",
+      viewKey: "dashboard" as keyof AclRule["permissions"],
+      manageKey: null,
+    },
   ]
 
   return (
@@ -245,6 +324,7 @@ export default function RoleAksesPage() {
         <div className="grid grid-cols-1 gap-6">
           {aclList.filter(roleAcl => roleAcl.role !== "Anggota").map((roleAcl) => {
             const isSuperAdmin = roleAcl.role === "Super Admin"
+            const isExpanded = !!expandedRoles[roleAcl.role]
 
             return (
               <div
@@ -255,13 +335,16 @@ export default function RoleAksesPage() {
               >
                 {/* Role Header Section */}
                 <div
-                  className={`px-6 py-4 flex items-center justify-between border-b ${
-                    isSuperAdmin ? "bg-amber-500/5 border-amber-100" : "bg-slate-50/50 border-slate-100"
-                  }`}
+                  onClick={() => toggleExpandRole(roleAcl.role)}
+                  className={`px-6 py-4 flex items-center justify-between cursor-pointer select-none transition-colors ${
+                    isSuperAdmin 
+                      ? "bg-amber-500/5 hover:bg-amber-500/10 border-amber-100" 
+                      : "bg-slate-50/50 hover:bg-slate-50 border-slate-100"
+                  } ${isExpanded ? "border-b" : ""}`}
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                         isSuperAdmin ? "bg-[#F7A440]/10 text-[#F7A440]" : "bg-slate-100 text-slate-600"
                       }`}
                     >
@@ -285,50 +368,97 @@ export default function RoleAksesPage() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Toggle Indicator Arrow */}
+                  <div className="text-slate-400 p-1 rounded-full hover:bg-slate-200/50 transition-colors">
+                    <span 
+                      className="material-symbols-outlined text-[20px] block transition-transform duration-200"
+                      style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }}
+                    >
+                      keyboard_arrow_down
+                    </span>
+                  </div>
                 </div>
 
-                {/* Role Permissions Switches Grid */}
-                <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {pageLabels.map((page) => {
-                    const isChecked = roleAcl.permissions[page.key]
-                    
-                    return (
-                      <div
-                        key={page.key}
-                        onClick={() => !isSuperAdmin && handleToggle(roleAcl.role, page.key)}
-                        className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
-                          isSuperAdmin
-                            ? "bg-slate-50/60 border-slate-100 cursor-not-allowed"
-                            : "bg-white border-slate-100 hover:border-slate-200 cursor-pointer hover:shadow-sm"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-[20px] text-slate-400">
-                            {page.icon}
-                          </span>
-                          <span className="text-xs font-bold text-slate-700">{page.label}</span>
-                        </div>
+                {/* Role Permissions Matrix Table (Collapsible) */}
+                {isExpanded && (
+                  <div className="overflow-x-auto animate-fadeIn">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50/30 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          <th className="px-6 py-4 w-[200px]">Fitur / Modul</th>
+                          <th className="px-6 py-4">Deskripsi Fitur</th>
+                          <th className="px-6 py-4 text-center w-[130px]">Kelola (CRUD)</th>
+                          <th className="px-6 py-4 text-center w-[130px]">Hanya Lihat</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                        {featureMatrix.map((feature) => {
+                          const isViewChecked = roleAcl.permissions[feature.viewKey]
+                          const isManageChecked = feature.manageKey ? roleAcl.permissions[feature.manageKey] : false
 
-                        {/* Custom Switch Toggle */}
-                        <div
-                          className={`relative w-10 h-6 rounded-full transition-colors duration-200 ${
-                            isChecked
-                              ? isSuperAdmin
-                                ? "bg-amber-400/80"
-                                : "bg-[#F7A440]"
-                              : "bg-slate-200"
-                          }`}
-                        >
-                          <span
-                            className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 shadow-sm ${
-                              isChecked ? "transform translate-x-4" : ""
-                            }`}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                          return (
+                            <tr key={feature.label} className="hover:bg-slate-50/20 transition-colors">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <span className="material-symbols-outlined text-[18px] text-slate-400">
+                                    {feature.icon}
+                                  </span>
+                                  <span className="font-bold text-slate-800">{feature.label}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-slate-500 font-medium">{feature.description}</td>
+                              <td className="px-6 py-4 text-center">
+                                {feature.manageKey ? (
+                                  <div className="flex justify-center">
+                                    <div
+                                      onClick={() => !isSuperAdmin && handleToggleManage(roleAcl.role, feature.manageKey!, feature.viewKey)}
+                                      className={`relative w-10 h-6 rounded-full transition-colors duration-200 ${
+                                        isSuperAdmin
+                                          ? "bg-amber-400/80 cursor-not-allowed"
+                                          : isManageChecked
+                                            ? "bg-[#F7A440] cursor-pointer"
+                                            : "bg-slate-200 cursor-pointer"
+                                      }`}
+                                    >
+                                      <span
+                                        className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 shadow-sm ${
+                                          isSuperAdmin || isManageChecked ? "transform translate-x-4" : ""
+                                        }`}
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">-</span>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <div className="flex justify-center">
+                                  <div
+                                    onClick={() => !isSuperAdmin && handleToggleView(roleAcl.role, feature.viewKey, feature.manageKey)}
+                                    className={`relative w-10 h-6 rounded-full transition-colors duration-200 ${
+                                      isSuperAdmin
+                                        ? "bg-slate-400/80 cursor-not-allowed"
+                                        : isViewChecked
+                                          ? "bg-slate-700 cursor-pointer"
+                                          : "bg-slate-200 cursor-pointer"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 shadow-sm ${
+                                        isSuperAdmin || isViewChecked ? "transform translate-x-4" : ""
+                                      }`}
+                                    />
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )
           })}
@@ -411,7 +541,7 @@ export default function RoleAksesPage() {
                               Ubah Peran
                             </button>
                             <button
-                              onClick={() => handleResetPassword(acc.npa)}
+                              onClick={() => handleResetUserPassword(acc.npa, acc.name)}
                               className="text-slate-500 hover:text-slate-800 transition-colors"
                             >
                               Reset Sandi

@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl } from "@/common/lib/mock-db"
+import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl, createMemberAccount } from "@/common/lib/mock-db"
+import { customAlert, customConfirm } from "@/common/lib/alert"
 
 interface Applicant {
   id: string
@@ -177,7 +178,7 @@ export default function CalonAnggota() {
   }
 
   // Accept Candidate -> Promote to Member
-  const handleAccept = (app: Applicant) => {
+  const handleAccept = async (app: Applicant) => {
     // 1. Promote to Member
     const rawMembers = getStoredMembers()
     const year2Digits = String(new Date().getFullYear()).slice(-2)
@@ -209,6 +210,23 @@ export default function CalonAnggota() {
 
     saveStoredMembers([...rawMembers, newMember])
 
+    // Load admin WA for fallback notification target
+    let adminWa = ""
+    const session = localStorage.getItem("simpa_session")
+    if (session) {
+      try {
+        const user = JSON.parse(session)
+        if (user && user.npa) {
+          const matched = rawMembers.find(m => m.id === user.npa)
+          if (matched && matched.whatsapp) {
+            adminWa = matched.whatsapp
+          }
+        }
+      } catch (e) {}
+    }
+
+    createMemberAccount(newMember, adminWa)
+
     // 2. Change applicant status to Diterima
     const updated = applicants.map(a => {
       if (a.id === app.id) {
@@ -219,12 +237,22 @@ export default function CalonAnggota() {
     saveApplicantsState(updated)
 
     setIsModalOpen(false)
-    alert(`Calon Anggota "${app.name}" berhasil diterima sebagai anggota resmi dengan NPA: ${newId}`)
+    await customAlert({
+      type: "success",
+      title: "Anggota Diterima",
+      message: `Calon Anggota "${app.name}" berhasil diterima sebagai anggota resmi dengan NPA: ${newId}`
+    })
   }
 
   // Reject Candidate
-  const handleReject = (app: Applicant) => {
-    if (confirm(`Apakah Anda yakin ingin menolak pendaftaran "${app.name}"?`)) {
+  const handleReject = async (app: Applicant) => {
+    const confirmed = await customConfirm({
+      type: "warning",
+      title: "Tolak Pendaftaran",
+      message: `Apakah Anda yakin ingin menolak pendaftaran "${app.name}"?`
+    })
+
+    if (confirmed) {
       const updated = applicants.map(a => {
         if (a.id === app.id) {
           return { ...a, status: "Ditolak" as const }

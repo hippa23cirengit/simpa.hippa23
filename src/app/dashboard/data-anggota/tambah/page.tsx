@@ -4,12 +4,13 @@ import * as React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl } from "@/common/lib/mock-db"
+import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl, createMemberAccount } from "@/common/lib/mock-db"
 
 export default function TambahAnggotaPage() {
   const router = useRouter()
   const [currentRole, setCurrentRole] = useState("Super Admin")
   const [existingMembers, setExistingMembers] = useState<Member[]>([])
+  const [adminWa, setAdminWa] = useState("")
 
   // Form State
   const [name, setName] = useState("")
@@ -35,6 +36,20 @@ export default function TambahAnggotaPage() {
 
     const members = getStoredMembers()
     setExistingMembers(members)
+
+    // Load admin WA for fallback notification target
+    const session = localStorage.getItem("simpa_session")
+    if (session) {
+      try {
+        const user = JSON.parse(session)
+        if (user && user.npa) {
+          const matched = members.find(m => m.id === user.npa)
+          if (matched && matched.whatsapp) {
+            setAdminWa(matched.whatsapp)
+          }
+        }
+      } catch (e) {}
+    }
     
     // Pre-fill a suggested unique ID/NPA (YY.XXXX format)
     const year2Digits = String(new Date().getFullYear()).slice(-2)
@@ -72,6 +87,7 @@ export default function TambahAnggotaPage() {
     }
 
     saveStoredMembers([...existingMembers, newMember])
+    createMemberAccount(newMember, adminWa)
     router.push("/dashboard/data-anggota")
   }
 
