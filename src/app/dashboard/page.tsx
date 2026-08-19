@@ -1,43 +1,131 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getStoredMembers, getStoredTasykil } from "@/common/lib/mock-db";
+
+interface Member {
+  id: string;
+  name: string;
+  role: string;
+  status: string;
+}
+
+interface Applicant {
+  id: string;
+  name: string;
+  status: string;
+}
 
 export default function AdminDashboard() {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [ketuaName, setKetuaName] = useState("-");
+  const [sekretarisName, setSekretarisName] = useState("-");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Load members
+    const rawMembers = getStoredMembers();
+    setMembers(rawMembers);
+
+    // Load tasykil & lookup names
+    const tasykil = getStoredTasykil();
+    const ketuaObj = rawMembers.find((m) => m.id === tasykil.pimhar.ketua);
+    const sekObj = rawMembers.find((m) => m.id === tasykil.pimhar.sekretaris);
+
+    if (ketuaObj) setKetuaName(ketuaObj.name);
+    if (sekObj) setSekretarisName(sekObj.name);
+
+    // Load candidates
+    const storedApplicants = localStorage.getItem("simpa_calon_anggota");
+    if (storedApplicants) {
+      try {
+        setApplicants(JSON.parse(storedApplicants));
+      } catch (e) {}
+    }
+
+    setLoading(false);
+
+    const handleDataChange = () => {
+      const updatedMembers = getStoredMembers();
+      setMembers(updatedMembers);
+      const updatedTasykil = getStoredTasykil();
+      const k = updatedMembers.find((m) => m.id === updatedTasykil.pimhar.ketua);
+      const s = updatedMembers.find((m) => m.id === updatedTasykil.pimhar.sekretaris);
+      setKetuaName(k ? k.name : "-");
+      setSekretarisName(s ? s.name : "-");
+    };
+
+    window.addEventListener("simpa_role_changed", handleDataChange);
+    return () => {
+      window.removeEventListener("simpa_role_changed", handleDataChange);
+    };
+  }, []);
+
+  // Calculate stats
+  const totalAnggota = members.length;
+  const pengurusAktif = members.filter((m) => m.role !== "-").length;
+  const calonAnggota = applicants.filter(
+    (a) => a.status === "Menunggu" || a.status === "Proses"
+  ).length;
+
   const stats = [
-    { name: "TOTAL ANGGOTA", value: "245", icon: "groups", bg: "bg-amber-500/10 text-[#F7A440]" },
-    { name: "PENGURUS AKTIF", value: "32", icon: "how_to_reg", bg: "bg-emerald-500/10 text-emerald-600" },
-    { name: "CALON ANGGOTA", value: "18", icon: "person_add", bg: "bg-orange-500/10 text-orange-600" },
-    { name: "KEGIATAN MENDATANG", value: "5", icon: "event", bg: "bg-blue-500/10 text-blue-600" },
+    {
+      name: "TOTAL ANGGOTA",
+      value: String(totalAnggota),
+      icon: "groups",
+      bg: "bg-amber-500/10 text-[#F7A440]",
+    },
+    {
+      name: "PENGURUS AKTIF",
+      value: String(pengurusAktif),
+      icon: "how_to_reg",
+      bg: "bg-emerald-500/10 text-emerald-600",
+    },
+    {
+      name: "CALON ANGGOTA",
+      value: String(calonAnggota),
+      icon: "person_add",
+      bg: "bg-orange-500/10 text-orange-600",
+    },
+    {
+      name: "KEGIATAN MENDATANG",
+      value: "2",
+      icon: "event",
+      bg: "bg-blue-500/10 text-blue-600",
+    },
   ];
 
-  const recentMembers = [
-    {
-      name: "Budi Santoso",
-      id: "23.142",
-      role: "Ketua Divisi Dakwah",
-      status: "Aktif",
-      statusBg: "bg-emerald-100 text-emerald-800",
-      avatar: "",
-      avatarColor: "bg-blue-50 text-blue-700 border-blue-100"
-    },
-    {
-      name: "Siti Aminah",
-      id: "23.143",
-      role: "Bendahara Umum",
-      status: "Aktif",
-      statusBg: "bg-emerald-100 text-emerald-800",
-      avatar: "",
-      avatarColor: "bg-emerald-50 text-emerald-700 border-emerald-100"
-    },
-    {
-      name: "Rizky Aditya",
-      id: "23.144",
-      role: "Anggota Biasa",
-      status: "Pending",
-      statusBg: "bg-amber-100 text-amber-800",
-      avatar: "",
-      avatarColor: "bg-slate-50 text-slate-700 border-slate-200"
-    }
-  ];
+  // Get up to 3 most recently added members
+  const recentMembers = [...members]
+    .reverse()
+    .slice(0, 3)
+    .map((m) => {
+      let statusBg = "bg-emerald-100 text-emerald-800";
+      if (m.status === "Tidak Aktif") statusBg = "bg-red-100 text-red-800";
+      if (m.status === "Alumni") statusBg = "bg-amber-100 text-amber-800";
+
+      return {
+        id: m.id,
+        name: m.name,
+        role: m.role === "-" ? "Anggota Biasa" : m.role,
+        status: m.status,
+        statusBg: statusBg,
+        avatarColor: m.id === "26.0000"
+          ? "bg-amber-500/10 text-[#895200] border-amber-200"
+          : "bg-slate-50 text-slate-700 border-slate-200",
+      };
+    });
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-2">
+        <div className="w-6 h-6 border-2 border-slate-300 border-t-transparent rounded-full animate-spin"></div>
+        <span className="text-xs font-semibold">Memuat Dashboard...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -86,7 +174,7 @@ export default function AdminDashboard() {
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
               </Link>
             </div>
-            
+
             {/* Timeline Cards Grid */}
             <div className="flex flex-col gap-4">
               <div className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 flex gap-4">
@@ -155,7 +243,7 @@ export default function AdminDashboard() {
                   <div className="flex-grow min-w-0">
                     <h4 className="font-bold text-slate-800 text-xs truncate">{member.name}</h4>
                     <p className="text-[10px] text-slate-500 mt-0.5 truncate font-medium">
-                      {member.role === "-" ? "Anggota" : member.role} • {member.id}
+                      {member.role} • {member.id}
                     </p>
                   </div>
                   <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${member.statusBg} shrink-0`}>
@@ -163,6 +251,9 @@ export default function AdminDashboard() {
                   </span>
                 </div>
               ))}
+              {recentMembers.length === 0 && (
+                <p className="text-xs text-slate-400 italic text-center py-4">Belum ada anggota terdaftar.</p>
+              )}
             </div>
           </div>
 
@@ -174,17 +265,17 @@ export default function AdminDashboard() {
             </h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between items-center">
-                <span className="text-slate-500">Ketua Umum</span>
-                <span className="font-semibold text-slate-800">Ahmad Fauzi</span>
+                <span className="text-slate-500 font-medium">Ketua Umum</span>
+                <span className="font-semibold text-slate-800">{ketuaName === "-" ? "Belum ditentukan" : ketuaName}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-500">Sekretaris Jenderal</span>
-                <span className="font-semibold text-slate-800">Nisa Utami</span>
+                <span className="text-slate-500 font-medium">Sekretaris</span>
+                <span className="font-semibold text-slate-800">{sekretarisName === "-" ? "Belum ditentukan" : sekretarisName}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-500">Periode Jabatan</span>
+                <span className="text-slate-500 font-medium">Periode Jabatan</span>
                 <span className="font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded text-xs">
-                  2023 - 2025
+                  2026 - 2028
                 </span>
               </div>
             </div>

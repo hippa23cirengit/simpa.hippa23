@@ -29,11 +29,19 @@ export default function TambahAnggotaPage() {
     const members = getStoredMembers()
     setExistingMembers(members)
     
-    // Pre-fill a suggested unique ID/NPA (YY.XXX format)
+    // Pre-fill a suggested unique ID/NPA (YY.XXXX format)
     const year2Digits = String(new Date().getFullYear()).slice(-2)
     const thisYearPrefix = `${year2Digits}.`
-    const countThisYear = members.filter(m => m.id.startsWith(thisYearPrefix)).length
-    const seq = String(countThisYear + 1).padStart(3, "0")
+    const yearMembers = members.filter(m => m.id.startsWith(thisYearPrefix))
+    let nextSeq = 1
+    if (yearMembers.length > 0) {
+      const seqs = yearMembers.map(m => {
+        const parts = m.id.split(".")
+        return parts.length > 1 ? parseInt(parts[1], 10) : 0
+      })
+      nextSeq = Math.max(...seqs) + 1
+    }
+    const seq = String(nextSeq).padStart(4, "0")
     setNpa(`${year2Digits}.${seq}`)
   }, [])
 

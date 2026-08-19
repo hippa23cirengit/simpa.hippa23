@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { getStoredMembers } from "@/common/lib/mock-db";
+import { getStoredMembers, getStoredTasykil } from "@/common/lib/mock-db";
 import { setSession, isLoggedIn, clearSession } from "@/common/lib/auth";
 
 export default function LoginPage() {
@@ -53,16 +53,17 @@ export default function LoginPage() {
         return;
       }
 
-      // Determine role based on NPA
+      // Determine role dynamically based on member assignments
       let role = "Anggota";
-      if (member.id === "23.001") {
+      if (member.id === "26.0000") {
         role = "Super Admin";
-      } else if (member.id === "23.002" || member.id === "23.003") {
-        role = "PIMHAR";
       } else {
-        // Check if member is part of a Bidang in the seeded IDs
-        const num = parseFloat(member.id);
-        if (num >= 23.004 && num <= 23.007) {
+        const tasykil = getStoredTasykil();
+        const isPimhar = Object.values(tasykil.pimhar).includes(member.id);
+        const isBidang = tasykil.bidang.some((b) => b.members.includes(member.id));
+        if (isPimhar) {
+          role = "PIMHAR";
+        } else if (isBidang) {
           role = "Bidang";
         }
       }

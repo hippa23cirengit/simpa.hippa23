@@ -9,6 +9,8 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  console.log("Starting database seed...");
+
   // Clean up all tables first to avoid duplicates or legacy records
   console.log("Cleaning up existing database records...");
   await prisma.pimhar.deleteMany({});
@@ -80,25 +82,25 @@ async function main() {
 
   // 2. Seed Bidang
   console.log("Seeding Bidang...");
-  const bidangKaderisasi = await prisma.bidang.upsert({
+  await prisma.bidang.upsert({
     where: { id: "bidang-kaderisasi" },
     update: {},
     create: { id: "bidang-kaderisasi", name: "Bidang Kaderisasi" },
   });
 
-  const bidangPendidikan = await prisma.bidang.upsert({
+  await prisma.bidang.upsert({
     where: { id: "bidang-pendidikan" },
     update: {},
     create: { id: "bidang-pendidikan", name: "Bidang Pendidikan" },
   });
 
-  const bidangOrganisasi = await prisma.bidang.upsert({
+  await prisma.bidang.upsert({
     where: { id: "bidang-organisasi" },
     update: {},
     create: { id: "bidang-organisasi", name: "Bidang Organisasi" },
   });
 
-  const bidangSosial = await prisma.bidang.upsert({
+  await prisma.bidang.upsert({
     where: { id: "bidang-sosial" },
     update: {},
     create: { id: "bidang-sosial", name: "Bidang Sosial" },
@@ -110,184 +112,16 @@ async function main() {
 
   const mockMembers = [
     {
-      id: "23.001",
-      name: "Ahmad Fauzan",
+      id: "26.0000",
+      name: "Najmi Shofwan Al-Azhar",
       status: "Aktif",
       tempatLahir: "Bandung",
       tanggalLahir: "2001-04-12",
-      alamat: "Kp. Cirengit RT 02/RW 04, Desa Cirengit, Bandung",
-      pekerjaan: "Mahasiswa",
+      alamat: "Bandung",
+      pekerjaan: "Super Admin",
       whatsapp: "0812-3456-7890",
-      email: "ahmad.fauzan@gmail.com",
+      email: "najmi.alazhar@gmail.com",
       loginRole: "Super Admin",
-    },
-    {
-      id: "23.002",
-      name: "Rizky Ibrahim",
-      status: "Aktif",
-      tempatLahir: "Garut",
-      tanggalLahir: "2000-08-21",
-      alamat: "Kp. Cirengit RT 01/RW 04, Desa Cirengit, Bandung",
-      pekerjaan: "Wirausaha",
-      whatsapp: "0821-9876-5432",
-      email: "rizky.ibrahim@gmail.com",
-      loginRole: "PIMHAR",
-    },
-    {
-      id: "23.003",
-      name: "Muhammad Ali",
-      status: "Aktif",
-      tempatLahir: "Bandung",
-      tanggalLahir: "2002-11-03",
-      alamat: "Perumahan Cirengit Indah Blok C No. 5, Bandung",
-      pekerjaan: "Karyawan Swasta",
-      whatsapp: "0852-1122-3344",
-      email: "muhammad.ali@gmail.com",
-      loginRole: "PIMHAR",
-    },
-    {
-      id: "23.004",
-      name: "Fajar Ramadhan",
-      status: "Aktif",
-      tempatLahir: "Sumedang",
-      tanggalLahir: "2001-09-15",
-      alamat: "Kp. Cirengit Kolot RT 03/RW 05, Desa Cirengit, Bandung",
-      pekerjaan: "Mahasiswa",
-      whatsapp: "0898-7654-3210",
-      email: "fajar.ramadhan@gmail.com",
-      loginRole: "Bidang",
-    },
-    {
-      id: "23.005",
-      name: "Ilham Saputra",
-      status: "Aktif",
-      tempatLahir: "Bandung",
-      tanggalLahir: "2003-01-28",
-      alamat: "Jl. Raya Cirengit No. 42, Bandung",
-      pekerjaan: "Pelajar",
-      whatsapp: "0877-2233-4455",
-      email: "ilham.saputra@gmail.com",
-      loginRole: "Bidang",
-    },
-    {
-      id: "23.006",
-      name: "Budi Santoso",
-      status: "Aktif",
-      tempatLahir: "Bandung",
-      tanggalLahir: "1999-05-19",
-      alamat: "Kp. Cirengit RT 04/RW 04, Desa Cirengit, Bandung",
-      pekerjaan: "Wirausaha",
-      whatsapp: "0813-9988-7766",
-      email: "budi.santoso@gmail.com",
-      loginRole: "Bidang",
-    },
-    {
-      id: "23.007",
-      name: "Ridwan Kamil",
-      status: "Aktif",
-      tempatLahir: "Bandung",
-      tanggalLahir: "2000-06-06",
-      alamat: "Jl. Cirengit Raya Blok F No. 12, Bandung",
-      pekerjaan: "Karyawan Swasta",
-      whatsapp: "0822-4433-2211",
-      email: "ridwan.kamil@gmail.com",
-      loginRole: "Bidang",
-    },
-    {
-      id: "23.008",
-      name: "Hasanuddin",
-      status: "Aktif",
-      tempatLahir: "Cianjur",
-      tanggalLahir: "2002-12-12",
-      alamat: "Kp. Pasir RT 02/RW 03, Cirengit, Bandung",
-      pekerjaan: "Mahasiswa",
-      whatsapp: "0812-7788-9900",
-      email: "hasanuddin@gmail.com",
-      loginRole: "Anggota",
-    },
-    {
-      id: "23.009",
-      name: "Cecep Solihin",
-      status: "Tidak Aktif",
-      tempatLahir: "Bandung",
-      tanggalLahir: "2001-10-10",
-      alamat: "Kp. Cirengit RT 02/RW 04, Desa Cirengit, Bandung",
-      pekerjaan: "Wirausaha",
-      whatsapp: "0838-1122-4455",
-      email: "cecep.solihin@gmail.com",
-      loginRole: "Anggota",
-    },
-    {
-      id: "23.010",
-      name: "Dadang Hermawan",
-      status: "Aktif",
-      tempatLahir: "Bandung",
-      tanggalLahir: "2003-02-14",
-      alamat: "Kp. Cirengit RT 03/RW 04, Desa Cirengit, Bandung",
-      pekerjaan: "Pelajar",
-      whatsapp: "0857-8899-0011",
-      email: "dadang.hermawan@gmail.com",
-      loginRole: "Anggota",
-    },
-    {
-      id: "23.011",
-      name: "Eman Sulaeman",
-      status: "Aktif",
-      tempatLahir: "Tasikmalaya",
-      tanggalLahir: "2000-03-03",
-      alamat: "Jl. Cirengit Baru No. 15, Bandung",
-      pekerjaan: "Mahasiswa",
-      whatsapp: "0896-1234-5678",
-      email: "eman.sulaeman@gmail.com",
-      loginRole: "Anggota",
-    },
-    {
-      id: "23.012",
-      name: "Fikri Ramadhan",
-      status: "Alumni",
-      tempatLahir: "Bandung",
-      tanggalLahir: "1997-07-07",
-      alamat: "Kp. Cirengit RT 01/RW 05, Desa Cirengit, Bandung",
-      pekerjaan: "PNS",
-      whatsapp: "0812-9900-1122",
-      email: "fikri.ramadhan@gmail.com",
-      loginRole: "Anggota",
-    },
-    {
-      id: "23.013",
-      name: "Ginanjar Kartasasmita",
-      status: "Aktif",
-      tempatLahir: "Bandung",
-      tanggalLahir: "2002-05-05",
-      alamat: "Perum Cirengit Blok A No. 1, Bandung",
-      pekerjaan: "Mahasiswa",
-      whatsapp: "0821-3344-5566",
-      email: "ginanjar.kartasasmita@gmail.com",
-      loginRole: "Anggota",
-    },
-    {
-      id: "23.014",
-      name: "Heri Hermawan",
-      status: "Tidak Aktif",
-      tempatLahir: "Bandung",
-      tanggalLahir: "2001-11-11",
-      alamat: "Kp. Pasir RT 01/RW 03, Cirengit, Bandung",
-      pekerjaan: "Karyawan Swasta",
-      whatsapp: "0852-6677-8899",
-      email: "heri.hermawan@gmail.com",
-      loginRole: "Anggota",
-    },
-    {
-      id: "23.015",
-      name: "Irfan Hakim",
-      status: "Aktif",
-      tempatLahir: "Sukabumi",
-      tanggalLahir: "2000-09-09",
-      alamat: "Jl. Cirengit Kolot RT 02/RW 05, Bandung",
-      pekerjaan: "Wirausaha",
-      whatsapp: "0878-5566-7788",
-      email: "irfan.hakim@gmail.com",
-      loginRole: "Anggota",
     },
   ];
 
@@ -320,50 +154,10 @@ async function main() {
   }
 
   // 4. Seed PIMHAR
-  console.log("Seeding Pimhar...");
-  await prisma.pimhar.upsert({
-    where: { roleKey: "ketua" },
-    update: { anggotaId: "23.001" },
-    create: { roleKey: "ketua", anggotaId: "23.001" },
-  });
-
-  await prisma.pimhar.upsert({
-    where: { roleKey: "sekretaris" },
-    update: { anggotaId: "23.002" },
-    create: { roleKey: "sekretaris", anggotaId: "23.002" },
-  });
-
-  await prisma.pimhar.upsert({
-    where: { roleKey: "bendahara" },
-    update: { anggotaId: "23.003" },
-    create: { roleKey: "bendahara", anggotaId: "23.003" },
-  });
+  console.log("Skipping Pimhar relations (start clean)...");
 
   // 5. Seed AnggotaBidang
-  console.log("Seeding AnggotaBidang...");
-  await prisma.anggotaBidang.upsert({
-    where: { anggotaId: "23.004" },
-    update: { bidangId: "bidang-kaderisasi" },
-    create: { anggotaId: "23.004", bidangId: "bidang-kaderisasi" },
-  });
-
-  await prisma.anggotaBidang.upsert({
-    where: { anggotaId: "23.005" },
-    update: { bidangId: "bidang-pendidikan" },
-    create: { anggotaId: "23.005", bidangId: "bidang-pendidikan" },
-  });
-
-  await prisma.anggotaBidang.upsert({
-    where: { anggotaId: "23.006" },
-    update: { bidangId: "bidang-organisasi" },
-    create: { anggotaId: "23.006", bidangId: "bidang-organisasi" },
-  });
-
-  await prisma.anggotaBidang.upsert({
-    where: { anggotaId: "23.007" },
-    update: { bidangId: "bidang-sosial" },
-    create: { anggotaId: "23.007", bidangId: "bidang-sosial" },
-  });
+  console.log("Skipping AnggotaBidang relations (start clean)...");
 
   // 6. Seed Penasehat
   console.log("Seeding Penasehat...");
