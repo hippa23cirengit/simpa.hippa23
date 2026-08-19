@@ -4,7 +4,7 @@ import * as React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { getStoredMembers, saveStoredMembers, getStoredTasykil, syncRoles, Member, getCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
-import { customAlert, customConfirm } from "@/common/lib/alert"
+import { customAlert, customConfirm, showToast } from "@/common/lib/alert"
 
 export default function DataAnggota() {
   const [members, setMembers] = useState<Member[]>([])
@@ -74,6 +74,10 @@ export default function DataAnggota() {
       const rawMembers = getStoredMembers()
       const filtered = rawMembers.filter(m => m.id !== memberId)
       saveStoredMembers(filtered)
+      showToast({
+        message: `Anggota "${memberName}" berhasil dihapus!`,
+        type: "success"
+      })
       loadData()
     }
   }

@@ -14,7 +14,7 @@ import {
   getCurrentRole,
   getStoredAcl
 } from "@/common/lib/mock-db"
-import { customConfirm } from "@/common/lib/alert"
+import { customConfirm, showToast } from "@/common/lib/alert"
 
 export default function Tasykil() {
   const [members, setMembers] = useState<Member[]>([])
@@ -95,7 +95,31 @@ export default function Tasykil() {
   }
 
   // Handle assigning PIMHAR role
-  const handleAssignPimhar = (roleKey: string, memberId: string) => {
+  const handleAssignPimhar = async (roleKey: string, memberId: string) => {
+    if (!tasykil) return
+    const member = getMemberById(memberId)
+    const memberName = member ? member.name : "Anggota"
+    const roleLabel = pimharRoles.find(r => r.key === roleKey)?.label || roleKey
+
+    const oldMemberId = tasykil.pimhar[roleKey as keyof typeof tasykil.pimhar]
+    let msg = `Apakah Anda yakin ingin menetapkan ${memberName} sebagai ${roleLabel}?`
+    
+    if (oldMemberId && oldMemberId !== memberId) {
+      const oldMember = getMemberById(oldMemberId)
+      const oldMemberName = oldMember ? oldMember.name : "pejabat sebelumnya"
+      msg = `Apakah Anda yakin ingin mengganti ${oldMemberName} dengan ${memberName} sebagai ${roleLabel}?`
+    }
+
+    const confirmed = await customConfirm({
+      title: "Tetapkan Jabatan Tasykil",
+      message: msg,
+      type: "warning",
+      confirmText: "Ya, Tetapkan",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
     const updated = {
       ...tasykil,
       pimhar: {
@@ -106,6 +130,10 @@ export default function Tasykil() {
     updateTasykilState(updated)
     setPimharModalOpen(false)
     setSelectedPimharRole(null)
+    showToast({
+      message: `Berhasil menetapkan ${memberName} sebagai ${roleLabel}!`,
+      type: "success"
+    })
   }
 
   // Handle removing PIMHAR role
@@ -135,18 +163,38 @@ export default function Tasykil() {
       }
     }
     updateTasykilState(updated)
+    showToast({
+      message: `Berhasil mencopot jabatan ${roleLabel}!`,
+      type: "success"
+    })
   }
 
   // Handle adding Penasehat
-  const handleAddPenasehat = () => {
+  const handleAddPenasehat = async () => {
     if (!newPenasehatName.trim() || !tasykil) return
+    const name = newPenasehatName.trim()
+
+    const confirmed = await customConfirm({
+      title: "Tambah Penasehat",
+      message: `Apakah Anda yakin ingin menambahkan ${name} ke jajaran Penasehat?`,
+      type: "warning",
+      confirmText: "Ya, Tambah",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
     const updated = {
       ...tasykil,
-      penasehat: [...tasykil.penasehat, newPenasehatName.trim()]
+      penasehat: [...tasykil.penasehat, name]
     }
     updateTasykilState(updated)
     setNewPenasehatName("")
     setAddPenasehatModalOpen(false)
+    showToast({
+      message: `Berhasil menambahkan ${name} sebagai Penasehat!`,
+      type: "success"
+    })
   }
 
   // Handle removing Penasehat
@@ -169,22 +217,42 @@ export default function Tasykil() {
       penasehat: tasykil.penasehat.filter((_, idx) => idx !== index)
     }
     updateTasykilState(updated)
+    showToast({
+      message: `Penasehat "${name}" berhasil dihapus!`,
+      type: "success"
+    })
   }
 
   // Handle adding new Bidang
-  const handleAddBidang = () => {
+  const handleAddBidang = async () => {
     if (!newBidangName.trim()) return
+    const name = newBidangName.trim()
+
+    const confirmed = await customConfirm({
+      title: "Tambah Bidang Baru",
+      message: `Apakah Anda yakin ingin membuat bidang baru "${name}"?`,
+      type: "warning",
+      confirmText: "Ya, Buat",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
     const id = `bidang-${Date.now()}`
     const updated = {
       ...tasykil,
       bidang: [
         ...tasykil.bidang,
-        { id, name: newBidangName, members: [] }
+        { id, name, members: [] }
       ]
     }
     updateTasykilState(updated)
     setNewBidangName("")
     setAddBidangModalOpen(false)
+    showToast({
+      message: `Bidang kepengurusan "${name}" berhasil dibuat!`,
+      type: "success"
+    })
   }
 
   // Handle deleting a Bidang
@@ -208,10 +276,28 @@ export default function Tasykil() {
       bidang: tasykil.bidang.filter(b => b.id !== bidangId)
     }
     updateTasykilState(updated)
+    showToast({
+      message: `Bidang kepengurusan "${name}" berhasil dihapus!`,
+      type: "success"
+    })
   }
 
   // Handle multi-choice select members for a Bidang
-  const handleUpdateBidangMembers = (bidangId: string, memberIds: string[]) => {
+  const handleUpdateBidangMembers = async (bidangId: string, memberIds: string[]) => {
+    if (!tasykil) return
+    const bidang = tasykil.bidang.find(b => b.id === bidangId)
+    const name = bidang ? bidang.name : "Bidang"
+
+    const confirmed = await customConfirm({
+      title: "Perbarui Anggota Bidang",
+      message: `Apakah Anda yakin ingin memperbarui daftar anggota untuk bidang ${name}?`,
+      type: "warning",
+      confirmText: "Ya, Simpan",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
     const updated = {
       ...tasykil,
       bidang: tasykil.bidang.map(b => 
@@ -219,6 +305,10 @@ export default function Tasykil() {
       )
     }
     updateTasykilState(updated)
+    showToast({
+      message: `Anggota bidang "${name}" berhasil diperbarui!`,
+      type: "success"
+    })
   }
 
   // Get list of members currently assigned to a specific bidang

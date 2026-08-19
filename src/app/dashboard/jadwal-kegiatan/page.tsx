@@ -273,8 +273,16 @@ export default function JadwalKegiatan() {
         body: JSON.stringify({
           target: testNumber.trim(),
           message: formattedMessage,
+          provider: config.provider || "fonnte",
           token: config.token,
-          endpoint: config.endpoint
+          endpoint: config.endpoint,
+          metaToken: config.metaToken || "",
+          metaPhoneId: config.metaPhoneId || "",
+          metaTemplateName: event.type === "kajian" ? (config.metaTemplateKajian || "event_kajian") : (config.metaTemplateUmum || "event_umum"),
+          metaTemplateLanguage: "id",
+          metaParams: event.type === "kajian"
+            ? ["Najmi Shofwan", event.title, event.speaker || "-", event.theme || "-", formatDateDisplay(event.date), event.time, event.location || "-"]
+            : ["Najmi Shofwan", event.title, formatDateDisplay(event.date), event.time, event.location || "-"]
         })
       })
 

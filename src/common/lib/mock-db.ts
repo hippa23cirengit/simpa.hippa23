@@ -547,8 +547,14 @@ export function createMemberAccount(newMember: Member, adminWa: string) {
     body: JSON.stringify({
       target: targetNumber,
       message: message,
+      provider: waConfig.provider || "fonnte",
       token: waConfig.token,
-      endpoint: waConfig.endpoint
+      endpoint: waConfig.endpoint,
+      metaToken: waConfig.metaToken || "",
+      metaPhoneId: waConfig.metaPhoneId || "",
+      metaTemplateName: waConfig.metaTemplateWelcome || "welcome_simpa",
+      metaTemplateLanguage: "id",
+      metaParams: [newMember.name, newMember.id, "#h1ppa23"]
     })
   })
   .then(res => res.json())
@@ -606,15 +612,27 @@ export function getWaTemplate(): string {
 }
 
 export interface WaConfig {
+  provider?: "fonnte" | "self-hosted" | "meta";
   endpoint: string;
   deviceId: string;
   token: string;
+  metaToken?: string;
+  metaPhoneId?: string;
+  metaTemplateWelcome?: string;
+  metaTemplateKajian?: string;
+  metaTemplateUmum?: string;
 }
 
 export const DEFAULT_WA_CONFIG: WaConfig = {
+  provider: "fonnte",
   endpoint: "https://api.fonnte.com/send",
   deviceId: "instance-fonnte-cirengit",
-  token: "t0k3n-s3cr3t-fonnt3-c1r3ng1t"
+  token: "t0k3n-s3cr3t-fonnt3-c1r3ng1t",
+  metaToken: "",
+  metaPhoneId: "",
+  metaTemplateWelcome: "welcome_simpa",
+  metaTemplateKajian: "event_kajian",
+  metaTemplateUmum: "event_umum"
 };
 
 const WA_CONFIG_KEY = "simpa_wa_config";

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl } from "@/common/lib/mock-db"
+import { customConfirm, showToast } from "@/common/lib/alert"
 
 export default function EditAnggotaPage() {
   const router = useRouter()
@@ -57,9 +58,19 @@ export default function EditAnggotaPage() {
 
 
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim() || !npa.trim() || !email.trim()) return
+
+    const confirmed = await customConfirm({
+      title: "Simpan Perubahan Profil",
+      message: `Apakah Anda yakin ingin menyimpan perubahan profil untuk "${name.trim()}"?`,
+      type: "warning",
+      confirmText: "Ya, Simpan",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
 
     const updatedMembers = existingMembers.map(m => {
       if (m.id === memberId) {
@@ -80,6 +91,10 @@ export default function EditAnggotaPage() {
     })
 
     saveStoredMembers(updatedMembers)
+    showToast({
+      message: `Profil "${name.trim()}" berhasil diperbarui!`,
+      type: "success"
+    })
     router.push("/dashboard/data-anggota")
   }
 

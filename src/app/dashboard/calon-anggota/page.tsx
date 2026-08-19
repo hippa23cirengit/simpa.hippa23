@@ -13,7 +13,7 @@ import {
   saveStoredApplicants,
   Applicant
 } from "@/common/lib/mock-db"
-import { customAlert, customConfirm } from "@/common/lib/alert"
+import { customAlert, customConfirm, showToast } from "@/common/lib/alert"
 
 const APPLICANTS_KEY = "simpa_calon_anggota"
 const DEFAULT_APPLICANTS: Applicant[] = []
@@ -124,6 +124,10 @@ export default function CalonAnggota() {
 
     saveApplicantsState([...applicants, newApp])
     setIsAddModalOpen(false)
+    showToast({
+      message: `Calon anggota "${formName}" berhasil ditambahkan!`,
+      type: "success"
+    })
   }
 
   // Accept Candidate -> Promote to Member
@@ -186,6 +190,10 @@ export default function CalonAnggota() {
     saveApplicantsState(updated)
 
     setIsModalOpen(false)
+    showToast({
+      message: `Berhasil menyetujui "${app.name}" sebagai anggota!`,
+      type: "success"
+    })
     await customAlert({
       type: "success",
       title: "Anggota Diterima",
@@ -210,6 +218,10 @@ export default function CalonAnggota() {
       })
       saveApplicantsState(updated)
       setIsModalOpen(false)
+      showToast({
+        message: `Pendaftaran "${app.name}" ditolak.`,
+        type: "error"
+      })
     }
   }
 
@@ -223,6 +235,10 @@ export default function CalonAnggota() {
     })
     saveApplicantsState(updated)
     setIsModalOpen(false)
+    showToast({
+      message: `Pendaftaran "${app.name}" dipindah ke dalam proses.`,
+      type: "info"
+    })
   }
 
   return (

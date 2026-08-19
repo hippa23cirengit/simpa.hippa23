@@ -12,7 +12,7 @@ import {
   LoginAccount,
   Member
 } from "@/common/lib/mock-db"
-import { customConfirm } from "@/common/lib/alert"
+import { customConfirm, showToast } from "@/common/lib/alert"
 
 export default function RoleAksesPage() {
   const [aclList, setAclList] = React.useState<AclRule[]>([])
@@ -138,6 +138,10 @@ export default function RoleAksesPage() {
     saveStoredAcl(aclList)
     setIsModified(false)
     setSaveSuccess(true)
+    showToast({
+      message: "Hak akses berhasil diperbarui!",
+      type: "success"
+    })
     
     // Dispatch event to update sidebar & layouts
     window.dispatchEvent(new Event("simpa_role_changed"))
@@ -160,6 +164,10 @@ export default function RoleAksesPage() {
 
     setAclList(getStoredAcl())
     setIsModified(false)
+    showToast({
+      message: "Perubahan hak akses dibatalkan.",
+      type: "info"
+    })
   }
 
   // USER MANAGEMENT ACTIONS

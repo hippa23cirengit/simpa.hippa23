@@ -4,7 +4,8 @@ import * as React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl, createMemberAccount } from "@/common/lib/mock-db"
+import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl, createMemberAccount, getStoredAccounts } from "@/common/lib/mock-db"
+import { customConfirm, showToast } from "@/common/lib/alert"
 
 export default function TambahAnggotaPage() {
   const router = useRouter()
@@ -38,14 +39,18 @@ export default function TambahAnggotaPage() {
     setExistingMembers(members)
 
     // Load admin WA for fallback notification target
-    const session = localStorage.getItem("simpa_session")
-    if (session) {
+    const storedAccounts = getStoredAccounts()
+    const activeSession = localStorage.getItem("simpa_session")
+    if (activeSession) {
       try {
-        const user = JSON.parse(session)
-        if (user && user.npa) {
-          const matched = members.find(m => m.id === user.npa)
-          if (matched && matched.whatsapp) {
-            setAdminWa(matched.whatsapp)
+        const sess = JSON.parse(activeSession)
+        if (sess && sess.npa) {
+          const matchedAcc = storedAccounts.find(a => a.npa === sess.npa)
+          if (matchedAcc && matchedAcc.linkedAnggotaId) {
+            const matchedMember = members.find(m => m.id === matchedAcc.linkedAnggotaId)
+            if (matchedMember && matchedMember.whatsapp) {
+              setAdminWa(matchedMember.whatsapp)
+            }
           }
         }
       } catch (e) {}
@@ -69,9 +74,19 @@ export default function TambahAnggotaPage() {
 
 
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim() || !npa.trim() || !email.trim()) return
+
+    const confirmed = await customConfirm({
+      title: "Tambah Anggota Baru",
+      message: `Apakah Anda yakin ingin mendaftarkan "${name.trim()}" (NPA: ${npa.trim()}) sebagai anggota baru di SIMPA?`,
+      type: "warning",
+      confirmText: "Ya, Daftarkan",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
 
     const newMember: Member = {
       id: npa.trim().toUpperCase(),
@@ -88,6 +103,10 @@ export default function TambahAnggotaPage() {
 
     saveStoredMembers([...existingMembers, newMember])
     createMemberAccount(newMember, adminWa)
+    showToast({
+      message: `Anggota "${name.trim()}" berhasil didaftarkan!`,
+      type: "success"
+    })
     router.push("/dashboard/data-anggota")
   }
 

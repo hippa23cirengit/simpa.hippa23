@@ -16,7 +16,7 @@ import {
   savePeriodeJabatan,
   WaConfig
 } from "@/common/lib/mock-db"
-import { customAlert, customConfirm } from "@/common/lib/alert"
+import { customAlert, customConfirm, showToast } from "@/common/lib/alert"
 
 export default function PengaturanPage() {
   const [currentRole, setCurrentRole] = useState("Super Admin")
@@ -30,9 +30,15 @@ export default function PengaturanPage() {
 
   // Wa Config State
   const [waConfig, setWaConfig] = useState<WaConfig>({
+    provider: "fonnte",
     endpoint: "https://api.fonnte.com/send",
     deviceId: "instance-fonnte-cirengit",
-    token: ""
+    token: "",
+    metaToken: "",
+    metaPhoneId: "",
+    metaTemplateWelcome: "welcome_simpa",
+    metaTemplateKajian: "event_kajian",
+    metaTemplateUmum: "event_umum"
   })
 
   // Live Device Connection State
@@ -68,8 +74,11 @@ export default function PengaturanPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          provider: targetCfg.provider || "fonnte",
           token: targetCfg.token,
-          endpoint: targetCfg.endpoint
+          endpoint: targetCfg.endpoint,
+          metaToken: targetCfg.metaToken || "",
+          metaPhoneId: targetCfg.metaPhoneId || ""
         })
       })
 
@@ -79,9 +88,9 @@ export default function PengaturanPage() {
         setDeviceInfo({
           checking: false,
           connected: true,
-          deviceNumber: data.device || data.phone || targetCfg.deviceId || "-",
-          deviceName: data.name || targetCfg.deviceId || "Fonnte Device",
-          reason: "Terhubung"
+          deviceNumber: data.device || data.phone || data.device_number || targetCfg.deviceId || "-",
+          deviceName: data.name || data.device_name || targetCfg.deviceId || "WhatsApp Device",
+          reason: data.reason || "Terhubung sukses"
         })
       } else {
         setDeviceInfo({
@@ -151,6 +160,10 @@ export default function PengaturanPage() {
       saveWaTemplateUmum(templateUmum)
     }
     setIsSaved(true)
+    showToast({
+      message: `Template WhatsApp (${activeTemplateTab === "kajian" ? "Kajian" : "Umum"}) berhasil disimpan!`,
+      type: "success"
+    })
     setTimeout(() => {
       setIsSaved(false)
     }, 3000)
@@ -171,6 +184,10 @@ export default function PengaturanPage() {
 
     saveWaConfig(waConfig)
     setIsConfigSaved(true)
+    showToast({
+      message: "Konfigurasi WA Gateway berhasil disimpan!",
+      type: "success"
+    })
 
     // Instantly check live connection with updated config
     checkLiveConnection(waConfig)
@@ -195,6 +212,10 @@ export default function PengaturanPage() {
 
     savePeriodeJabatan(periodeJabatan.trim())
     setIsPeriodeSaved(true)
+    showToast({
+      message: "Periode jabatan kepengurusan berhasil disimpan!",
+      type: "success"
+    })
     setTimeout(() => {
       setIsPeriodeSaved(false)
     }, 3000)
@@ -214,26 +235,49 @@ export default function PengaturanPage() {
         body: JSON.stringify({
           target: testPhone,
           message: getPreviewText(activeTemplate),
+          provider: waConfig.provider || "fonnte",
           token: waConfig.token,
-          endpoint: waConfig.endpoint
+          endpoint: waConfig.endpoint,
+          metaToken: waConfig.metaToken || "",
+          metaPhoneId: waConfig.metaPhoneId || "",
+          metaTemplateName: activeTemplateTab === "kajian" ? (waConfig.metaTemplateKajian || "event_kajian") : (waConfig.metaTemplateUmum || "event_umum"),
+          metaTemplateLanguage: "id",
+          metaParams: activeTemplateTab === "kajian"
+            ? ["Budi Santoso", "Peran Pemuda di Era Digital", "Ustadz Hanan Attaki", "Fikih Dakwah Pemuda", "Sabtu, 22 Agustus 2026", "19:30", "Masjid Al-Ikhlas Cirengit"]
+            : ["Budi Santoso", "Olahraga Futsal Rutin Pemuda", "Minggu, 23 Agustus 2026", "16:00", "Futsal Center Cirengit"]
         })
       })
 
       const resData = await response.json()
       setTestSent(false)
 
+      const activeProvider = waConfig.provider || "fonnte"
+
       if (resData.status === true || resData.status === "true") {
         await customAlert({
           type: "success",
           title: "Pesan Terkirim",
-          message: `✅ Pesan WhatsApp BERHASIL dikirim ke nomor ${testPhone}!\n\nStatus Fonnte: OK`
+          message: `✅ Pesan WhatsApp BERHASIL dikirim ke nomor ${testPhone} via ${
+            activeProvider === "self-hosted" ? "Self-Hosted Gateway" : activeProvider === "meta" ? "Meta Cloud API" : "Fonnte"
+          }!`
         })
       } else {
         const errorDetail = resData.reason || resData.detail || resData.message || JSON.stringify(resData)
+        let providerName = "Fonnte"
+        let tips = "Pastikan:\n1. Token Fonnte di atas sudah sesuai dan diklik 'Simpan Konfigurasi'\n2. Status Device di Fonnte (md.fonnte.com) sudah 'Connected' (hijau)"
+        
+        if (activeProvider === "self-hosted") {
+          providerName = "Self-Hosted"
+          tips = "Pastikan:\n1. Server Gateway lokal Anda sudah berjalan (`node server.js`)\n2. Status WhatsApp Web di server lokal Anda sudah Ready/Connected\n3. Token pengaman sudah cocok"
+        } else if (activeProvider === "meta") {
+          providerName = "Meta Cloud API"
+          tips = "Pastikan:\n1. Meta Access Token dan Phone Number ID sudah terisi dengan benar\n2. Nama Template Pesan sudah terdaftar dan disetujui di Meta Business Manager"
+        }
+
         await customAlert({
           type: "error",
           title: "Pengiriman Gagal",
-          message: `⚠️ Respon dari Fonnte WA Gateway: GAGAL\n\nAlasan: ${errorDetail}\n\nPastikan:\n1. Token Fonnte di atas sudah sesuai dan diklik 'Simpan Konfigurasi'\n2. Status Device di Fonnte (md.fonnte.com) sudah 'Connected' (hijau)`
+          message: `⚠️ Respon dari ${providerName} WA Gateway: GAGAL\n\nAlasan: ${errorDetail}\n\n${tips}`
         })
       }
     } catch (err: any) {
@@ -463,61 +507,213 @@ export default function PengaturanPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-4">
+              {/* Dropdown Select Provider */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  API URL Endpoint
+                  Penyedia WhatsApp Gateway (Provider)
                 </label>
-                <input
-                  type="text"
-                  required
+                <select
                   disabled={!canManage}
-                  value={waConfig.endpoint}
-                  onChange={(e) => setWaConfig({ ...waConfig, endpoint: e.target.value })}
-                  placeholder="https://api.fonnte.com/send"
-                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 font-mono focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
-                />
+                  value={waConfig.provider || "fonnte"}
+                  onChange={(e) => setWaConfig({ ...waConfig, provider: e.target.value as any })}
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors bg-white font-bold"
+                >
+                  <option value="fonnte">Fonnte Gateway (Unofficial / Local Partner)</option>
+                  <option value="self-hosted">Self-Hosted Gateway (whatsapp-web.js Lokal/Cloud)</option>
+                  <option value="meta">Official Meta WhatsApp Business Cloud API (Free 1000/bln)</option>
+                </select>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    Device ID / Instance ID
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    disabled={!canManage}
-                    value={waConfig.deviceId}
-                    onChange={(e) => setWaConfig({ ...waConfig, deviceId: e.target.value })}
-                    placeholder="Contoh: Bot HIPPA"
-                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    API Token / Secret Key
-                  </label>
-                  <div className="relative">
+
+              {/* Fonnte Fields */}
+              {(waConfig.provider === "fonnte" || !waConfig.provider) && (
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Fonnte URL Endpoint
+                    </label>
                     <input
-                      type={showToken ? "text" : "password"}
+                      type="text"
                       required
                       disabled={!canManage}
-                      value={waConfig.token}
-                      onChange={(e) => setWaConfig({ ...waConfig, token: e.target.value })}
-                      placeholder="Masukkan Token dari md.fonnte.com"
-                      className="w-full border border-slate-200 rounded-lg pl-3.5 pr-10 py-2 font-body-md text-sm text-slate-800 font-mono focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
+                      value={waConfig.endpoint}
+                      onChange={(e) => setWaConfig({ ...waConfig, endpoint: e.target.value })}
+                      placeholder="https://api.fonnte.com/send"
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 font-mono focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowToken(!showToken)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">
-                        {showToken ? "visibility_off" : "visibility"}
-                      </span>
-                    </button>
                   </div>
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        Device ID / Instance ID
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        disabled={!canManage}
+                        value={waConfig.deviceId}
+                        onChange={(e) => setWaConfig({ ...waConfig, deviceId: e.target.value })}
+                        placeholder="Contoh: Bot HIPPA"
+                        className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        Fonnte API Token
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showToken ? "text" : "password"}
+                          required
+                          disabled={!canManage}
+                          value={waConfig.token}
+                          onChange={(e) => setWaConfig({ ...waConfig, token: e.target.value })}
+                          placeholder="Masukkan Token dari md.fonnte.com"
+                          className="w-full border border-slate-200 rounded-lg pl-3.5 pr-10 py-2 font-body-md text-sm text-slate-800 font-mono focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowToken(!showToken)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">
+                            {showToken ? "visibility_off" : "visibility"}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Self-Hosted Fields */}
+              {waConfig.provider === "self-hosted" && (
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Gateway Server URL Endpoint
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      disabled={!canManage}
+                      value={waConfig.endpoint}
+                      onChange={(e) => setWaConfig({ ...waConfig, endpoint: e.target.value })}
+                      placeholder="http://localhost:5000/send atau URL Render Anda"
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 font-mono focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Secret Token Pengaman (API Token)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showToken ? "text" : "password"}
+                        disabled={!canManage}
+                        value={waConfig.token}
+                        onChange={(e) => setWaConfig({ ...waConfig, token: e.target.value })}
+                        placeholder="Contoh: cirengit-super-secret-wa-token-123"
+                        className="w-full border border-slate-200 rounded-lg pl-3.5 pr-10 py-2 font-body-md text-sm text-slate-800 font-mono focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowToken(!showToken)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">
+                          {showToken ? "visibility_off" : "visibility"}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Meta Cloud API Fields */}
+              {waConfig.provider === "meta" && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        Meta Phone Number ID
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        disabled={!canManage}
+                        value={waConfig.metaPhoneId || ""}
+                        onChange={(e) => setWaConfig({ ...waConfig, metaPhoneId: e.target.value })}
+                        placeholder="Contoh: 1029384756102"
+                        className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 font-mono focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        Meta Access Token (Permanent / Temporary)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showToken ? "text" : "password"}
+                          required
+                          disabled={!canManage}
+                          value={waConfig.metaToken || ""}
+                          onChange={(e) => setWaConfig({ ...waConfig, metaToken: e.target.value })}
+                          placeholder="EAAW..."
+                          className="w-full border border-slate-200 rounded-lg pl-3.5 pr-10 py-2 font-body-md text-sm text-slate-800 font-mono focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowToken(!showToken)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">
+                            {showToken ? "visibility_off" : "visibility"}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 my-2 pt-2">
+                    <p className="text-[11px] font-bold text-[#F7A440] uppercase tracking-wider mb-2">Konfigurasi Template Pesan (Meta)</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-bold text-slate-400">Template Akun Baru</span>
+                        <input
+                          type="text"
+                          required
+                          disabled={!canManage}
+                          value={waConfig.metaTemplateWelcome || "welcome_simpa"}
+                          onChange={(e) => setWaConfig({ ...waConfig, metaTemplateWelcome: e.target.value })}
+                          className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 font-body-md text-xs text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-bold text-slate-400">Template Kajian</span>
+                        <input
+                          type="text"
+                          required
+                          disabled={!canManage}
+                          value={waConfig.metaTemplateKajian || "event_kajian"}
+                          onChange={(e) => setWaConfig({ ...waConfig, metaTemplateKajian: e.target.value })}
+                          className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 font-body-md text-xs text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-bold text-slate-400">Template Umum</span>
+                        <input
+                          type="text"
+                          required
+                          disabled={!canManage}
+                          value={waConfig.metaTemplateUmum || "event_umum"}
+                          onChange={(e) => setWaConfig({ ...waConfig, metaTemplateUmum: e.target.value })}
+                          className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 font-body-md text-xs text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
           {canManage && (
