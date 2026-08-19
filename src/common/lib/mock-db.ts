@@ -40,14 +40,19 @@ export interface ScheduledEvent {
 }
 
 export interface AclRule {
-  role: string; // 'Super Admin' | 'PIMHAR' | 'Bidang' | 'Anggota'
+  role: string;
   permissions: {
     dashboard: boolean;
-    dataAnggota: boolean;
-    tasykil: boolean;
-    calonAnggota: boolean;
-    jadwalKegiatan: boolean;
-    pengaturan: boolean;
+    viewDataAnggota: boolean;
+    manageDataAnggota: boolean;
+    viewTasykil: boolean;
+    manageTasykil: boolean;
+    viewCalonAnggota: boolean;
+    manageCalonAnggota: boolean;
+    viewJadwalKegiatan: boolean;
+    manageJadwalKegiatan: boolean;
+    viewPengaturan: boolean;
+    managePengaturan: boolean;
   };
 }
 
@@ -197,44 +202,48 @@ export const DEFAULT_ACL: AclRule[] = [
     role: "Super Admin",
     permissions: {
       dashboard: true,
-      dataAnggota: true,
-      tasykil: true,
-      calonAnggota: true,
-      jadwalKegiatan: true,
-      pengaturan: true
+      viewDataAnggota: true,
+      manageDataAnggota: true,
+      viewTasykil: true,
+      manageTasykil: true,
+      viewCalonAnggota: true,
+      manageCalonAnggota: true,
+      viewJadwalKegiatan: true,
+      manageJadwalKegiatan: true,
+      viewPengaturan: true,
+      managePengaturan: true
     }
   },
   {
     role: "PIMHAR",
     permissions: {
       dashboard: true,
-      dataAnggota: true,
-      tasykil: true,
-      calonAnggota: true,
-      jadwalKegiatan: true,
-      pengaturan: false
-    }
-  },
-  {
-    role: "Bidang",
-    permissions: {
-      dashboard: true,
-      dataAnggota: true,
-      tasykil: true, // Read-Only
-      calonAnggota: true, // Read-Only
-      jadwalKegiatan: true,
-      pengaturan: false
+      viewDataAnggota: true,
+      manageDataAnggota: true,
+      viewTasykil: true,
+      manageTasykil: true,
+      viewCalonAnggota: true,
+      manageCalonAnggota: true,
+      viewJadwalKegiatan: true,
+      manageJadwalKegiatan: true,
+      viewPengaturan: false,
+      managePengaturan: false
     }
   },
   {
     role: "Anggota",
     permissions: {
       dashboard: true,
-      dataAnggota: true, // Read-Only
-      tasykil: true, // Read-Only
-      calonAnggota: true, // Read-Only
-      jadwalKegiatan: true, // Read-Only
-      pengaturan: false
+      viewDataAnggota: true,
+      manageDataAnggota: false,
+      viewTasykil: true,
+      manageTasykil: false,
+      viewCalonAnggota: true,
+      manageCalonAnggota: false,
+      viewJadwalKegiatan: true,
+      manageJadwalKegiatan: false,
+      viewPengaturan: false,
+      managePengaturan: false
     }
   }
 ];
@@ -271,14 +280,107 @@ export function saveStoredEvents(events: ScheduledEvent[]) {
 export function getStoredAcl(): AclRule[] {
   if (typeof window === "undefined") return DEFAULT_ACL;
   const stored = localStorage.getItem(ACL_KEY);
+  let parsed: AclRule[] = [];
   if (!stored) {
-    localStorage.setItem(ACL_KEY, JSON.stringify(DEFAULT_ACL));
-    return DEFAULT_ACL;
+    parsed = [...DEFAULT_ACL];
+  } else {
+    try {
+      parsed = JSON.parse(stored);
+    } catch (e) {
+      parsed = [...DEFAULT_ACL];
+    }
+  }
+
+  // Auto-sync: Ensure every Bidang in Tasykil has an ACL configuration
+  const tasykil = getStoredTasykil();
+  let changed = false;
+  tasykil.bidang.forEach(b => {
+    const roleName = b.name;
+    const exists = parsed.some(r => r.role === roleName);
+    if (!exists) {
+      parsed.push({
+        role: roleName,
+        permissions: {
+          dashboard: true,
+          viewDataAnggota: false,
+          manageDataAnggota: false,
+          viewTasykil: false,
+          manageTasykil: false,
+          viewCalonAnggota: false,
+          manageCalonAnggota: false,
+          viewJadwalKegiatan: true,
+          manageJadwalKegiatan: false,
+          viewPengaturan: false,
+          managePengaturan: false
+        }
+      });
+      changed = true;
+    }
+  });
+
+  // Clean up legacy roles not present in default ACL or current Tasykil Bidang names
+  const validRoles = new Set([
+    "Super Admin",
+    "PIMHAR",
+    "Anggota",
+    ...tasykil.bidang.map(b => b.name)
+  ]);
+  const initialLength = parsed.length;
+  parsed = parsed.filter(r => validRoles.has(r.role));
+  if (parsed.length !== initialLength) {
+    changed = true;
+  }
+
+  if (changed) {
+    localStorage.setItem(ACL_KEY, JSON.stringify(parsed));
+  }
+
+  return parsed;
+}
+
+export interface LoginAccount {
+  npa: string;
+  name: string;
+  role: string;
+  passwordHash: string; // Plaintext "cirengit23" check in mock
+  linkedAnggotaId: string | null;
+}
+
+export const DEFAULT_LOGIN_ACCOUNTS: LoginAccount[] = [
+  {
+    npa: "26.0000",
+    name: "Najmi Shofwan Al-Azhar",
+    role: "Super Admin",
+    passwordHash: "cirengit23",
+    linkedAnggotaId: null
+  }
+];
+
+const ACCOUNTS_KEY = "simpa_login_accounts";
+
+export function getStoredAccounts(): LoginAccount[] {
+  if (typeof window === "undefined") return DEFAULT_LOGIN_ACCOUNTS;
+  const stored = localStorage.getItem(ACCOUNTS_KEY);
+  if (!stored) {
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(DEFAULT_LOGIN_ACCOUNTS));
+    return DEFAULT_LOGIN_ACCOUNTS;
   }
   try {
-    return JSON.parse(stored);
+    const parsed = JSON.parse(stored) as LoginAccount[];
+    // Migration: If Najmi is not the first account, reset to ensure sync
+    if (parsed.length === 0 || parsed[0].npa !== "26.0000") {
+      localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(DEFAULT_LOGIN_ACCOUNTS));
+      return DEFAULT_LOGIN_ACCOUNTS;
+    }
+    return parsed;
   } catch (e) {
-    return DEFAULT_ACL;
+    return DEFAULT_LOGIN_ACCOUNTS;
+  }
+}
+
+export function saveStoredAccounts(accounts: LoginAccount[]) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
   }
 }
 

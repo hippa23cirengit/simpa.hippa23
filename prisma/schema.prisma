@@ -58,24 +58,32 @@ model AnggotaBidang {
 }
 
 model RoleAkses {
-  roleName           String  @id @map("role_name") // 'Super Admin' | 'PIMHAR' | 'Bidang' | 'Anggota'
-  allowDashboard     Boolean @default(true) @map("allow_dashboard")
-  allowDataAnggota   Boolean @default(false) @map("allow_data_anggota")
-  allowTasykil       Boolean @default(false) @map("allow_tasykil")
-  allowCalonAnggota  Boolean @default(false) @map("allow_calon_anggota")
-  allowJadwalKegiatan Boolean @default(true) @map("allow_jadwal_kegiatan")
-  allowPengaturan    Boolean @default(false) @map("allow_pengaturan")
-  akunLogins         AkunLogin[]
+  roleName             String  @id @map("role_name")
+  allowDashboard       Boolean @default(true) @map("allow_dashboard")
+  viewDataAnggota      Boolean @default(false) @map("view_data_anggota")
+  manageDataAnggota    Boolean @default(false) @map("manage_data_anggota")
+  viewTasykil          Boolean @default(false) @map("view_tasykil")
+  manageTasykil        Boolean @default(false) @map("manage_tasykil")
+  viewCalonAnggota     Boolean @default(false) @map("view_calon_anggota")
+  manageCalonAnggota   Boolean @default(false) @map("manage_calon_anggota")
+  viewJadwalKegiatan   Boolean @default(true) @map("view_jadwal_kegiatan")
+  manageJadwalKegiatan Boolean @default(false) @map("manage_jadwal_kegiatan")
+  viewPengaturan       Boolean @default(false) @map("view_pengaturan")
+  managePengaturan     Boolean @default(false) @map("manage_pengaturan")
+  akunLogins           AkunLogin[]
 
   @@map("role_akses")
 }
 
 model AkunLogin {
-  anggotaId    String    @id @map("anggota_id")
-  passwordHash String    @map("password_hash")
-  role         String    @default("Anggota")
-  anggota      Anggota   @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
-  roleAkses    RoleAkses @relation(fields: [role], references: [roleName], onDelete: Restrict)
+  id              String    @id @default(uuid())
+  npa             String    @unique  // NPA or Username for login (e.g. "26.0000")
+  name            String
+  passwordHash    String    @map("password_hash")
+  role            String    @default("Anggota")
+  linkedAnggotaId String?   @unique @map("linked_anggota_id")
+  anggota         Anggota?  @relation(fields: [linkedAnggotaId], references: [id], onDelete: SetNull)
+  roleAkses       RoleAkses @relation(fields: [role], references: [roleName], onDelete: Restrict)
 
   @@map("akun_login")
 }

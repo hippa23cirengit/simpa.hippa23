@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { getStoredMembers, getStoredTasykil } from "@/common/lib/mock-db";
+import { getStoredAccounts, getStoredTasykil } from "@/common/lib/mock-db";
 import { setSession, isLoggedIn, clearSession } from "@/common/lib/auth";
 
 export default function LoginPage() {
@@ -34,46 +34,51 @@ export default function LoginPage() {
     }
 
     setTimeout(() => {
-      // Find member in mock db
-      const members = getStoredMembers();
-      const member = members.find(
-        (m) => m.id.toLowerCase() === trimmedNpa.toLowerCase()
+      // Find account in mock db
+      const accounts = getStoredAccounts();
+      const account = accounts.find(
+        (acc) => acc.npa.toLowerCase() === trimmedNpa.toLowerCase()
       );
 
-      if (!member) {
+      if (!account) {
         setLoading(false);
         setError("NPA tidak terdaftar di database.");
         return;
       }
 
       // Check password (default password: cirengit23)
-      if (trimmedPassword !== "cirengit23") {
+      if (trimmedPassword !== account.passwordHash) {
         setLoading(false);
         setError("Password yang Anda masukkan salah.");
         return;
       }
 
-      // Determine role dynamically based on member assignments
-      let role = "Anggota";
-      if (member.id === "26.0000") {
-        role = "Super Admin";
-      } else {
+      // Determine role dynamically based on member Tasykil assignment
+      let resolvedRole = account.role;
+      if (account.linkedAnggotaId) {
         const tasykil = getStoredTasykil();
-        const isPimhar = Object.values(tasykil.pimhar).includes(member.id);
-        const isBidang = tasykil.bidang.some((b) => b.members.includes(member.id));
+        const isPimhar = Object.values(tasykil.pimhar).includes(account.linkedAnggotaId);
         if (isPimhar) {
-          role = "PIMHAR";
-        } else if (isBidang) {
-          role = "Bidang";
+          resolvedRole = "PIMHAR";
+        } else {
+          // Check if they are in a specific Bidang
+          const activeBidang = tasykil.bidang.find((b) =>
+            b.members.includes(account.linkedAnggotaId!)
+          );
+          if (activeBidang) {
+            resolvedRole = activeBidang.name; // e.g. "Bidang Kaderisasi"
+          } else {
+            resolvedRole = "Anggota";
+          }
         }
       }
 
       // Save user session
       setSession({
         isLoggedIn: true,
-        npa: member.id,
-        name: member.name,
-        role: role,
+        npa: account.npa,
+        name: account.name,
+        role: resolvedRole,
         loginAt: Date.now(),
       });
 

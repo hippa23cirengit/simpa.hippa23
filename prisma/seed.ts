@@ -30,11 +30,16 @@ async function main() {
     create: {
       roleName: "Super Admin",
       allowDashboard: true,
-      allowDataAnggota: true,
-      allowTasykil: true,
-      allowCalonAnggota: true,
-      allowJadwalKegiatan: true,
-      allowPengaturan: true,
+      viewDataAnggota: true,
+      manageDataAnggota: true,
+      viewTasykil: true,
+      manageTasykil: true,
+      viewCalonAnggota: true,
+      manageCalonAnggota: true,
+      viewJadwalKegiatan: true,
+      manageJadwalKegiatan: true,
+      viewPengaturan: true,
+      managePengaturan: true,
     },
   });
 
@@ -44,25 +49,16 @@ async function main() {
     create: {
       roleName: "PIMHAR",
       allowDashboard: true,
-      allowDataAnggota: true,
-      allowTasykil: true,
-      allowCalonAnggota: true,
-      allowJadwalKegiatan: true,
-      allowPengaturan: true,
-    },
-  });
-
-  await prisma.roleAkses.upsert({
-    where: { roleName: "Bidang" },
-    update: {},
-    create: {
-      roleName: "Bidang",
-      allowDashboard: true,
-      allowDataAnggota: true,
-      allowTasykil: true,
-      allowCalonAnggota: true,
-      allowJadwalKegiatan: true,
-      allowPengaturan: false,
+      viewDataAnggota: true,
+      manageDataAnggota: true,
+      viewTasykil: true,
+      manageTasykil: true,
+      viewCalonAnggota: true,
+      manageCalonAnggota: true,
+      viewJadwalKegiatan: true,
+      manageJadwalKegiatan: true,
+      viewPengaturan: false,
+      managePengaturan: false,
     },
   });
 
@@ -72,11 +68,16 @@ async function main() {
     create: {
       roleName: "Anggota",
       allowDashboard: true,
-      allowDataAnggota: true,
-      allowTasykil: true,
-      allowCalonAnggota: true,
-      allowJadwalKegiatan: true,
-      allowPengaturan: false,
+      viewDataAnggota: true,
+      manageDataAnggota: false,
+      viewTasykil: true,
+      manageTasykil: false,
+      viewCalonAnggota: true,
+      manageCalonAnggota: false,
+      viewJadwalKegiatan: true,
+      manageJadwalKegiatan: false,
+      viewPengaturan: false,
+      managePengaturan: false,
     },
   });
 
@@ -107,51 +108,21 @@ async function main() {
   });
 
   // 3. Seed Anggota
-  console.log("Seeding Anggota & AkunLogin...");
+  // 3. Seed Anggota & AkunLogin
+  console.log("Seeding Super Admin AkunLogin...");
   const defaultPasswordHash = await bcrypt.hash("cirengit23", 10);
 
-  const mockMembers = [
-    {
-      id: "26.0000",
+  await prisma.akunLogin.upsert({
+    where: { npa: "26.0000" },
+    update: {},
+    create: {
+      npa: "26.0000",
       name: "Najmi Shofwan Al-Azhar",
-      status: "Aktif",
-      tempatLahir: "Bandung",
-      tanggalLahir: "2001-04-12",
-      alamat: "Bandung",
-      pekerjaan: "Super Admin",
-      whatsapp: "0812-3456-7890",
-      email: "najmi.alazhar@gmail.com",
-      loginRole: "Super Admin",
+      passwordHash: defaultPasswordHash,
+      role: "Super Admin",
+      linkedAnggotaId: null,
     },
-  ];
-
-  for (const m of mockMembers) {
-    await prisma.anggota.upsert({
-      where: { id: m.id },
-      update: {},
-      create: {
-        id: m.id,
-        name: m.name,
-        status: m.status,
-        tempatLahir: m.tempatLahir,
-        tanggalLahir: m.tanggalLahir,
-        alamat: m.alamat,
-        pekerjaan: m.pekerjaan,
-        whatsapp: m.whatsapp,
-        email: m.email,
-      },
-    });
-
-    await prisma.akunLogin.upsert({
-      where: { anggotaId: m.id },
-      update: {},
-      create: {
-        anggotaId: m.id,
-        passwordHash: defaultPasswordHash,
-        role: m.loginRole,
-      },
-    });
-  }
+  });
 
   // 4. Seed PIMHAR
   console.log("Skipping Pimhar relations (start clean)...");
