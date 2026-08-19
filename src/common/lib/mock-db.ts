@@ -142,6 +142,7 @@ export function saveStoredTasykil(state: TasykilState) {
 
 export function syncRoles(members: Member[], tasykil: TasykilState): Member[] {
   return members.map(m => {
+    if (m.id === "26.0000") return { ...m, role: "Super Admin" };
     if (tasykil.pimhar.ketua === m.id) return { ...m, role: "Ketua" };
     if (tasykil.pimhar.wakilKetua === m.id) return { ...m, role: "Wakil Ketua" };
     if (tasykil.pimhar.sekretaris === m.id) return { ...m, role: "Sekretaris" };
