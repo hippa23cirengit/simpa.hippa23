@@ -16,6 +16,7 @@ model Anggota {
   pekerjaan    String?
   whatsapp     String?
   email        String
+  profilePhoto String?         @map("profile_photo")
   pimhar       Pimhar?
   bidang       AnggotaBidang?
   akunLogin    AkunLogin?
@@ -95,6 +96,9 @@ model ScheduledEvent {
   time     String // HH:mm
   location String
   color    String // e.g. 'blue', 'amber', 'emerald', 'purple', 'red'
+  type     String @default("umum")
+  speaker  String?
+  theme    String?
 
   @@map("scheduled_event")
 }
