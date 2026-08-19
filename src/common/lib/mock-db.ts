@@ -623,13 +623,15 @@ const PERIODE_JABATAN_KEY = "simpa_periode_jabatan";
 export function getWaConfig(): WaConfig {
   if (typeof window === "undefined") return DEFAULT_WA_CONFIG;
   const stored = localStorage.getItem(WA_CONFIG_KEY);
-  if (!stored) {
+  if (!stored || stored === "null") {
     localStorage.setItem(WA_CONFIG_KEY, JSON.stringify(DEFAULT_WA_CONFIG));
     syncToServer(WA_CONFIG_KEY, DEFAULT_WA_CONFIG)
     return DEFAULT_WA_CONFIG;
   }
   try {
-    return JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    if (!parsed) return DEFAULT_WA_CONFIG;
+    return parsed;
   } catch (e) {
     return DEFAULT_WA_CONFIG;
   }
@@ -645,7 +647,7 @@ export function saveWaConfig(config: WaConfig) {
 export function getPeriodeJabatan(): string {
   if (typeof window === "undefined") return "2026 - 2028";
   const stored = localStorage.getItem(PERIODE_JABATAN_KEY);
-  if (!stored) {
+  if (!stored || stored === "null") {
     localStorage.setItem(PERIODE_JABATAN_KEY, "2026 - 2028");
     syncToServer(PERIODE_JABATAN_KEY, "2026 - 2028")
     return "2026 - 2028";
