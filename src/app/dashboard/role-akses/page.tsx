@@ -103,7 +103,7 @@ export default function RoleAksesPage() {
 
       {/* Roles Panels Grid */}
       <div className="grid grid-cols-1 gap-6">
-        {aclList.map((roleAcl) => {
+        {aclList.filter(roleAcl => roleAcl.role !== "Anggota").map((roleAcl) => {
           const isSuperAdmin = roleAcl.role === "Super Admin"
 
           return (

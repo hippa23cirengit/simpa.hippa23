@@ -130,6 +130,10 @@ export default function DetailAnggota() {
                   <p className="text-slate-400 font-medium mb-1">Pekerjaan / Aktivitas</p>
                   <p className="font-bold text-slate-800">{member.pekerjaan}</p>
                 </div>
+                <div>
+                  <p className="text-slate-400 font-medium mb-1">Alamat Email (Gmail)</p>
+                  <p className="font-bold text-[#F7A440] font-semibold">{member.email || "-"}</p>
+                </div>
               </div>
             </div>
 

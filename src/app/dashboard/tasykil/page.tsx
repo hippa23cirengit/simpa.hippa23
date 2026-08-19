@@ -10,12 +10,14 @@ import {
   syncRoles,
   Member,
   TasykilState,
-  Bidang
+  Bidang,
+  getCurrentRole
 } from "@/common/lib/mock-db"
 
 export default function Tasykil() {
   const [members, setMembers] = useState<Member[]>([])
   const [tasykil, setTasykil] = useState<TasykilState | null>(null)
+  const [currentRole, setCurrentRole] = useState("Super Admin")
   
   // Modal states
   const [pimharModalOpen, setPimharModalOpen] = useState(false)
@@ -32,11 +34,26 @@ export default function Tasykil() {
   
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Load state on mount
-  useEffect(() => {
+  const loadData = () => {
     setMembers(getStoredMembers())
     setTasykil(getStoredTasykil())
+    setCurrentRole(getCurrentRole())
+  }
+
+  // Load state on mount
+  useEffect(() => {
+    loadData()
+
+    const handleRoleChange = () => {
+      loadData()
+    }
+    window.addEventListener("simpa_role_changed", handleRoleChange)
+    return () => {
+      window.removeEventListener("simpa_role_changed", handleRoleChange)
+    }
   }, [])
+
+  const isReadOnly = currentRole === "Anggota" || currentRole === "Bidang"
 
   // Sync state helpers
   const updateTasykilState = (newTasykil: TasykilState) => {
@@ -183,13 +200,15 @@ export default function Tasykil() {
             <span className="material-symbols-outlined text-amber-500 text-[22px]">verified_user</span>
             <h3 className="font-bold text-slate-800 text-sm md:text-base">Dewan Penasehat</h3>
           </div>
-          <button
-            onClick={() => setAddPenasehatModalOpen(true)}
-            className="bg-[#F7A440] hover:bg-[#e09132] text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 transition text-xs shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[15px]">add</span>
-            Tambah Penasehat
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => setAddPenasehatModalOpen(true)}
+              className="bg-[#F7A440] hover:bg-[#e09132] text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 transition text-xs shadow-sm"
+            >
+              <span className="material-symbols-outlined text-[15px]">add</span>
+              Tambah Penasehat
+            </button>
+          )}
         </div>
 
         <div className="p-6">
@@ -199,7 +218,7 @@ export default function Tasykil() {
                 <tr className="bg-slate-50 border-b border-slate-100 font-bold text-slate-500">
                   <th className="py-3 px-4 w-60">Jabatan</th>
                   <th className="py-3 px-4">Nama Penasehat</th>
-                  <th className="py-3 px-4 w-28 text-center">Aksi</th>
+                  {!isReadOnly && <th className="py-3 px-4 w-28 text-center">Aksi</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
@@ -218,24 +237,26 @@ export default function Tasykil() {
                       <span className="text-slate-400 font-semibold italic">Belum memiliki penasehat</span>
                     )}
                   </td>
-                  <td className="py-4 px-4 text-center">
-                    {tasykil.penasehat.length > 0 ? (
-                      <div className="flex flex-col gap-1.5 py-1">
-                        {tasykil.penasehat.map((_, index) => (
-                          <div key={index} className="h-5 flex items-center justify-center">
-                            <button
-                              onClick={() => handleRemovePenasehat(index)}
-                              className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
-                            >
-                              Hapus
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-slate-300 font-mono italic">-</span>
-                    )}
-                  </td>
+                  {!isReadOnly && (
+                    <td className="py-4 px-4 text-center">
+                      {tasykil.penasehat.length > 0 ? (
+                        <div className="flex flex-col gap-1.5 py-1">
+                          {tasykil.penasehat.map((_, index) => (
+                            <div key={index} className="h-5 flex items-center justify-center">
+                              <button
+                                onClick={() => handleRemovePenasehat(index)}
+                                className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-slate-300 font-mono italic">-</span>
+                      )}
+                    </td>
+                  )}
                 </tr>
               </tbody>
             </table>
@@ -259,7 +280,7 @@ export default function Tasykil() {
                 <tr className="bg-slate-50 border-b border-slate-100 font-bold text-slate-500">
                   <th className="py-3 px-4 w-48">Jabatan</th>
                   <th className="py-3 px-4">Nama Pengurus</th>
-                  <th className="py-3 px-4 w-28 text-center">Aksi</th>
+                  {!isReadOnly && <th className="py-3 px-4 w-28 text-center">Aksi</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
@@ -285,32 +306,34 @@ export default function Tasykil() {
                           <span className="text-slate-400 font-semibold italic">Belum diisi</span>
                         )}
                       </td>
-                      <td className="py-3.5 px-4 text-center">
-                        {assignee ? (
-                          <div className="flex items-center justify-center gap-2">
+                      {!isReadOnly && (
+                        <td className="py-3.5 px-4 text-center">
+                          {assignee ? (
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => { setSelectedPimharRole(role.key); setPimharModalOpen(true); }}
+                                className="text-[#F7A440] hover:text-[#e09132] font-bold text-[11px] transition-colors"
+                              >
+                                Ganti
+                              </button>
+                              <span className="text-slate-300">|</span>
+                              <button
+                                onClick={() => handleRemovePimhar(role.key)}
+                                className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          ) : (
                             <button
                               onClick={() => { setSelectedPimharRole(role.key); setPimharModalOpen(true); }}
-                              className="text-[#F7A440] hover:text-[#e09132] font-bold text-[11px] transition-colors"
+                              className="bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-[10px] shadow-sm transition"
                             >
-                              Ganti
+                              + Pilih Anggota
                             </button>
-                            <span className="text-slate-300">|</span>
-                            <button
-                              onClick={() => handleRemovePimhar(role.key)}
-                              className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
-                            >
-                              Hapus
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => { setSelectedPimharRole(role.key); setPimharModalOpen(true); }}
-                            className="bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-[10px] shadow-sm transition"
-                          >
-                            + Pilih Anggota
-                          </button>
-                        )}
-                      </td>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   )
                 })}
@@ -327,13 +350,15 @@ export default function Tasykil() {
             <span className="material-symbols-outlined text-purple-500 text-[22px]">corporate_fare</span>
             <h3 className="font-bold text-slate-800 text-sm md:text-base">Pembagian Bidang / Departemen</h3>
           </div>
-          <button
-            onClick={() => setAddBidangModalOpen(true)}
-            className="bg-[#F7A440] hover:bg-[#e09132] text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 transition text-xs shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[15px]">add</span>
-            Tambah Bidang
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => setAddBidangModalOpen(true)}
+              className="bg-[#F7A440] hover:bg-[#e09132] text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 transition text-xs shadow-sm"
+            >
+              <span className="material-symbols-outlined text-[15px]">add</span>
+              Tambah Bidang
+            </button>
+          )}
         </div>
 
         <div className="p-6">
@@ -344,7 +369,7 @@ export default function Tasykil() {
                   <th className="py-3 px-4 w-60">Nama Bidang</th>
                   <th className="py-3 px-4">Nama Pengurus</th>
                   <th className="py-3 px-4 w-48">NPA</th>
-                  <th className="py-3 px-4 w-28 text-center">Aksi</th>
+                  {!isReadOnly && <th className="py-3 px-4 w-28 text-center">Aksi</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
@@ -380,23 +405,25 @@ export default function Tasykil() {
                           <span className="text-slate-300 font-mono italic">-</span>
                         )}
                       </td>
-                      <td className="py-4 px-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => { setSelectedBidangId(b.id); setBidangModalOpen(true); }}
-                            className="text-[#F7A440] hover:text-[#e09132] font-bold text-[11px] transition-colors"
-                          >
-                            + Anggota
-                          </button>
-                          <span className="text-slate-300">|</span>
-                          <button
-                            onClick={() => handleDeleteBidang(b.id)}
-                            className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
-                          >
-                            Hapus
-                          </button>
-                        </div>
-                      </td>
+                      {!isReadOnly && (
+                        <td className="py-4 px-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => { setSelectedBidangId(b.id); setBidangModalOpen(true); }}
+                              className="text-[#F7A440] hover:text-[#e09132] font-bold text-[11px] transition-colors"
+                            >
+                              + Anggota
+                            </button>
+                            <span className="text-slate-300">|</span>
+                            <button
+                              onClick={() => handleDeleteBidang(b.id)}
+                              className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   )
                 })}
