@@ -14,6 +14,7 @@ import {
   getCurrentRole,
   getStoredAcl
 } from "@/common/lib/mock-db"
+import { customConfirm } from "@/common/lib/alert"
 
 export default function Tasykil() {
   const [members, setMembers] = useState<Member[]>([])
@@ -108,7 +109,24 @@ export default function Tasykil() {
   }
 
   // Handle removing PIMHAR role
-  const handleRemovePimhar = (roleKey: string) => {
+  const handleRemovePimhar = async (roleKey: string) => {
+    if (!tasykil) return
+    const memberId = tasykil.pimhar[roleKey as keyof typeof tasykil.pimhar]
+    if (!memberId) return
+    const member = getMemberById(memberId)
+    const roleLabel = pimharRoles.find(r => r.key === roleKey)?.label || roleKey
+    const memberName = member ? member.name : "Anggota"
+
+    const confirmed = await customConfirm({
+      title: "Hapus Pengurus PIMHAR",
+      message: `Apakah Anda yakin ingin menghapus ${memberName} dari jabatan ${roleLabel}?`,
+      type: "warning",
+      confirmText: "Ya, Hapus",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
     const updated = {
       ...tasykil,
       pimhar: {
@@ -132,8 +150,20 @@ export default function Tasykil() {
   }
 
   // Handle removing Penasehat
-  const handleRemovePenasehat = (index: number) => {
+  const handleRemovePenasehat = async (index: number) => {
     if (!tasykil) return
+    const name = tasykil.penasehat[index]
+    
+    const confirmed = await customConfirm({
+      title: "Hapus Penasehat",
+      message: `Apakah Anda yakin ingin menghapus ${name} dari jajaran Penasehat?`,
+      type: "warning",
+      confirmText: "Ya, Hapus",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
     const updated = {
       ...tasykil,
       penasehat: tasykil.penasehat.filter((_, idx) => idx !== index)
@@ -158,7 +188,21 @@ export default function Tasykil() {
   }
 
   // Handle deleting a Bidang
-  const handleDeleteBidang = (bidangId: string) => {
+  const handleDeleteBidang = async (bidangId: string) => {
+    if (!tasykil) return
+    const bidang = tasykil.bidang.find(b => b.id === bidangId)
+    const name = bidang ? bidang.name : "Bidang"
+
+    const confirmed = await customConfirm({
+      title: "Hapus Bidang Kepengurusan",
+      message: `Apakah Anda yakin ingin menghapus ${name} secara permanen? Semua anggota di bidang ini akan kehilangan jabatannya.`,
+      type: "warning",
+      confirmText: "Ya, Hapus",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
     const updated = {
       ...tasykil,
       bidang: tasykil.bidang.filter(b => b.id !== bidangId)

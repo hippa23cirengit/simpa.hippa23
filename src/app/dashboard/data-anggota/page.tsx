@@ -66,8 +66,8 @@ export default function DataAnggota() {
 
     const confirmed = await customConfirm({
       type: "warning",
-      title: "Hapus Anggota",
-      message: `Apakah Anda yakin ingin menghapus data anggota "${memberName}"?`
+      title: "Hapus Anggota Permanen",
+      message: `Apakah Anda yakin ingin menghapus "${memberName}" (NPA: ${memberId}) secara permanen dari database SIMPA?`
     })
 
     if (confirmed) {

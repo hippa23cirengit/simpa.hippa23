@@ -16,7 +16,7 @@ import {
   savePeriodeJabatan,
   WaConfig
 } from "@/common/lib/mock-db"
-import { customAlert } from "@/common/lib/alert"
+import { customAlert, customConfirm } from "@/common/lib/alert"
 
 export default function PengaturanPage() {
   const [currentRole, setCurrentRole] = useState("Super Admin")
@@ -133,8 +133,18 @@ export default function PengaturanPage() {
   const hasAccess = currentRole === "Super Admin" || !!activeAcl?.permissions.viewPengaturan
   const canManage = currentRole === "Super Admin" || !!activeAcl?.permissions.managePengaturan
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = async () => {
     if (!canManage) return
+    const confirmed = await customConfirm({
+      title: "Simpan Template Pesan",
+      message: `Apakah Anda yakin ingin memperbarui template WhatsApp untuk pesan broadcast ${activeTemplateTab === "kajian" ? "Kajian" : "Umum"}?`,
+      type: "warning",
+      confirmText: "Ya, Simpan",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
     if (activeTemplateTab === "kajian") {
       saveWaTemplateKajian(templateKajian)
     } else {
@@ -146,9 +156,19 @@ export default function PengaturanPage() {
     }, 3000)
   }
 
-  const handleSaveConfig = (e: React.FormEvent) => {
+  const handleSaveConfig = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canManage) return
+    const confirmed = await customConfirm({
+      title: "Simpan Konfigurasi WA Gateway",
+      message: "Apakah Anda yakin ingin memperbarui token dan endpoint WhatsApp Gateway (Fonnte)? Pastikan token Fonnte Anda valid.",
+      type: "warning",
+      confirmText: "Ya, Simpan",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
     saveWaConfig(waConfig)
     setIsConfigSaved(true)
 
@@ -160,9 +180,19 @@ export default function PengaturanPage() {
     }, 3000)
   }
 
-  const handleSavePeriode = (e: React.FormEvent) => {
+  const handleSavePeriode = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canManage) return
+    const confirmed = await customConfirm({
+      title: "Simpan Periode Jabatan",
+      message: `Apakah Anda yakin ingin memperbarui periode jabatan kepengurusan menjadi "${periodeJabatan.trim()}"?`,
+      type: "warning",
+      confirmText: "Ya, Simpan",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
     savePeriodeJabatan(periodeJabatan.trim())
     setIsPeriodeSaved(true)
     setTimeout(() => {

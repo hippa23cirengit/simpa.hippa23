@@ -12,6 +12,7 @@ import {
   LoginAccount,
   Member
 } from "@/common/lib/mock-db"
+import { customConfirm } from "@/common/lib/alert"
 
 export default function RoleAksesPage() {
   const [aclList, setAclList] = React.useState<AclRule[]>([])
@@ -123,7 +124,17 @@ export default function RoleAksesPage() {
     })
   }
 
-  const handleSaveAcl = () => {
+  const handleSaveAcl = async () => {
+    const confirmed = await customConfirm({
+      title: "Simpan Perubahan Hak Akses",
+      message: "Apakah Anda yakin ingin menyimpan perubahan hak akses ini? Perubahan akan langsung mempengaruhi izin menu dan tindakan dari role pengurus terkait.",
+      type: "warning",
+      confirmText: "Ya, Simpan",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
     saveStoredAcl(aclList)
     setIsModified(false)
     setSaveSuccess(true)
@@ -136,7 +147,17 @@ export default function RoleAksesPage() {
     }, 3000)
   }
 
-  const handleResetAcl = () => {
+  const handleResetAcl = async () => {
+    const confirmed = await customConfirm({
+      title: "Batalkan Perubahan",
+      message: "Apakah Anda yakin ingin membatalkan semua perubahan hak akses yang belum disimpan?",
+      type: "warning",
+      confirmText: "Ya, Batalkan",
+      cancelText: "Kembali"
+    })
+
+    if (!confirmed) return
+
     setAclList(getStoredAcl())
     setIsModified(false)
   }
