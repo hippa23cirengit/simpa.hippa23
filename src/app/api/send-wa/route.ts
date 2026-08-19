@@ -17,9 +17,9 @@ export async function POST(req: Request) {
       cleanTarget = "62" + cleanTarget.slice(1);
     }
 
-    const formData = new FormData();
-    formData.append("target", cleanTarget);
-    formData.append("message", message || "Pesan Uji Coba SIMPA");
+    const params = new URLSearchParams();
+    params.append("target", cleanTarget);
+    params.append("message", message || "Pesan Uji Coba SIMPA");
 
     const apiUrl = endpoint || "https://api.fonnte.com/send";
 
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
       headers: {
         Authorization: token.trim(),
       },
-      body: formData,
+      body: params,
     });
 
     const data = await response.json();
