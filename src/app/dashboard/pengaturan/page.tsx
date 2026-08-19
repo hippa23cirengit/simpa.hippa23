@@ -90,15 +90,36 @@ export default function PengaturanPage() {
     }, 3000)
   }
 
-  const handleSendTest = (e: React.FormEvent) => {
+  const handleSendTest = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!testPhone.trim()) return
-    
+
     setTestSent(true)
-    setTimeout(() => {
+
+    try {
+      const response = await fetch("/api/send-wa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target: testPhone,
+          message: "[SIMPA HIPPA] Halo! Ini adalah pesan uji coba sistem notifikasi otomatis WhatsApp HIPPA Cirengit.",
+          token: waConfig.token,
+          endpoint: waConfig.endpoint
+        })
+      })
+
+      const resData = await response.json()
       setTestSent(false)
-      alert(`Pesan uji coba berhasil dikirim ke nomor ${testPhone} melalui gateway (${waConfig.endpoint})!`)
-    }, 1200)
+
+      if (resData.status) {
+        alert(`Pesan WhatsApp BERHASIL dikirim ke nomor ${testPhone}!`)
+      } else {
+        alert(`Gagal mengirim WhatsApp: ${resData.reason || resData.detail || JSON.stringify(resData)}`)
+      }
+    } catch (err: any) {
+      setTestSent(false)
+      alert(`Terjadi kesalahan koneksi: ${err.message || err}`)
+    }
   }
 
   // Parse template variables for mockup preview
