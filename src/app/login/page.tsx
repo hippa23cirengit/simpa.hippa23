@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { getStoredAccounts, getStoredTasykil } from "@/common/lib/mock-db";
+import { getStoredAccounts, getStoredTasykil, syncDatabaseFromServer } from "@/common/lib/mock-db";
 import { setSession, isLoggedIn, clearSession } from "@/common/lib/auth";
 
 export default function LoginPage() {
@@ -14,9 +14,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Clear session on mount to act as a logout guard
+  // Clear session on mount and fetch database updates
   useEffect(() => {
     clearSession();
+    syncDatabaseFromServer();
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,13 +25,18 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const trimmedNpa = npa.trim();
+    let trimmedNpa = npa.trim();
     const trimmedPassword = password.trim();
 
     if (!trimmedNpa || !trimmedPassword) {
       setLoading(false);
       setError("NPA dan Password wajib diisi.");
       return;
+    }
+
+    // Auto-format 6-digit NPA entry to include the dot (e.g. 260000 -> 26.0000)
+    if (/^\d{6}$/.test(trimmedNpa)) {
+      trimmedNpa = trimmedNpa.slice(0, 2) + "." + trimmedNpa.slice(2);
     }
 
     setTimeout(() => {
