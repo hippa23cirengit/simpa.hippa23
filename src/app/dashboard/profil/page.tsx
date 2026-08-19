@@ -1,122 +1,401 @@
+"use client"
+
+import * as React from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { getSession, setSession, clearSession } from "@/common/lib/auth"
+import {
+  getStoredAccounts,
+  saveStoredAccounts,
+  getStoredMembers,
+  saveStoredMembers,
+  LoginAccount,
+  Member,
+  getCurrentRole
+} from "@/common/lib/mock-db"
+
 export default function ProfilPage() {
+  const router = useRouter()
+  const [account, setAccount] = useState<LoginAccount | null>(null)
+  const [member, setMember] = useState<Member | null>(null)
+  const [currentRole, setCurrentRole] = useState("")
+
+  // Form State
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [whatsapp, setWhatsapp] = useState("")
+  const [alamat, setAlamat] = useState("")
+
+  // Password State
+  const [oldPassword, setOldPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+
+  // Notification State
+  const [infoMsg, setInfoMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [passMsg, setPassMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  const loadProfile = () => {
+    const session = getSession()
+    if (!session) return
+
+    const role = getCurrentRole()
+    setCurrentRole(role)
+
+    const accounts = getStoredAccounts()
+    const acc = accounts.find((a) => a.npa === session.npa)
+    if (acc) {
+      setAccount(acc)
+      setName(acc.name)
+
+      if (acc.linkedAnggotaId) {
+        const members = getStoredMembers()
+        const mem = members.find((m) => m.id === acc.linkedAnggotaId)
+        if (mem) {
+          setMember(mem)
+          setEmail(mem.email || "")
+          setWhatsapp(mem.whatsapp || "")
+          setAlamat(mem.alamat || "")
+        }
+      }
+    }
+  }
+
+  useEffect(() => {
+    loadProfile()
+  }, [])
+
+  const initials = (name || "User")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+
+  // Save personal info
+  const handleSaveInfo = (e: React.FormEvent) => {
+    e.preventDefault()
+    setInfoMsg(null)
+
+    if (!account) return
+
+    // Update account
+    const accounts = getStoredAccounts()
+    const updatedAccounts = accounts.map((acc) => {
+      if (acc.npa === account.npa) {
+        return { ...acc, name }
+      }
+      return acc
+    })
+    saveStoredAccounts(updatedAccounts)
+
+    // Update session
+    const session = getSession()
+    if (session) {
+      setSession({
+        ...session,
+        name
+      })
+    }
+
+    // Update member if linked
+    if (account.linkedAnggotaId) {
+      const members = getStoredMembers()
+      const updatedMembers = members.map((m) => {
+        if (m.id === account.linkedAnggotaId) {
+          return { ...m, name, email, whatsapp, alamat }
+        }
+        return m
+      })
+      saveStoredMembers(updatedMembers)
+    }
+
+    window.dispatchEvent(new Event("simpa_role_changed"))
+    setInfoMsg({ type: "success", text: "Informasi profil berhasil diperbarui!" })
+    setTimeout(() => setInfoMsg(null), 3000)
+  }
+
+  // Change password
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault()
+    setPassMsg(null)
+
+    if (!account) return
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      setPassMsg({ type: "error", text: "Semua kolom kata sandi wajib diisi." })
+      return
+    }
+
+    if (oldPassword !== account.passwordHash) {
+      setPassMsg({ type: "error", text: "Kata sandi lama yang Anda masukkan salah." })
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setPassMsg({ type: "error", text: "Kata sandi baru minimal 6 karakter." })
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPassMsg({ type: "error", text: "Konfirmasi kata sandi baru tidak cocok." })
+      return
+    }
+
+    // Update password in accounts
+    const accounts = getStoredAccounts()
+    const updatedAccounts = accounts.map((acc) => {
+      if (acc.npa === account.npa) {
+        return { ...acc, passwordHash: newPassword }
+      }
+      return acc
+    })
+    saveStoredAccounts(updatedAccounts)
+
+    setAccount((prev) => (prev ? { ...prev, passwordHash: newPassword } : null))
+    setOldPassword("")
+    setNewPassword("")
+    setConfirmPassword("")
+
+    setPassMsg({ type: "success", text: "Kata sandi Anda berhasil diperbarui!" })
+    setTimeout(() => setPassMsg(null), 4000)
+  }
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto pb-10">
       {/* Page Header */}
       <div>
-        <h2 className="font-headline-lg text-2xl md:text-3xl font-extrabold text-[#1A1A1A] leading-tight">Profil Pengguna</h2>
-        <p className="font-body-md text-sm text-slate-500 mt-1">Atur informasi akun dan keamanan kata sandi Anda.</p>
+        <h2 className="font-headline-lg text-2xl md:text-3xl font-extrabold text-[#1A1A1A] leading-tight">
+          Profil Pengguna
+        </h2>
+        <p className="font-body-md text-sm text-slate-500 mt-1">
+          Atur informasi akun dan keamanan kata sandi Anda.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Avatar & Photo Actions (Span 4) */}
+        {/* Left Column: Avatar (Span 4) */}
         <div className="md:col-span-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col items-center text-center">
-          <h3 className="font-title-lg text-sm font-bold text-slate-800 self-start mb-4">Foto Profil</h3>
-          <div className="w-24 h-24 rounded-full bg-amber-500/10 border-2 border-amber-200 flex items-center justify-center text-3xl font-bold text-[#895200] shadow-inner mb-4">
-            AF
+          <h3 className="font-title-lg text-sm font-bold text-slate-800 self-start mb-4">
+            Foto & Identitas Akun
+          </h3>
+          <div className="w-24 h-24 rounded-full bg-amber-500/10 border-2 border-amber-200 flex items-center justify-center text-3xl font-bold text-[#895200] shadow-inner mb-3">
+            {initials}
           </div>
-          <p className="text-xs text-slate-400 font-medium leading-relaxed px-4 mb-5">
-            Unggah foto profil baru. Format JPG, PNG, atau WEBP. Maksimal 2MB.
+          <h4 className="font-bold text-slate-800 text-base leading-snug">{name}</h4>
+          <p className="text-xs text-slate-400 font-mono mt-0.5 font-semibold">
+            {account?.npa || "-"}
           </p>
-          <div className="flex flex-col gap-2 w-full">
-            <button className="w-full bg-[#F7A440]/10 hover:bg-[#F7A440]/20 text-[#895200] font-bold py-2 px-4 rounded-xl text-xs transition duration-250 border border-[#f7a440]/20">
-              Pilih Foto Baru
-            </button>
-            <button className="w-full border border-red-100 hover:bg-red-50 text-red-600 font-bold py-2 px-4 rounded-xl text-xs transition duration-250">
-              Hapus Foto
-            </button>
+
+          <div className="w-full mt-5 pt-4 border-t border-slate-100 space-y-2 text-xs">
+            <div className="flex justify-between items-center py-1">
+              <span className="text-slate-400 font-medium">Peran Sistem</span>
+              <span className="font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px]">
+                {currentRole}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1">
+              <span className="text-slate-400 font-medium">Tipe Akun</span>
+              <span className="font-bold text-slate-700">
+                {account?.npa === "26.0000" ? "🖥️ Super Admin" : "👤 Anggota"}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Right Column: Profile Info & Change Password Forms (Span 8) */}
+        {/* Right Column: Information & Password (Span 8) */}
         <div className="md:col-span-8 space-y-6">
           {/* Section 1: Personal Info */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-            <h3 className="font-title-lg text-base font-bold text-slate-900 mb-5 flex items-center gap-2 pb-3 border-b border-slate-100">
-              <span className="material-symbols-outlined text-[#F7A440]">badge</span>
-              Informasi Pribadi
-            </h3>
+          <form onSubmit={handleSaveInfo} className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-5">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+              <h3 className="font-title-lg text-base font-bold text-slate-900 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#F7A440]">badge</span>
+                Informasi Pribadi
+              </h3>
+            </div>
+
+            {infoMsg && (
+              <div
+                className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                  infoMsg.type === "success"
+                    ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                    : "bg-red-50 border border-red-200 text-red-700"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  {infoMsg.type === "success" ? "check_circle" : "error"}
+                </span>
+                <span>{infoMsg.text}</span>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Nama Lengkap</label>
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Nama Lengkap
+                </label>
                 <input
                   type="text"
-                  defaultValue="Ahmad Fauzan"
-                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
                 />
               </div>
+
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Jabatan</label>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  NPA / Username
+                </label>
                 <input
                   type="text"
-                  value="Administrator"
+                  value={account?.npa || ""}
+                  disabled
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-400 font-mono cursor-not-allowed"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Peran Sistem (ACL)
+                </label>
+                <input
+                  type="text"
+                  value={currentRole}
                   disabled
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-400 cursor-not-allowed"
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Alamat Email</label>
-                <input
-                  type="email"
-                  defaultValue="ahmad.fauzan@example.com"
-                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Nomor WhatsApp</label>
-                <input
-                  type="text"
-                  defaultValue="0812-3456-7890"
-                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
-                />
-              </div>
+
+              {account?.linkedAnggotaId && (
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Alamat Email
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Nomor WhatsApp
+                    </label>
+                    <input
+                      type="text"
+                      value={whatsapp}
+                      onChange={(e) => setWhatsapp(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Alamat Lengkap
+                    </label>
+                    <input
+                      type="text"
+                      value={alamat}
+                      onChange={(e) => setAlamat(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
+                    />
+                  </div>
+                </>
+              )}
             </div>
-          </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                className="px-6 py-2.5 bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[16px]">save</span>
+                Simpan Profil
+              </button>
+            </div>
+          </form>
 
           {/* Section 2: Security / Password */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-            <h3 className="font-title-lg text-base font-bold text-slate-900 mb-5 flex items-center gap-2 pb-3 border-b border-slate-100">
-              <span className="material-symbols-outlined text-[#F7A440]">lock_open</span>
-              Keamanan Kata Sandi
-            </h3>
+          <form onSubmit={handleChangePassword} className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-5">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+              <h3 className="font-title-lg text-base font-bold text-slate-900 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#F7A440]">lock_open</span>
+                Keamanan Kata Sandi
+              </h3>
+            </div>
+
+            {passMsg && (
+              <div
+                className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                  passMsg.type === "success"
+                    ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                    : "bg-red-50 border border-red-200 text-red-700"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  {passMsg.type === "success" ? "check_circle" : "error"}
+                </span>
+                <span>{passMsg.text}</span>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kata Sandi Lama</label>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Kata Sandi Lama
+                </label>
                 <input
                   type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
                 />
               </div>
+
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kata Sandi Baru</label>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Kata Sandi Baru
+                </label>
                 <input
                   type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
                 />
               </div>
+
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Konfirmasi Baru</label>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Konfirmasi Baru
+                </label>
                 <input
                   type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
                 />
               </div>
             </div>
-          </div>
 
-          {/* Form Action */}
-          <div className="flex justify-end gap-3">
-            <button className="px-5 py-2.5 border border-slate-200 hover:bg-slate-100 rounded-xl font-bold text-slate-600 text-xs transition duration-200">
-              Batal
-            </button>
-            <button className="px-6 py-2.5 bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm">
-              Simpan Perubahan
-            </button>
-          </div>
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                className="px-6 py-2.5 bg-[#1A1A1A] hover:bg-[#2C2C2C] active:bg-[#000] text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[16px]">key</span>
+                Ubah Kata Sandi
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
-  );
+  )
 }

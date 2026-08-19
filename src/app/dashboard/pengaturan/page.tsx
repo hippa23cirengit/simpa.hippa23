@@ -3,20 +3,45 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { getCurrentRole, getWaTemplate, saveWaTemplate } from "@/common/lib/mock-db"
+import {
+  getCurrentRole,
+  getStoredAcl,
+  getWaTemplate,
+  saveWaTemplate,
+  getWaConfig,
+  saveWaConfig,
+  getPeriodeJabatan,
+  savePeriodeJabatan,
+  WaConfig
+} from "@/common/lib/mock-db"
 
 export default function PengaturanPage() {
   const [currentRole, setCurrentRole] = useState("Super Admin")
   const [template, setTemplate] = useState("")
   const [isSaved, setIsSaved] = useState(false)
-  
+  const [isConfigSaved, setIsConfigSaved] = useState(false)
+  const [isPeriodeSaved, setIsPeriodeSaved] = useState(false)
+
+  // Wa Config State
+  const [waConfig, setWaConfig] = useState<WaConfig>({
+    endpoint: "https://api.fonnte.com/send",
+    deviceId: "instance-fonnte-cirengit",
+    token: "t0k3n-s3cr3t-fonnt3-c1r3ng1t"
+  })
+
+  // Periode Jabatan State
+  const [periodeJabatan, setPeriodeJabatanInput] = useState("2026 - 2028")
+
   // Test message states
   const [testPhone, setTestPhone] = useState("")
   const [testSent, setTestSent] = useState(false)
 
   const loadData = () => {
-    setCurrentRole(getCurrentRole())
+    const role = getCurrentRole()
+    setCurrentRole(role)
     setTemplate(getWaTemplate())
+    setWaConfig(getWaConfig())
+    setPeriodeJabatanInput(getPeriodeJabatan())
   }
 
   useEffect(() => {
@@ -31,14 +56,37 @@ export default function PengaturanPage() {
     }
   }, [])
 
-  // Authorization check: Only Super Admin has access to Pengaturan
-  const hasAccess = currentRole === "Super Admin"
+  // Authorization check via ACL managePengaturan or viewPengaturan
+  const activeAcl = getStoredAcl().find(r => r.role === currentRole)
+  const hasAccess = currentRole === "Super Admin" || !!activeAcl?.permissions.viewPengaturan
+  const canManage = currentRole === "Super Admin" || !!activeAcl?.permissions.managePengaturan
 
   const handleSaveTemplate = () => {
+    if (!canManage) return
     saveWaTemplate(template)
     setIsSaved(true)
     setTimeout(() => {
       setIsSaved(false)
+    }, 3000)
+  }
+
+  const handleSaveConfig = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!canManage) return
+    saveWaConfig(waConfig)
+    setIsConfigSaved(true)
+    setTimeout(() => {
+      setIsConfigSaved(false)
+    }, 3000)
+  }
+
+  const handleSavePeriode = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!canManage) return
+    savePeriodeJabatan(periodeJabatan.trim())
+    setIsPeriodeSaved(true)
+    setTimeout(() => {
+      setIsPeriodeSaved(false)
     }, 3000)
   }
 
@@ -49,8 +97,8 @@ export default function PengaturanPage() {
     setTestSent(true)
     setTimeout(() => {
       setTestSent(false)
-      alert(`Pesan uji coba berhasil dikirim ke nomor ${testPhone}!`)
-    }, 1500)
+      alert(`Pesan uji coba berhasil dikirim ke nomor ${testPhone} melalui gateway (${waConfig.endpoint})!`)
+    }, 1200)
   }
 
   // Parse template variables for mockup preview
@@ -67,18 +115,6 @@ export default function PengaturanPage() {
   const renderWaFormattedText = (text: string) => {
     const lines = text.split("\n")
     return lines.map((line, lineIdx) => {
-      // Bold matcher: *text*
-      let rendered = line
-      const boldRegex = /\*(.*?)\*/g
-      const italicRegex = /_(.*?)_/g
-      
-      const elements: React.ReactNode[] = []
-      let lastIndex = 0
-      
-      // We can do basic string replacing or use a simple HTML parser,
-      // but to keep it safe and avoid dangerouslySetInnerHTML:
-      // Let's replace *text* with span font-bold and _text_ with italic.
-      // For simple visualization, we can render the text using a helper:
       return (
         <div key={lineIdx} className="min-h-[1.25rem]">
           {line.split(" ").map((word, wordIdx) => {
@@ -108,7 +144,7 @@ export default function PengaturanPage() {
         <div className="space-y-2">
           <h3 className="font-headline-md text-xl font-bold text-slate-800">Akses Ditolak (403)</h3>
           <p className="text-sm text-slate-500 font-semibold leading-relaxed">
-            Role Anda ({currentRole}) tidak memiliki izin untuk mengakses menu Pengaturan Sistem. Menu ini dikunci khusus untuk Super Admin.
+            Role Anda ({currentRole}) tidak memiliki izin untuk mengakses menu Pengaturan Sistem.
           </p>
         </div>
         <Link
@@ -122,11 +158,48 @@ export default function PengaturanPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pb-10">
       {/* Page Header */}
       <div>
         <h2 className="font-headline-lg text-2xl md:text-3xl font-extrabold text-[#1A1A1A] leading-tight">Pengaturan Sistem</h2>
-        <p className="font-body-md text-sm text-slate-500 mt-1">Konfigurasi integrasi Whatsapp API Gateway untuk notifikasi otomatis Himpunan.</p>
+        <p className="font-body-md text-sm text-slate-500 mt-1">Konfigurasi integrasi Whatsapp API Gateway & parameter organisasi Himpunan.</p>
+      </div>
+
+      {/* Periode Jabatan Form Card */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+        <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
+          <h3 className="font-title-lg text-base font-bold text-slate-900 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#F7A440]">calendar_month</span>
+            Pengaturan Periode Kepengurusan
+          </h3>
+          {isPeriodeSaved && (
+            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+              Periode Disimpan!
+            </span>
+          )}
+        </div>
+        <form onSubmit={handleSavePeriode} className="flex flex-col sm:flex-row items-end gap-4">
+          <div className="flex-1 space-y-1.5 w-full">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Periode Jabatan Tasykil</label>
+            <input
+              type="text"
+              required
+              disabled={!canManage}
+              value={periodeJabatan}
+              onChange={(e) => setPeriodeJabatanInput(e.target.value)}
+              placeholder="Contoh: 2026 - 2028"
+              className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 disabled:cursor-not-allowed transition-colors"
+            />
+          </div>
+          {canManage && (
+            <button
+              type="submit"
+              className="px-5 py-2.5 bg-[#1A1A1A] hover:bg-[#2C2C2C] active:bg-[#000] text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm shrink-0"
+            >
+              Simpan Periode
+            </button>
+          )}
+        </form>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
@@ -142,7 +215,7 @@ export default function PengaturanPage() {
               <div className="flex items-center justify-between p-3.5 bg-emerald-50 rounded-xl border border-emerald-100">
                 <div className="flex items-center gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
-                  <span className="text-sm font-bold text-emerald-800">Terhubung</span>
+                  <span className="text-sm font-bold text-emerald-800">Terhubung (Tersimpan)</span>
                 </div>
                 <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded font-bold uppercase">Online</span>
               </div>
@@ -150,33 +223,30 @@ export default function PengaturanPage() {
               {/* Device metadata */}
               <div className="space-y-2.5 text-xs font-semibold text-slate-500">
                 <div className="flex justify-between items-center py-1.5 border-b border-slate-50">
-                  <span>Nomor Terkoneksi</span>
-                  <span className="text-slate-800 font-bold">0812-3456-7890</span>
+                  <span>Instance ID</span>
+                  <span className="text-slate-800 font-bold font-mono">{waConfig.deviceId}</span>
                 </div>
                 <div className="flex justify-between items-center py-1.5 border-b border-slate-50">
-                  <span>Nama Perangkat</span>
-                  <span className="text-slate-800 font-bold">Redmi Note 12 - SIMPA Gateway</span>
+                  <span>Endpoint URL</span>
+                  <span className="text-slate-800 font-bold font-mono text-[11px] truncate max-w-[180px]">{waConfig.endpoint}</span>
                 </div>
                 <div className="flex justify-between items-center py-1.5 border-b border-slate-50">
-                  <span>Baterai</span>
+                  <span>Status Koneksi Server</span>
                   <span className="text-emerald-600 font-bold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[16px] fill">battery_charging_full</span>
-                    87%
+                    <span className="material-symbols-outlined text-[16px] fill">check_circle</span>
+                    Aktif
                   </span>
-                </div>
-                <div className="flex justify-between items-center py-1.5">
-                  <span>Waktu Sinkronisasi</span>
-                  <span className="text-slate-800 font-bold">19 Agt 2026, 09:40 WIB</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="mt-8 flex gap-2">
-            <button className="flex-1 py-2.5 px-4 text-center text-xs font-bold text-red-600 border border-red-100 hover:bg-red-50 rounded-xl transition duration-200">
-              Putuskan
-            </button>
-            <button className="flex-1 py-2.5 px-4 text-center text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition duration-200 flex items-center justify-center gap-1">
+            <button
+              type="button"
+              onClick={() => alert("Koneksi API WhatsApp Gateway telah diperiksa dan berfungsi dengan baik.")}
+              className="w-full py-2.5 px-4 text-center text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition duration-200 flex items-center justify-center gap-1"
+            >
               <span className="material-symbols-outlined text-[16px]">sync</span>
               Cek Koneksi
             </button>
@@ -184,19 +254,30 @@ export default function PengaturanPage() {
         </div>
 
         {/* Right Column: API Configuration Form */}
-        <div className="xl:col-span-7 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between">
+        <form onSubmit={handleSaveConfig} className="xl:col-span-7 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between">
           <div className="space-y-4">
-            <h3 className="font-title-lg text-base font-bold text-slate-900 mb-4 flex items-center gap-2 pb-3 border-b border-slate-100">
-              <span className="material-symbols-outlined text-[#F7A440]">api</span>
-              Konfigurasi API Gateway
-            </h3>
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
+              <h3 className="font-title-lg text-base font-bold text-slate-900 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#F7A440]">api</span>
+                Konfigurasi API Gateway
+              </h3>
+              {isConfigSaved && (
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                  Config Disimpan!
+                </span>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">API URL Endpoint</label>
                 <input
                   type="text"
-                  defaultValue="https://api.fonnte.com/send"
-                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+                  required
+                  disabled={!canManage}
+                  value={waConfig.endpoint}
+                  onChange={(e) => setWaConfig({ ...waConfig, endpoint: e.target.value })}
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -204,28 +285,38 @@ export default function PengaturanPage() {
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Device ID / Instance ID</label>
                   <input
                     type="text"
-                    defaultValue="instance-fonnte-cirengit"
-                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+                    required
+                    disabled={!canManage}
+                    value={waConfig.deviceId}
+                    onChange={(e) => setWaConfig({ ...waConfig, deviceId: e.target.value })}
+                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">API Token / Secret Key</label>
                   <input
                     type="password"
-                    value="t0k3n-s3cr3t-fonnt3-c1r3ng1t"
-                    readOnly
-                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
+                    required
+                    disabled={!canManage}
+                    value={waConfig.token}
+                    onChange={(e) => setWaConfig({ ...waConfig, token: e.target.value })}
+                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
                   />
                 </div>
               </div>
             </div>
           </div>
-          <div className="mt-8 flex justify-end">
-            <button className="px-6 py-2.5 bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm">
-              Simpan Konfigurasi
-            </button>
-          </div>
-        </div>
+          {canManage && (
+            <div className="mt-8 flex justify-end">
+              <button
+                type="submit"
+                className="px-6 py-2.5 bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm"
+              >
+                Simpan Konfigurasi
+              </button>
+            </div>
+          )}
+        </form>
       </div>
 
       {/* WhatsApp Notification Template Editor */}
@@ -246,7 +337,7 @@ export default function PengaturanPage() {
             </div>
             
             <p className="text-xs text-slate-400 leading-relaxed font-semibold">
-              Kustomisasi template pengingat jadwal kegiatan otomatis jam 06.00 WIB. Gunakan variabel dinamis berikut untuk merender data kegiatan secara otomatis:
+              Kustomisasi template pengingat jadwal kegiatan otomatis. Gunakan variabel dinamis berikut untuk merender data kegiatan secara otomatis:
             </p>
             <div className="flex flex-wrap gap-2 text-[10px] font-bold text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
               <span className="px-1.5 py-0.5 bg-white border border-slate-200 rounded">{"{{NAMA}}"} = Nama Anggota</span>
@@ -257,24 +348,28 @@ export default function PengaturanPage() {
 
             <div className="flex flex-col gap-1.5 pt-2">
               <textarea
+                disabled={!canManage}
                 value={template}
                 onChange={(e) => setTemplate(e.target.value)}
                 rows={8}
-                className="w-full border border-slate-200 rounded-lg p-3.5 font-mono text-xs text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors resize-none leading-relaxed"
+                className="w-full border border-slate-200 rounded-lg p-3.5 font-mono text-xs text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors resize-none leading-relaxed"
                 placeholder="Tulis template pesan di sini..."
               />
             </div>
           </div>
           
-          <div className="mt-6 flex justify-end">
-            <button
-              onClick={handleSaveTemplate}
-              className="px-5 py-2.5 bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-[16px]">save</span>
-              Simpan Template
-            </button>
-          </div>
+          {canManage && (
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={handleSaveTemplate}
+                className="px-5 py-2.5 bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[16px]">save</span>
+                Simpan Template
+              </button>
+            </div>
+          )}
         </div>
 
         {/* WhatsApp Real-time Chat Bubble Preview (Span 5) */}

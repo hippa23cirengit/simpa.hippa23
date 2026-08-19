@@ -62,6 +62,47 @@ export default function DataAnggota() {
     }
   }
 
+  // Export Excel CSV
+  const handleExportExcel = () => {
+    if (members.length === 0) return
+
+    const headers = [
+      "NPA",
+      "Nama Lengkap",
+      "Jabatan",
+      "Status",
+      "Tempat Lahir",
+      "Tanggal Lahir",
+      "Alamat",
+      "Pekerjaan",
+      "WhatsApp",
+      "Email"
+    ]
+
+    const rows = filteredMembers.map(m => [
+      `"${m.id}"`,
+      `"${(m.name || "").replace(/"/g, '""')}"`,
+      `"${m.role}"`,
+      `"${m.status}"`,
+      `"${(m.tempatLahir || "").replace(/"/g, '""')}"`,
+      `"${m.tanggalLahir || ""}"`,
+      `"${(m.alamat || "").replace(/"/g, '""')}"`,
+      `"${(m.pekerjaan || "").replace(/"/g, '""')}"`,
+      `"${m.whatsapp || ""}"`,
+      `"${m.email || ""}"`
+    ])
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", `Data_Anggota_HIPPA_Cirengit_${new Date().toISOString().split("T")[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -70,15 +111,26 @@ export default function DataAnggota() {
           <h2 className="font-headline-lg text-2xl md:text-3xl font-extrabold text-[#1A1A1A] leading-tight">Data Anggota</h2>
           <p className="font-body-md text-sm text-slate-500 mt-1">Kelola seluruh data anggota HIPPA dalam satu tempat.</p>
         </div>
-        {!isReadOnly && (
-          <Link
-            href="/dashboard/data-anggota/tambah"
-            className="bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition duration-300 shadow-sm self-start sm:self-auto text-sm"
+
+        <div className="flex items-center gap-3 self-start sm:self-auto">
+          <button
+            onClick={handleExportExcel}
+            className="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-2.5 px-4 rounded-lg flex items-center gap-1.5 transition duration-300 shadow-sm text-xs"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            Tambah Anggota
-          </Link>
-        )}
+            <span className="material-symbols-outlined text-[18px]">download</span>
+            Export Excel
+          </button>
+
+          {!isReadOnly && (
+            <Link
+              href="/dashboard/data-anggota/tambah"
+              className="bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition duration-300 shadow-sm text-xs"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              Tambah Anggota
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Toolbar (Search & Filter) */}

@@ -432,6 +432,58 @@ export function getWaTemplate(): string {
   return stored;
 }
 
+export interface WaConfig {
+  endpoint: string;
+  deviceId: string;
+  token: string;
+}
+
+export const DEFAULT_WA_CONFIG: WaConfig = {
+  endpoint: "https://api.fonnte.com/send",
+  deviceId: "instance-fonnte-cirengit",
+  token: "t0k3n-s3cr3t-fonnt3-c1r3ng1t"
+};
+
+const WA_CONFIG_KEY = "simpa_wa_config";
+const PERIODE_JABATAN_KEY = "simpa_periode_jabatan";
+
+export function getWaConfig(): WaConfig {
+  if (typeof window === "undefined") return DEFAULT_WA_CONFIG;
+  const stored = localStorage.getItem(WA_CONFIG_KEY);
+  if (!stored) {
+    localStorage.setItem(WA_CONFIG_KEY, JSON.stringify(DEFAULT_WA_CONFIG));
+    return DEFAULT_WA_CONFIG;
+  }
+  try {
+    return JSON.parse(stored);
+  } catch (e) {
+    return DEFAULT_WA_CONFIG;
+  }
+}
+
+export function saveWaConfig(config: WaConfig) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(WA_CONFIG_KEY, JSON.stringify(config));
+  }
+}
+
+export function getPeriodeJabatan(): string {
+  if (typeof window === "undefined") return "2026 - 2028";
+  const stored = localStorage.getItem(PERIODE_JABATAN_KEY);
+  if (!stored) {
+    localStorage.setItem(PERIODE_JABATAN_KEY, "2026 - 2028");
+    return "2026 - 2028";
+  }
+  return stored;
+}
+
+export function savePeriodeJabatan(periode: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(PERIODE_JABATAN_KEY, periode);
+    window.dispatchEvent(new Event("simpa_role_changed"));
+  }
+}
+
 export function saveWaTemplate(template: string) {
   if (typeof window !== "undefined") {
     localStorage.setItem(WA_TEMPLATE_KEY, template);

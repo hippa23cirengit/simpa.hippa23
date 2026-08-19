@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { clearSession } from "@/common/lib/auth"
 import {
   Avatar,
   AvatarFallback,
@@ -34,12 +35,20 @@ export function NavUser({
   const router = useRouter()
 
   const handleLogout = () => {
+    clearSession()
     router.push("/login")
   }
 
   const handleProfile = () => {
     router.push("/dashboard/profil")
   }
+
+  const initials = (user?.name || "User")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
     <SidebarMenu>
@@ -56,7 +65,7 @@ export function NavUser({
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8 rounded-full border border-amber-200">
                 <AvatarFallback className="bg-amber-500/10 text-[#895200] text-xs font-bold font-sans">
-                  AF
+                  {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-xs leading-tight group-data-[collapsible=icon]:hidden">
@@ -78,7 +87,7 @@ export function NavUser({
               <div className="flex items-center gap-2">
                 <Avatar className="h-7 w-7 rounded-full border border-amber-200">
                   <AvatarFallback className="bg-amber-500/10 text-[#895200] text-[10px] font-bold">
-                    AF
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-[11px] leading-tight">

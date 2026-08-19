@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getStoredMembers, getStoredTasykil } from "@/common/lib/mock-db";
+import {
+  getStoredMembers,
+  getStoredTasykil,
+  getStoredEvents,
+  getPeriodeJabatan,
+  ScheduledEvent
+} from "@/common/lib/mock-db";
 
 interface Member {
   id: string;
@@ -20,24 +26,23 @@ interface Applicant {
 export default function AdminDashboard() {
   const [members, setMembers] = useState<Member[]>([]);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [events, setEvents] = useState<ScheduledEvent[]>([]);
+  const [periodeJabatan, setPeriodeJabatan] = useState("2026 - 2028");
   const [ketuaName, setKetuaName] = useState("-");
   const [sekretarisName, setSekretarisName] = useState("-");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Load members
+  const loadDashboardData = () => {
     const rawMembers = getStoredMembers();
     setMembers(rawMembers);
 
-    // Load tasykil & lookup names
     const tasykil = getStoredTasykil();
     const ketuaObj = rawMembers.find((m) => m.id === tasykil.pimhar.ketua);
     const sekObj = rawMembers.find((m) => m.id === tasykil.pimhar.sekretaris);
 
-    if (ketuaObj) setKetuaName(ketuaObj.name);
-    if (sekObj) setSekretarisName(sekObj.name);
+    setKetuaName(ketuaObj ? ketuaObj.name : "-");
+    setSekretarisName(sekObj ? sekObj.name : "-");
 
-    // Load candidates
     const storedApplicants = localStorage.getItem("simpa_calon_anggota");
     if (storedApplicants) {
       try {
@@ -45,16 +50,16 @@ export default function AdminDashboard() {
       } catch (e) {}
     }
 
+    setEvents(getStoredEvents());
+    setPeriodeJabatan(getPeriodeJabatan());
     setLoading(false);
+  };
+
+  useEffect(() => {
+    loadDashboardData();
 
     const handleDataChange = () => {
-      const updatedMembers = getStoredMembers();
-      setMembers(updatedMembers);
-      const updatedTasykil = getStoredTasykil();
-      const k = updatedMembers.find((m) => m.id === updatedTasykil.pimhar.ketua);
-      const s = updatedMembers.find((m) => m.id === updatedTasykil.pimhar.sekretaris);
-      setKetuaName(k ? k.name : "-");
-      setSekretarisName(s ? s.name : "-");
+      loadDashboardData();
     };
 
     window.addEventListener("simpa_role_changed", handleDataChange);
@@ -69,6 +74,11 @@ export default function AdminDashboard() {
   const calonAnggota = applicants.filter(
     (a) => a.status === "Menunggu" || a.status === "Proses"
   ).length;
+
+  const todayStr = new Date().toISOString().split("T")[0];
+  const upcomingEvents = events
+    .filter((e) => e.date >= todayStr)
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   const stats = [
     {
@@ -91,7 +101,7 @@ export default function AdminDashboard() {
     },
     {
       name: "KEGIATAN MENDATANG",
-      value: "2",
+      value: String(upcomingEvents.length),
       icon: "event",
       bg: "bg-blue-500/10 text-blue-600",
     },
@@ -112,11 +122,27 @@ export default function AdminDashboard() {
         role: m.role === "-" ? "Anggota Biasa" : m.role,
         status: m.status,
         statusBg: statusBg,
-        avatarColor: m.id === "26.0000"
-          ? "bg-amber-500/10 text-[#895200] border-amber-200"
-          : "bg-slate-50 text-slate-700 border-slate-200",
+        avatarColor:
+          m.id === "26.0000"
+            ? "bg-amber-500/10 text-[#895200] border-amber-200"
+            : "bg-slate-50 text-slate-700 border-slate-200",
       };
     });
+
+  const monthShortNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+
+  const formatMonthShort = (dateStr: string) => {
+    const parts = dateStr.split("-");
+    if (parts.length < 2) return "Agt";
+    const mIdx = parseInt(parts[1], 10) - 1;
+    return monthShortNames[mIdx] || "Agt";
+  };
+
+  const formatDayNum = (dateStr: string) => {
+    const parts = dateStr.split("-");
+    if (parts.length < 3) return "01";
+    return parts[2];
+  };
 
   if (loading) {
     return (
@@ -175,43 +201,33 @@ export default function AdminDashboard() {
               </Link>
             </div>
 
-            {/* Timeline Cards Grid */}
+            {/* Timeline Cards Grid (Dinamis dari events riil) */}
             <div className="flex flex-col gap-4">
-              <div className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 flex gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#F7A440]/10 text-[#F7A440] flex flex-col items-center justify-center shrink-0">
-                  <span className="text-[10px] font-bold uppercase">Agt</span>
-                  <span className="text-lg font-extrabold leading-none">20</span>
+              {upcomingEvents.slice(0, 3).map((item) => (
+                <div key={item.id} className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 flex gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#F7A440]/10 text-[#F7A440] flex flex-col items-center justify-center shrink-0">
+                    <span className="text-[10px] font-bold uppercase">{formatMonthShort(item.date)}</span>
+                    <span className="text-lg font-extrabold leading-none">{formatDayNum(item.date)}</span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm leading-snug">{item.title}</h4>
+                    <p className="text-xs text-slate-500 mt-1 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">schedule</span>
+                      {item.time} WIB
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">location_on</span>
+                      {item.location}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm leading-snug">Rapat Pengurus Bulanan</h4>
-                  <p className="text-xs text-slate-500 mt-1 font-semibold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">schedule</span>
-                    09:00 WIB
-                  </p>
-                  <p className="text-xs text-slate-500 mt-0.5 font-semibold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">location_on</span>
-                    Ruang Rapat Utama
-                  </p>
-                </div>
-              </div>
+              ))}
 
-              <div className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 flex gap-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex flex-col items-center justify-center shrink-0">
-                  <span className="text-[10px] font-bold uppercase">Agt</span>
-                  <span className="text-lg font-extrabold leading-none">22</span>
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm leading-snug">Kajian Rutin Mingguan</h4>
-                  <p className="text-xs text-slate-500 mt-1 font-semibold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">schedule</span>
-                    16:00 WIB
-                  </p>
-                  <p className="text-xs text-slate-500 mt-0.5 font-semibold flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">location_on</span>
-                    Masjid Al-Ikhlas
-                  </p>
-                </div>
-              </div>
+              {upcomingEvents.length === 0 && (
+                <p className="text-xs text-slate-400 italic text-center py-6">
+                  Tidak ada agenda kegiatan mendatang.
+                </p>
+              )}
             </div>
           </div>
 
@@ -275,7 +291,7 @@ export default function AdminDashboard() {
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">Periode Jabatan</span>
                 <span className="font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded text-xs">
-                  2026 - 2028
+                  {periodeJabatan}
                 </span>
               </div>
             </div>
