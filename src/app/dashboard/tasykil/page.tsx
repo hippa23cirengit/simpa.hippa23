@@ -1,0 +1,682 @@
+"use client"
+
+import * as React from "react"
+import { useState, useEffect } from "react"
+import {
+  getStoredMembers,
+  getStoredTasykil,
+  saveStoredTasykil,
+  saveStoredMembers,
+  syncRoles,
+  Member,
+  TasykilState,
+  Bidang
+} from "@/common/lib/mock-db"
+
+export default function Tasykil() {
+  const [members, setMembers] = useState<Member[]>([])
+  const [tasykil, setTasykil] = useState<TasykilState | null>(null)
+  
+  // Modal states
+  const [pimharModalOpen, setPimharModalOpen] = useState(false)
+  const [selectedPimharRole, setSelectedPimharRole] = useState<string | null>(null)
+  
+  const [bidangModalOpen, setBidangModalOpen] = useState(false)
+  const [selectedBidangId, setSelectedBidangId] = useState<string | null>(null)
+  
+  const [newBidangName, setNewBidangName] = useState("")
+  const [addBidangModalOpen, setAddBidangModalOpen] = useState(false)
+  
+  const [addPenasehatModalOpen, setAddPenasehatModalOpen] = useState(false)
+  const [newPenasehatName, setNewPenasehatName] = useState("")
+  
+  const [searchQuery, setSearchQuery] = useState("")
+
+  // Load state on mount
+  useEffect(() => {
+    setMembers(getStoredMembers())
+    setTasykil(getStoredTasykil())
+  }, [])
+
+  // Sync state helpers
+  const updateTasykilState = (newTasykil: TasykilState) => {
+    setTasykil(newTasykil)
+    saveStoredTasykil(newTasykil)
+    // Automatically update roles in members list
+    const updatedMembers = syncRoles(members, newTasykil)
+    setMembers(updatedMembers)
+    saveStoredMembers(updatedMembers)
+  }
+
+  if (!tasykil) return <div className="p-8 text-center text-slate-500 font-medium">Memuat data...</div>
+
+  // PIMHAR Roles definitions
+  const pimharRoles = [
+    { key: "ketua", label: "Ketua" },
+    { key: "wakilKetua", label: "Wakil Ketua" },
+    { key: "sekretaris", label: "Sekretaris" },
+    { key: "wakilSekretaris", label: "Wakil Sekretaris" },
+    { key: "bendahara", label: "Bendahara" },
+    { key: "wakilBendahara", label: "Wakil Bendahara" }
+  ]
+
+  // Get member details helper
+  const getMemberById = (id: string) => members.find(m => m.id === id)
+
+  // Find members who DO NOT hold any role
+  const getAvailableMembers = () => {
+    // Collect all assigned IDs
+    const assignedIds = new Set<string>()
+    Object.values(tasykil.pimhar).forEach(id => { if (id) assignedIds.add(id) })
+    tasykil.bidang.forEach(b => {
+      b.members.forEach(id => assignedIds.add(id))
+    })
+    return members.filter(m => !assignedIds.has(m.id))
+  }
+
+  // Handle assigning PIMHAR role
+  const handleAssignPimhar = (roleKey: string, memberId: string) => {
+    const updated = {
+      ...tasykil,
+      pimhar: {
+        ...tasykil.pimhar,
+        [roleKey]: memberId
+      }
+    }
+    updateTasykilState(updated)
+    setPimharModalOpen(false)
+    setSelectedPimharRole(null)
+  }
+
+  // Handle removing PIMHAR role
+  const handleRemovePimhar = (roleKey: string) => {
+    const updated = {
+      ...tasykil,
+      pimhar: {
+        ...tasykil.pimhar,
+        [roleKey]: ""
+      }
+    }
+    updateTasykilState(updated)
+  }
+
+  // Handle adding Penasehat
+  const handleAddPenasehat = () => {
+    if (!newPenasehatName.trim() || !tasykil) return
+    const updated = {
+      ...tasykil,
+      penasehat: [...tasykil.penasehat, newPenasehatName.trim()]
+    }
+    updateTasykilState(updated)
+    setNewPenasehatName("")
+    setAddPenasehatModalOpen(false)
+  }
+
+  // Handle removing Penasehat
+  const handleRemovePenasehat = (index: number) => {
+    if (!tasykil) return
+    const updated = {
+      ...tasykil,
+      penasehat: tasykil.penasehat.filter((_, idx) => idx !== index)
+    }
+    updateTasykilState(updated)
+  }
+
+  // Handle adding new Bidang
+  const handleAddBidang = () => {
+    if (!newBidangName.trim()) return
+    const id = `bidang-${Date.now()}`
+    const updated = {
+      ...tasykil,
+      bidang: [
+        ...tasykil.bidang,
+        { id, name: newBidangName, members: [] }
+      ]
+    }
+    updateTasykilState(updated)
+    setNewBidangName("")
+    setAddBidangModalOpen(false)
+  }
+
+  // Handle deleting a Bidang
+  const handleDeleteBidang = (bidangId: string) => {
+    const updated = {
+      ...tasykil,
+      bidang: tasykil.bidang.filter(b => b.id !== bidangId)
+    }
+    updateTasykilState(updated)
+  }
+
+  // Handle multi-choice select members for a Bidang
+  const handleUpdateBidangMembers = (bidangId: string, memberIds: string[]) => {
+    const updated = {
+      ...tasykil,
+      bidang: tasykil.bidang.map(b => 
+        b.id === bidangId ? { ...b, members: memberIds } : b
+      )
+    }
+    updateTasykilState(updated)
+  }
+
+  // Get list of members currently assigned to a specific bidang
+  const getBidangMembers = (bidangId: string) => {
+    const b = tasykil.bidang.find(x => x.id === bidangId)
+    if (!b) return []
+    return b.members.map(id => getMemberById(id)).filter((m): m is Member => !!m)
+  }
+
+  // Unassigned members (Table 3) sorted A-Z
+  const unassignedMembers = getAvailableMembers().sort((a, b) => a.name.localeCompare(b.name))
+
+  return (
+    <div className="space-y-8 max-w-7xl mx-auto pb-12">
+      {/* Page Header */}
+      <div>
+        <h2 className="font-headline-lg text-2xl md:text-3xl font-extrabold text-[#1A1A1A] leading-tight">Tasykil Pengurus</h2>
+        <p className="font-body-md text-sm text-slate-500 mt-1">Kelola pembagian penugasan, penasehat, serta departemen bidang organisasi.</p>
+      </div>
+
+      {/* ======================= TABEL 1: DEWAN PENASEHAT ======================= */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <div className="flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-amber-500 text-[22px]">verified_user</span>
+            <h3 className="font-bold text-slate-800 text-sm md:text-base">Dewan Penasehat</h3>
+          </div>
+          <button
+            onClick={() => setAddPenasehatModalOpen(true)}
+            className="bg-[#F7A440] hover:bg-[#e09132] text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 transition text-xs shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[15px]">add</span>
+            Tambah Penasehat
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="overflow-x-auto border border-slate-100 rounded-xl">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100 font-bold text-slate-500">
+                  <th className="py-3 px-4 w-60">Jabatan</th>
+                  <th className="py-3 px-4">Nama Penasehat</th>
+                  <th className="py-3 px-4 w-28 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                <tr className="hover:bg-slate-50/30 transition-colors">
+                  <td className="py-4 px-4 font-bold text-slate-700">Penasehat</td>
+                  <td className="py-4 px-4">
+                    {tasykil.penasehat.length > 0 ? (
+                      <div className="flex flex-col gap-1.5 py-1">
+                        {tasykil.penasehat.map((name, index) => (
+                          <div key={index} className="text-xs text-slate-800 font-bold h-5 flex items-center">
+                            {name}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 font-semibold italic">Belum memiliki penasehat</span>
+                    )}
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    {tasykil.penasehat.length > 0 ? (
+                      <div className="flex flex-col gap-1.5 py-1">
+                        {tasykil.penasehat.map((_, index) => (
+                          <div key={index} className="h-5 flex items-center justify-center">
+                            <button
+                              onClick={() => handleRemovePenasehat(index)}
+                              className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-slate-300 font-mono italic">-</span>
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* ======================= TABEL 2: PIMPINAN HARIAN (PIMHAR) ======================= */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <div className="flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-amber-500 text-[22px]">verified_user</span>
+            <h3 className="font-bold text-slate-800 text-sm md:text-base">Pimpinan Harian (PIMHAR)</h3>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="overflow-x-auto border border-slate-100 rounded-xl">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100 font-bold text-slate-500">
+                  <th className="py-3 px-4 w-48">Jabatan</th>
+                  <th className="py-3 px-4">Nama Pengurus</th>
+                  <th className="py-3 px-4 w-28 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {pimharRoles.map((role) => {
+                  const assigneeId = tasykil.pimhar[role.key as keyof typeof tasykil.pimhar]
+                  const assignee = assigneeId ? getMemberById(assigneeId) : null
+
+                  return (
+                    <tr key={role.key} className="hover:bg-slate-50/30 transition-colors">
+                      <td className="py-3.5 px-4 font-bold text-slate-700">{role.label}</td>
+                      <td className="py-3.5 px-4">
+                        {assignee ? (
+                          <div className="flex items-center gap-3">
+                            <div className="w-7 h-7 rounded-full bg-amber-500/10 text-[#895200] border border-amber-200 flex items-center justify-center font-bold text-[10px]">
+                              {assignee.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                              <span className="font-bold text-slate-800 text-xs">{assignee.name}</span>
+                              <span className="text-[10px] text-slate-500 font-medium font-mono">NPA: {assignee.id}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 font-semibold italic">Belum diisi</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        {assignee ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => { setSelectedPimharRole(role.key); setPimharModalOpen(true); }}
+                              className="text-[#F7A440] hover:text-[#e09132] font-bold text-[11px] transition-colors"
+                            >
+                              Ganti
+                            </button>
+                            <span className="text-slate-300">|</span>
+                            <button
+                              onClick={() => handleRemovePimhar(role.key)}
+                              className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => { setSelectedPimharRole(role.key); setPimharModalOpen(true); }}
+                            className="bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-[10px] shadow-sm transition"
+                          >
+                            + Pilih Anggota
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* ======================= TABEL 2: BIDANG-BIDANG ======================= */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <div className="flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-purple-500 text-[22px]">corporate_fare</span>
+            <h3 className="font-bold text-slate-800 text-sm md:text-base">Pembagian Bidang / Departemen</h3>
+          </div>
+          <button
+            onClick={() => setAddBidangModalOpen(true)}
+            className="bg-[#F7A440] hover:bg-[#e09132] text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 transition text-xs shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[15px]">add</span>
+            Tambah Bidang
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="overflow-x-auto border border-slate-100 rounded-xl">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100 font-bold text-slate-500">
+                  <th className="py-3 px-4 w-60">Nama Bidang</th>
+                  <th className="py-3 px-4">Nama Pengurus</th>
+                  <th className="py-3 px-4 w-48">NPA</th>
+                  <th className="py-3 px-4 w-28 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {tasykil.bidang.map((b) => {
+                  const assignedMembers = getBidangMembers(b.id)
+
+                  return (
+                    <tr key={b.id} className="hover:bg-slate-50/30 transition-colors">
+                      <td className="py-4 px-4 font-bold text-slate-700">{b.name}</td>
+                      <td className="py-4 px-4">
+                        {assignedMembers.length > 0 ? (
+                          <div className="flex flex-col gap-1.5 py-1">
+                            {assignedMembers.map(m => (
+                              <div key={m.id} className="text-xs text-slate-800 font-bold h-5 flex items-center">
+                                {m.name}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 font-semibold italic">Belum memiliki anggota</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4">
+                        {assignedMembers.length > 0 ? (
+                          <div className="flex flex-col gap-1.5 py-1">
+                            {assignedMembers.map(m => (
+                              <div key={m.id} className="text-[10px] text-slate-500 font-medium font-mono h-5 flex items-center">
+                                {m.id}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-300 font-mono italic">-</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => { setSelectedBidangId(b.id); setBidangModalOpen(true); }}
+                            className="text-[#F7A440] hover:text-[#e09132] font-bold text-[11px] transition-colors"
+                          >
+                            + Anggota
+                          </button>
+                          <span className="text-slate-300">|</span>
+                          <button
+                            onClick={() => handleDeleteBidang(b.id)}
+                            className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
+                          >
+                            Hapus
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+                {tasykil.bidang.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-8 px-4 text-center text-slate-400 italic">
+                      Belum ada bidang kepengurusan. Tambah bidang pertama Anda.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* ======================= TABEL 3: ANGGOTA (TANPA JABATAN) ======================= */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <div className="flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-slate-500 text-[22px]">groups</span>
+            <h3 className="font-bold text-slate-800 text-sm md:text-base">Daftar Anggota</h3>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="overflow-x-auto border border-slate-100 rounded-xl">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100 font-bold text-slate-500">
+                  <th className="py-3 px-4 w-16 text-center">No</th>
+                  <th className="py-3 px-4">Nama Lengkap</th>
+                  <th className="py-3 px-4 w-48">NPA</th>
+                  <th className="py-3 px-4 w-32">Status Keanggotaan</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-600 font-medium">
+                {unassignedMembers.map((m, index) => (
+                  <tr key={m.id} className="hover:bg-slate-50/30 transition-colors">
+                    <td className="py-3 px-4 text-center text-slate-400">{index + 1}</td>
+                    <td className="py-3 px-4 font-bold text-slate-800">{m.name}</td>
+                    <td className="py-3 px-4 font-mono">{m.id}</td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        m.status === "Aktif" ? "bg-slate-100 text-slate-600" : "bg-orange-50 text-orange-600"
+                      }`}>
+                        {m.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {unassignedMembers.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-8 px-4 text-center text-slate-400 italic">
+                      Seluruh anggota aktif sudah didelegasikan peran jabatan.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================================= */}
+      {/* ======================================== MODALS ======================================== */}
+      {/* ========================================================================================= */}
+
+      {/* 1. Modal: Assign PIMHAR Member */}
+      {pimharModalOpen && selectedPimharRole && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-slate-800 text-sm">
+                Pilih Anggota: {pimharRoles.find(r => r.key === selectedPimharRole)?.label}
+              </h3>
+              <button
+                onClick={() => { setPimharModalOpen(false); setSelectedPimharRole(null); setSearchQuery(""); }}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            
+            <div className="p-4 border-b border-slate-50 bg-slate-50/50">
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+                <input
+                  type="text"
+                  placeholder="Cari anggota..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-[#F7A440] bg-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 divide-y divide-slate-100 max-h-[350px]">
+              {getAvailableMembers()
+                .filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                .map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => handleAssignPimhar(selectedPimharRole, m.id)}
+                    className="w-full text-left py-3 px-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-between group"
+                  >
+                    <div>
+                      <p className="font-bold text-xs text-slate-800 group-hover:text-[#F7A440] transition-colors">{m.name}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{m.id}</p>
+                    </div>
+                    <span className="material-symbols-outlined text-slate-300 group-hover:text-[#F7A440] text-[16px] transition-colors">
+                      add_circle
+                    </span>
+                  </button>
+                ))}
+              {getAvailableMembers().filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                <p className="py-8 text-center text-xs text-slate-400 italic">Anggota tidak ditemukan / seluruhnya sudah memiliki peran.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Modal: Assign Bidang Members (Multiple Choice) */}
+      {bidangModalOpen && selectedBidangId && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-slate-800 text-sm">
+                Pilih Anggota: {tasykil.bidang.find(b => b.id === selectedBidangId)?.name}
+              </h3>
+              <button
+                onClick={() => { setBidangModalOpen(false); setSelectedBidangId(null); setSearchQuery(""); }}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            <div className="p-4 border-b border-slate-50 bg-slate-50/50">
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+                <input
+                  type="text"
+                  placeholder="Cari anggota..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-[#F7A440] bg-white"
+                />
+              </div>
+            </div>
+
+            {/* List of members to check/uncheck */}
+            <div className="flex-1 overflow-y-auto p-4 divide-y divide-slate-100 max-h-[350px]">
+              {members
+                .filter(m => {
+                  // Hide members already assigned to PIMHAR
+                  const assignedPimharIds = new Set(Object.values(tasykil.pimhar).filter(id => !!id))
+                  if (assignedPimharIds.has(m.id)) return false
+                  
+                  // Hide members in other bidang
+                  const otherBidangMembers = new Set<string>()
+                  tasykil.bidang.forEach(b => {
+                    if (b.id !== selectedBidangId) {
+                      b.members.forEach(id => otherBidangMembers.add(id))
+                    }
+                  })
+                  if (otherBidangMembers.has(m.id)) return false
+
+                  return m.name.toLowerCase().includes(searchQuery.toLowerCase())
+                })
+                .map(m => {
+                  const targetBidang = tasykil.bidang.find(b => b.id === selectedBidangId)
+                  const isChecked = targetBidang ? targetBidang.members.includes(m.id) : false
+
+                  const handleCheckboxChange = () => {
+                    if (!targetBidang) return
+                    const currentMembers = targetBidang.members
+                    const nextMembers = isChecked
+                      ? currentMembers.filter(id => id !== m.id)
+                      : [...currentMembers, m.id]
+                    handleUpdateBidangMembers(selectedBidangId, nextMembers)
+                  }
+
+                  return (
+                    <label
+                      key={m.id}
+                      className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50 cursor-pointer select-none transition"
+                    >
+                      <div>
+                        <p className="font-bold text-xs text-slate-800">{m.name}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{m.id}</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={handleCheckboxChange}
+                        className="w-4 h-4 rounded text-[#F7A440] border-slate-300 focus:ring-[#F7A440]"
+                      />
+                    </label>
+                  )
+                })}
+            </div>
+            
+            <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+              <button
+                onClick={() => { setBidangModalOpen(false); setSelectedBidangId(null); setSearchQuery(""); }}
+                className="bg-[#F7A440] hover:bg-[#e09132] text-white font-bold px-5 py-2 rounded-lg text-xs shadow-sm transition"
+              >
+                Selesai
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Modal: Add New Bidang */}
+      {addBidangModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl border border-slate-100 overflow-hidden flex flex-col p-6 space-y-4">
+            <div>
+              <h3 className="font-bold text-slate-800 text-sm">Tambah Bidang Baru</h3>
+              <p className="text-[10px] text-slate-400 font-medium mt-1">Masukkan nama divisi bidang kepengurusan baru.</p>
+            </div>
+            <input
+              type="text"
+              placeholder="Contoh: Bidang Publikasi & Dakwah"
+              value={newBidangName}
+              onChange={(e) => setNewBidangName(e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-[#F7A440] focus:ring-1 focus:ring-[#f7a440]"
+            />
+            <div className="flex gap-2 justify-end pt-2 text-xs font-bold">
+              <button
+                onClick={() => { setAddBidangModalOpen(false); setNewBidangName(""); }}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleAddBidang}
+                className="px-4 py-2 bg-[#F7A440] hover:bg-[#e09132] text-white rounded-lg shadow-sm transition"
+              >
+                Tambah
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 4. Modal: Add New Penasehat */}
+      {addPenasehatModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl border border-slate-100 overflow-hidden flex flex-col p-6 space-y-4">
+            <div>
+              <h3 className="font-bold text-slate-800 text-sm">Tambah Penasehat Baru</h3>
+              <p className="text-[10px] text-slate-400 font-medium mt-1">Masukkan nama dewan penasehat baru (kustom).</p>
+            </div>
+            <input
+              type="text"
+              placeholder="Contoh: Ust. KH. Aceng Zakaria"
+              value={newPenasehatName}
+              onChange={(e) => setNewPenasehatName(e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-[#F7A440] focus:ring-1 focus:ring-[#f7a440]"
+            />
+            <div className="flex gap-2 justify-end pt-2 text-xs font-bold">
+              <button
+                onClick={() => { setAddPenasehatModalOpen(false); setNewPenasehatName(""); }}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleAddPenasehat}
+                className="px-4 py-2 bg-[#F7A440] hover:bg-[#e09132] text-white rounded-lg shadow-sm transition"
+              >
+                Tambah
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

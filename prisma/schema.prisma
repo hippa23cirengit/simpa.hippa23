@@ -1,0 +1,113 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Anggota {
+  id           String          @id // NPA (Nomor Pokok Anggota), e.g. "23.0001"
+  name         String
+  status       String          // 'Aktif' | 'Tidak Aktif' | 'Alumni'
+  tempatLahir  String?
+  tanggalLahir String?
+  alamat       String?
+  pekerjaan    String?
+  whatsapp     String?
+  email        String
+  pimhar       Pimhar?
+  bidang       AnggotaBidang?
+  akunLogin    AkunLogin?
+
+  @@map("anggota")
+}
+
+model Penasehat {
+  id        Int    @id @default(autoincrement())
+  name      String
+  sortOrder Int    @map("sort_order")
+
+  @@map("penasehat")
+}
+
+model Pimhar {
+  roleKey   String  @id @map("role_key") // 'ketua', 'wakil_ketua', 'sekretaris', 'wakil_sekretaris', 'bendahara', 'wakil_bendahara'
+  anggotaId String? @unique @map("anggota_id")
+  anggota   Anggota? @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+
+  @@map("pimhar")
+}
+
+model Bidang {
+  id      String          @id @default(uuid())
+  name    String
+  members AnggotaBidang[]
+
+  @@map("bidang")
+}
+
+model AnggotaBidang {
+  id        String @id @default(uuid())
+  bidangId  String @map("bidang_id")
+  anggotaId String @unique @map("anggota_id")
+  bidang    Bidang @relation(fields: [bidangId], references: [id], onDelete: Cascade)
+  anggota   Anggota @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+
+  @@map("anggota_bidang")
+}
+
+model RoleAkses {
+  roleName           String  @id @map("role_name") // 'Super Admin' | 'PIMHAR' | 'Bidang' | 'Anggota'
+  allowDashboard     Boolean @default(true) @map("allow_dashboard")
+  allowDataAnggota   Boolean @default(false) @map("allow_data_anggota")
+  allowTasykil       Boolean @default(false) @map("allow_tasykil")
+  allowCalonAnggota  Boolean @default(false) @map("allow_calon_anggota")
+  allowJadwalKegiatan Boolean @default(true) @map("allow_jadwal_kegiatan")
+  allowPengaturan    Boolean @default(false) @map("allow_pengaturan")
+  akunLogins         AkunLogin[]
+
+  @@map("role_akses")
+}
+
+model AkunLogin {
+  anggotaId    String    @id @map("anggota_id")
+  passwordHash String    @map("password_hash")
+  role         String    @default("Anggota")
+  anggota      Anggota   @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
+  roleAkses    RoleAkses @relation(fields: [role], references: [roleName], onDelete: Restrict)
+
+  @@map("akun_login")
+}
+
+model ScheduledEvent {
+  id       String @id @default(uuid())
+  title    String
+  date     String // YYYY-MM-DD
+  time     String // HH:mm
+  location String
+  color    String // e.g. 'blue', 'amber', 'emerald', 'purple', 'red'
+
+  @@map("scheduled_event")
+}
+
+model Applicant {
+  id           String @id @default(uuid())
+  name         String
+  date         String // YYYY-MM-DD
+  contact      String // WhatsApp number
+  status       String // 'Menunggu' | 'Proses' | 'Diterima' | 'Ditolak'
+  tempatLahir  String
+  tanggalLahir String
+  alamat       String
+  pekerjaan    String
+
+  @@map("applicant")
+}
+
+model WaTemplate {
+  id      String @id @default("default")
+  content String
+
+  @@map("wa_template")
+}

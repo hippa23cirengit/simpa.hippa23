@@ -1,0 +1,202 @@
+import Image from "next/image";
+import Link from "next/link";
+
+export default function AdminDashboard() {
+  const stats = [
+    { name: "TOTAL ANGGOTA", value: "245", icon: "groups", bg: "bg-amber-500/10 text-[#F7A440]" },
+    { name: "PENGURUS AKTIF", value: "32", icon: "how_to_reg", bg: "bg-emerald-500/10 text-emerald-600" },
+    { name: "CALON ANGGOTA", value: "18", icon: "person_add", bg: "bg-orange-500/10 text-orange-600" },
+    { name: "KEGIATAN MENDATANG", value: "5", icon: "event", bg: "bg-blue-500/10 text-blue-600" },
+  ];
+
+  const recentMembers = [
+    {
+      name: "Budi Santoso",
+      id: "23.0142",
+      role: "Ketua Divisi Dakwah",
+      status: "Aktif",
+      statusBg: "bg-emerald-100 text-emerald-800",
+      avatar: "",
+      avatarColor: "bg-blue-50 text-blue-700 border-blue-100"
+    },
+    {
+      name: "Siti Aminah",
+      id: "23.0143",
+      role: "Bendahara Umum",
+      status: "Aktif",
+      statusBg: "bg-emerald-100 text-emerald-800",
+      avatar: "",
+      avatarColor: "bg-emerald-50 text-emerald-700 border-emerald-100"
+    },
+    {
+      name: "Rizky Aditya",
+      id: "23.0144",
+      role: "Anggota Biasa",
+      status: "Pending",
+      statusBg: "bg-amber-100 text-amber-800",
+      avatar: "",
+      avatarColor: "bg-slate-50 text-slate-700 border-slate-200"
+    }
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div>
+        <h2 className="font-headline-lg text-2xl md:text-3xl font-extrabold text-[#1A1A1A] leading-tight">
+          Assalamu'alaikum, Selamat Datang di SIMPA 👋
+        </h2>
+        <p className="text-sm md:text-base text-slate-500 mt-1 font-medium">
+          Sistem Informasi Manajemen Pengurus dan Anggota HIPPA
+        </p>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat) => (
+          <div
+            key={stat.name}
+            className="bg-white p-4 md:p-6 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4 hover:-translate-y-0.5 transition-all duration-300"
+          >
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${stat.bg}`}>
+              <span className="material-symbols-outlined fill text-[24px]">
+                {stat.icon}
+              </span>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">{stat.name}</p>
+              <p className="font-headline-md text-xl md:text-2xl font-bold text-slate-800 mt-0.5">{stat.value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Main Bento Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Kegiatan Mendatang (Left Col - Span 2) */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-6 pb-3 border-b border-slate-100 bg-transparent">
+              <h3 className="font-title-lg text-base md:text-lg font-bold text-slate-900">Kegiatan Mendatang</h3>
+              <Link
+                href="/dashboard/jadwal-kegiatan"
+                className="font-label-md text-xs font-bold text-[#F7A440] hover:text-[#e09132] transition-colors flex items-center gap-1"
+              >
+                Lihat Kalender
+                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+              </Link>
+            </div>
+            
+            {/* Timeline Cards Grid */}
+            <div className="flex flex-col gap-4">
+              <div className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 flex gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[#F7A440]/10 text-[#F7A440] flex flex-col items-center justify-center shrink-0">
+                  <span className="text-[10px] font-bold uppercase">Agt</span>
+                  <span className="text-lg font-extrabold leading-none">20</span>
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm leading-snug">Rapat Pengurus Bulanan</h4>
+                  <p className="text-xs text-slate-500 mt-1 font-semibold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">schedule</span>
+                    09:00 WIB
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5 font-semibold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">location_on</span>
+                    Ruang Rapat Utama
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 flex gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex flex-col items-center justify-center shrink-0">
+                  <span className="text-[10px] font-bold uppercase">Agt</span>
+                  <span className="text-lg font-extrabold leading-none">22</span>
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm leading-snug">Kajian Rutin Mingguan</h4>
+                  <p className="text-xs text-slate-500 mt-1 font-semibold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">schedule</span>
+                    16:00 WIB
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5 font-semibold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">location_on</span>
+                    Masjid Al-Ikhlas
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-slate-100/60 text-xs text-slate-400 font-semibold flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px] text-[#F7A440]">info</span>
+            <span>Jadwal di atas disinkronkan otomatis dengan kalender kegiatan HIPPA Cirengit.</span>
+          </div>
+        </div>
+
+        {/* Right Sidebar Details */}
+        <div className="flex flex-col gap-6">
+          {/* Anggota Terbaru */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+              <h3 className="font-title-lg text-base font-bold text-slate-900">Anggota Terbaru</h3>
+              <Link
+                href="/dashboard/data-anggota"
+                className="text-xs font-bold text-[#F7A440] hover:text-[#e09132] transition-colors"
+              >
+                Lihat Semua
+              </Link>
+            </div>
+            <div className="flex flex-col gap-4">
+              {recentMembers.map((member) => (
+                <div key={member.id} className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-full border flex items-center justify-center text-xs font-bold shrink-0 ${member.avatarColor}`}>
+                    {member.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex-grow min-w-0">
+                    <h4 className="font-bold text-slate-800 text-xs truncate">{member.name}</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5 truncate font-medium">
+                      {member.role === "-" ? "Anggota" : member.role} • {member.id}
+                    </p>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${member.statusBg} shrink-0`}>
+                    {member.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Org Summary */}
+          <div className="bg-gradient-to-br from-white to-slate-50/50 p-6 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-amber-500/5 rounded-full blur-xl"></div>
+            <h3 className="font-title-lg text-base md:text-lg font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100">
+              Ringkasan Kepengurusan
+            </h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Ketua Umum</span>
+                <span className="font-semibold text-slate-800">Ahmad Fauzi</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Sekretaris Jenderal</span>
+                <span className="font-semibold text-slate-800">Nisa Utami</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Periode Jabatan</span>
+                <span className="font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded text-xs">
+                  2023 - 2025
+                </span>
+              </div>
+            </div>
+            <Link
+              href="/dashboard/tasykil"
+              className="w-full mt-5 py-2.5 border border-[#1A1A1A] hover:bg-slate-100 text-[#1A1A1A] font-bold text-xs rounded-xl transition duration-300 flex items-center justify-center"
+            >
+              Lihat Struktur Lengkap
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
