@@ -281,19 +281,26 @@ export function getStoredAcl(): AclRule[] {
   if (typeof window === "undefined") return DEFAULT_ACL;
   const stored = localStorage.getItem(ACL_KEY);
   let parsed: AclRule[] = [];
+  let changed = false;
   if (!stored) {
     parsed = [...DEFAULT_ACL];
+    changed = true;
   } else {
     try {
       parsed = JSON.parse(stored);
+      // Migration: Reset if legacy structure (missing granular permission keys)
+      if (parsed.length > 0 && !parsed[0].permissions.hasOwnProperty("viewDataAnggota")) {
+        parsed = [...DEFAULT_ACL];
+        changed = true;
+      }
     } catch (e) {
       parsed = [...DEFAULT_ACL];
+      changed = true;
     }
   }
 
   // Auto-sync: Ensure every Bidang in Tasykil has an ACL configuration
   const tasykil = getStoredTasykil();
-  let changed = false;
   tasykil.bidang.forEach(b => {
     const roleName = b.name;
     const exists = parsed.some(r => r.role === roleName);
