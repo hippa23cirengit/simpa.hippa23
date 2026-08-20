@@ -56,8 +56,16 @@ client.on("qr", (qr) => {
   console.log("\n=======================================================");
   console.log("SCAN QR CODE BERIKUT DENGAN WHATSAPP ANDA (LINKED DEVICES):");
   console.log("=======================================================\n");
+  
+  // Output standard terminal ASCII blocks
   qrcode.generate(qr, { small: true });
-  console.log("\n=======================================================\n");
+  
+  // Output a clickable visual image link to bypass terminal font distortion
+  const qrImageLink = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(qr)}`;
+  console.log("\n=======================================================");
+  console.log("ATAU JIKA TAMPILAN DI ATAS RUSAK / SUSAH DI-SCAN, BUKA LINK BERIKUT:");
+  console.log(qrImageLink);
+  console.log("=======================================================\n");
 });
 
 // Authentication successful
