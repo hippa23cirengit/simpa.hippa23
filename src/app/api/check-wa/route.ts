@@ -42,12 +42,13 @@ export async function POST(req: Request) {
 
         const data = await response.json();
         return NextResponse.json({
-          status: true,
+          status: data.whatsappReady ? true : false,
           device_status: data.whatsappReady ? "connect" : "disconnect",
           device_name: "Self-Hosted Gateway",
           device_number: data.whatsappReady ? "Connected (Ready)" : "Offline (Not Ready)",
           name: "Self-Hosted WA Gateway",
-          reason: data.message
+          reason: data.message,
+          qr_url: data.qrUrl || null
         });
       } catch (err: any) {
         return NextResponse.json({

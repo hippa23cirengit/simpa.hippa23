@@ -43,3 +43,10 @@ next-env.d.ts
 # credentials
 /data-penting/
 
+# whatsapp gateway projects
+/whatsapp-gateway/
+/whatsapp-gateway-new/
+/whatsapp-gateway.rar
+*.rar
+*.zip
+

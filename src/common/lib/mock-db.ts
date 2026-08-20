@@ -41,6 +41,7 @@ export interface ScheduledEvent {
   type?: "kajian" | "umum"; // Tipe kegiatan
   speaker?: string;        // Nama pemateri (opsional)
   theme?: string;          // Tema kajian (opsional)
+  notificationCount?: number; // Jumlah notifikasi terkirim (maks 2)
 }
 
 export interface AclRule {

@@ -48,12 +48,14 @@ export default function PengaturanPage() {
     deviceNumber: string;
     deviceName: string;
     reason: string;
+    qrUrl?: string | null;
   }>({
     checking: true,
     connected: false,
     deviceNumber: "-",
     deviceName: "-",
-    reason: "Memeriksa status koneksi server..."
+    reason: "Memeriksa status koneksi server...",
+    qrUrl: null
   })
 
   // Periode Jabatan State
@@ -64,6 +66,105 @@ export default function PengaturanPage() {
   const [testSent, setTestSent] = useState(false)
 
   const [showToken, setShowToken] = useState(false)
+  const [isRestarting, setIsRestarting] = useState(false)
+
+  const handleRestartGateway = async () => {
+    if (!canManage) return
+    const confirmed = await customConfirm({
+      title: "Restart Server Gateway",
+      message: "Apakah Anda yakin ingin memuat ulang (restart) server gateway? Browser virtual akan dijalankan kembali tetapi sesi masuk (login) tetap dipertahankan.",
+      type: "warning",
+      confirmText: "Ya, Restart",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
+    setIsRestarting(true)
+    showToast({ message: "Mengirim perintah restart ke server...", type: "info" })
+
+    try {
+      const res = await fetch("/api/restart-wa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: waConfig.token,
+          endpoint: waConfig.endpoint
+        })
+      })
+      const data = await res.json()
+      if (data.status === true) {
+        showToast({ message: "Server berhasil direstart! Menunggu inisialisasi ulang...", type: "success" })
+        setTimeout(() => {
+          setIsRestarting(false)
+          checkLiveConnection(waConfig)
+        }, 5000)
+      } else {
+        setIsRestarting(false)
+        await customAlert({
+          type: "error",
+          title: "Gagal Restart",
+          message: `Gagal merestart server: ${data.reason || "Alasan tidak diketahui"}`
+        })
+      }
+    } catch (err: any) {
+      setIsRestarting(false)
+      await customAlert({
+        type: "error",
+        title: "Kesalahan Koneksi",
+        message: `Gagal menghubungi API restart: ${err.message}`
+      })
+    }
+  }
+
+  const handleLogoutGateway = async () => {
+    if (!canManage) return
+    const confirmed = await customConfirm({
+      title: "Keluar Sesi & Tautkan Ulang",
+      message: "Apakah Anda yakin ingin mengeluarkan (logout) sesi WhatsApp saat ini dan mereset gateway? Sesi lama akan dihapus dan Anda harus melakukan scan QR Code baru.",
+      type: "warning",
+      confirmText: "Ya, Reset Sesi",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
+    setIsRestarting(true)
+    showToast({ message: "Mengeluarkan sesi dan mereset gateway...", type: "info" })
+
+    try {
+      const res = await fetch("/api/logout-wa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: waConfig.token,
+          endpoint: waConfig.endpoint
+        })
+      })
+      const data = await res.json()
+      if (data.status === true) {
+        showToast({ message: "Sesi berhasil dihapus! Menunggu QR Code baru...", type: "success" })
+        setTimeout(() => {
+          setIsRestarting(false)
+          checkLiveConnection(waConfig)
+        }, 5000)
+      } else {
+        setIsRestarting(false)
+        await customAlert({
+          type: "error",
+          title: "Gagal Reset",
+          message: `Gagal mereset sesi: ${data.reason || "Alasan tidak diketahui"}`
+        })
+      }
+    } catch (err: any) {
+      setIsRestarting(false)
+      await customAlert({
+        type: "error",
+        title: "Kesalahan Koneksi",
+        message: `Gagal menghubungi API reset: ${err.message}`
+      })
+    }
+  }
 
   const checkLiveConnection = async (cfgToTest?: WaConfig) => {
     const targetCfg = cfgToTest || waConfig
@@ -90,7 +191,8 @@ export default function PengaturanPage() {
           connected: true,
           deviceNumber: data.device || data.phone || data.device_number || targetCfg.deviceId || "-",
           deviceName: data.name || data.device_name || targetCfg.deviceId || "WhatsApp Device",
-          reason: data.reason || "Terhubung sukses"
+          reason: data.reason || "Terhubung sukses",
+          qrUrl: data.qr_url || null
         })
       } else {
         setDeviceInfo({
@@ -98,7 +200,8 @@ export default function PengaturanPage() {
           connected: false,
           deviceNumber: "-",
           deviceName: "-",
-          reason: data.reason || data.detail || "Terputus / Token Tidak Valid"
+          reason: data.reason || data.detail || "Terputus / Token Tidak Valid",
+          qrUrl: data.qr_url || null
         })
       }
     } catch (err: any) {
@@ -107,7 +210,8 @@ export default function PengaturanPage() {
         connected: false,
         deviceNumber: "-",
         deviceName: "-",
-        reason: err.message || "Gagal menghubungi endpoint"
+        reason: err.message || "Gagal menghubungi endpoint",
+        qrUrl: null
       })
     }
   }
@@ -448,7 +552,7 @@ export default function PengaturanPage() {
                     </span>
                   </div>
                   <p className="text-[10px] text-red-600 font-medium leading-snug">
-                    Respon Fonnte: {deviceInfo.reason}
+                    Respon Gateway: {deviceInfo.reason}
                   </p>
                 </div>
               )}
@@ -470,21 +574,54 @@ export default function PengaturanPage() {
                   </span>
                 </div>
               </div>
+
+              {/* QR Code display inside settings dashboard */}
+              {!deviceInfo.connected && deviceInfo.qrUrl && (
+                <div className="flex flex-col items-center gap-3 p-4 bg-amber-50/70 rounded-2xl border border-amber-200 mt-4 shadow-sm">
+                  <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[14px]">qr_code_2</span>
+                    Scan QR Code Gateway
+                  </span>
+                  <img 
+                    src={deviceInfo.qrUrl} 
+                    alt="WhatsApp QR Code" 
+                    className="w-[180px] h-[180px] bg-white border border-slate-200 rounded-xl p-2 shadow-inner" 
+                  />
+                  <p className="text-[9px] text-amber-700 font-bold text-center leading-normal max-w-[200px]">
+                    Buka WhatsApp di HP &gt; Perangkat Tertaut &gt; Tautkan Perangkat.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="mt-8 flex gap-2">
+          <div className="mt-8 flex flex-col sm:flex-row gap-2 w-full">
             <button
               type="button"
               onClick={() => checkLiveConnection()}
-              disabled={deviceInfo.checking}
-              className="w-full py-2.5 px-4 text-center text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-xl transition duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50"
+              disabled={deviceInfo.checking || isRestarting}
+              className="flex-1 py-2.5 px-4 text-center text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-xl transition duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               <span className={`material-symbols-outlined text-[16px] ${deviceInfo.checking ? "animate-spin" : ""}`}>
                 sync
               </span>
               {deviceInfo.checking ? "Memeriksa..." : "Cek Koneksi Live"}
             </button>
+
+            {waConfig.provider === "self-hosted" && canManage && (
+              <button
+                type="button"
+                onClick={handleLogoutGateway}
+                disabled={deviceInfo.checking || isRestarting}
+                className="flex-1 py-2.5 px-4 text-center text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 active:bg-red-200 border border-red-200/60 rounded-xl transition duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50"
+                title="Mengeluarkan sesi WA di server dan meminta barcode baru"
+              >
+                <span className={`material-symbols-outlined text-[16px] ${isRestarting ? "animate-spin" : ""}`}>
+                  logout
+                </span>
+                {isRestarting ? "Memproses..." : "Tautkan Ulang / Keluar"}
+              </button>
+            )}
           </div>
         </div>
 

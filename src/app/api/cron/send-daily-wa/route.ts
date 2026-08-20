@@ -5,6 +5,7 @@ import {
   DEFAULT_WA_TEMPLATE_KAJIAN,
   DEFAULT_WA_TEMPLATE_UMUM
 } from "@/common/lib/mock-db"
+import { sendWhatsAppMessage } from "@/common/lib/whatsapp-service"
 
 export async function GET(req: Request) {
   try {
@@ -33,12 +34,30 @@ export async function GET(req: Request) {
     const templateKajian = settingsMap["simpa_wa_template_kajian"] || DEFAULT_WA_TEMPLATE_KAJIAN
     const templateUmum = settingsMap["simpa_wa_template_umum"] || DEFAULT_WA_TEMPLATE_UMUM
 
-    // 2. Load WA configurations check
-    if (!waConfig.token || waConfig.token === "t0k3n-s3cr3t-fonnt3-c1r3ng1t") {
-      return NextResponse.json({
-        status: false,
-        reason: "Fonnte API Token tidak terkonfigurasi di server."
-      }, { status: 400 })
+    // 2. Load WA configurations check based on active provider
+    const provider = waConfig.provider || "fonnte"
+    if (provider === "meta") {
+      if (!waConfig.metaToken || !waConfig.metaPhoneId) {
+        return NextResponse.json({
+          status: false,
+          reason: "Kredensial Meta (Access Token atau Phone Number ID) belum terkonfigurasi di server."
+        }, { status: 400 })
+      }
+    } else if (provider === "self-hosted") {
+      if (!waConfig.endpoint) {
+        return NextResponse.json({
+          status: false,
+          reason: "Endpoint Self-Hosted Gateway belum terkonfigurasi di server."
+        }, { status: 400 })
+      }
+    } else {
+      // Fonnte
+      if (!waConfig.token || waConfig.token === "t0k3n-s3cr3t-fonnt3-c1r3ng1t") {
+        return NextResponse.json({
+          status: false,
+          reason: "Fonnte API Token tidak terkonfigurasi di server."
+        }, { status: 400 })
+      }
     }
 
     // 3. Load active members list from Supabase
@@ -90,7 +109,7 @@ export async function GET(req: Request) {
 
     const broadcastLog: any[] = []
 
-    // 5. Send daily event alerts to all registered members
+    // 6. Send daily event alerts to all registered members
     for (const event of todayEvents) {
       const template = event.type === "kajian" ? templateKajian : templateUmum
 
@@ -111,21 +130,34 @@ export async function GET(req: Request) {
           cleanPhone = "62" + cleanPhone.slice(1)
         }
 
-        // Call Fonnte API Gateway via server post
-        const params = new URLSearchParams()
-        params.append("target", cleanPhone)
-        params.append("message", message)
+        const sendParams: any = {
+          target: cleanPhone,
+          provider: provider,
+          token: waConfig.token,
+          endpoint: waConfig.endpoint,
+          metaToken: waConfig.metaToken,
+          metaPhoneId: waConfig.metaPhoneId
+        }
+
+        if (provider === "meta") {
+          sendParams.metaTemplateName = event.type === "kajian" ? waConfig.metaTemplateKajian : waConfig.metaTemplateUmum
+          sendParams.metaTemplateLanguage = "id"
+          sendParams.metaParams = [
+            member.name,
+            event.title,
+            event.speaker || "-",
+            event.theme || "-",
+            formatDateIndo(event.date),
+            event.time,
+            event.location || "-"
+          ]
+        } else {
+          sendParams.message = message
+        }
 
         try {
-          const apiRes = await fetch(waConfig.endpoint || "https://api.fonnte.com/send", {
-            method: "POST",
-            headers: {
-              Authorization: waConfig.token.trim()
-            },
-            body: params
-          })
+          const resData = await sendWhatsAppMessage(sendParams)
 
-          const resData = await apiRes.json()
           broadcastLog.push({
             member: member.name,
             phone: cleanPhone,
@@ -155,3 +187,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ status: false, error: error.message }, { status: 500 })
   }
 }
+
