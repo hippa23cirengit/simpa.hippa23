@@ -132,7 +132,6 @@ export function getStoredMembers(): Member[] {
   const stored = localStorage.getItem(MEMBERS_KEY)
   if (!stored) {
     localStorage.setItem(MEMBERS_KEY, JSON.stringify(DEFAULT_MEMBERS))
-    syncToServer(MEMBERS_KEY, DEFAULT_MEMBERS)
     return DEFAULT_MEMBERS
   }
   try {
@@ -141,8 +140,6 @@ export function getStoredMembers(): Member[] {
     if (parsed.length === 0 || parsed[0].id !== "26.0000" || parsed[0].name !== "Najmi Shofwan Al-Azhar") {
       localStorage.setItem(MEMBERS_KEY, JSON.stringify(DEFAULT_MEMBERS))
       localStorage.setItem(TASYKIL_KEY, JSON.stringify(DEFAULT_TASYKIL))
-      syncToServer(MEMBERS_KEY, DEFAULT_MEMBERS)
-      syncToServer(TASYKIL_KEY, DEFAULT_TASYKIL)
       return DEFAULT_MEMBERS
     }
     return parsed
@@ -163,7 +160,6 @@ export function getStoredTasykil(): TasykilState {
   const stored = localStorage.getItem(TASYKIL_KEY);
   if (!stored) {
     localStorage.setItem(TASYKIL_KEY, JSON.stringify(DEFAULT_TASYKIL));
-    syncToServer(TASYKIL_KEY, DEFAULT_TASYKIL)
     return DEFAULT_TASYKIL;
   }
   try {
@@ -172,7 +168,6 @@ export function getStoredTasykil(): TasykilState {
     if (typeof parsed.penasehat === "string") {
       parsed.penasehat = parsed.penasehat ? [parsed.penasehat] : [];
       localStorage.setItem(TASYKIL_KEY, JSON.stringify(parsed));
-      syncToServer(TASYKIL_KEY, parsed)
     }
     return parsed;
   } catch (e) {
@@ -206,37 +201,7 @@ const ACL_KEY = "simpa_acl_rules";
 const CURRENT_ROLE_KEY = "simpa_current_role";
 const WA_TEMPLATE_KEY = "simpa_wa_template";
 
-export const DEFAULT_EVENTS: ScheduledEvent[] = [
-  {
-    id: "evt-1",
-    title: "Kajian Rutin Pemuda: Peran Pemuda di Era Digital",
-    date: "2026-08-22",
-    time: "19:30",
-    location: "Masjid Al-Ikhlas Cirengit",
-    color: "blue",
-    type: "kajian",
-    speaker: "Ustadz Evie Effendi",
-    theme: "Pemuda Hijrah"
-  },
-  {
-    id: "evt-2",
-    title: "Olahraga Futsal Rutin Pemuda",
-    date: "2026-08-23",
-    time: "16:00",
-    location: "Futsal Center Cirengit",
-    color: "emerald",
-    type: "umum"
-  },
-  {
-    id: "evt-3",
-    title: "Rapat Pleno Pengurus Bulanan",
-    date: "2026-08-28",
-    time: "09:00",
-    location: "Sekretariat HIPPA Cirengit",
-    color: "amber",
-    type: "umum"
-  }
-];
+export const DEFAULT_EVENTS: ScheduledEvent[] = [];
 
 export const DEFAULT_ACL: AclRule[] = [
   {
@@ -303,7 +268,6 @@ export function getStoredEvents(): ScheduledEvent[] {
   const stored = localStorage.getItem(EVENTS_KEY);
   if (!stored) {
     localStorage.setItem(EVENTS_KEY, JSON.stringify(DEFAULT_EVENTS));
-    syncToServer(EVENTS_KEY, DEFAULT_EVENTS)
     return DEFAULT_EVENTS;
   }
   try {
@@ -383,7 +347,6 @@ export function getStoredAcl(): AclRule[] {
 
   if (changed) {
     localStorage.setItem(ACL_KEY, JSON.stringify(parsed));
-    syncToServer(ACL_KEY, parsed)
   }
 
   return parsed;
@@ -414,7 +377,6 @@ export function getStoredAccounts(): LoginAccount[] {
   const stored = localStorage.getItem(ACCOUNTS_KEY);
   if (!stored) {
     localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(DEFAULT_LOGIN_ACCOUNTS));
-    syncToServer(ACCOUNTS_KEY, DEFAULT_LOGIN_ACCOUNTS)
     return DEFAULT_LOGIN_ACCOUNTS;
   }
   try {
@@ -422,7 +384,6 @@ export function getStoredAccounts(): LoginAccount[] {
     // Migration: If Najmi is not the first account, reset to ensure sync
     if (parsed.length === 0 || parsed[0].npa !== "26.0000") {
       localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(DEFAULT_LOGIN_ACCOUNTS));
-      syncToServer(ACCOUNTS_KEY, DEFAULT_LOGIN_ACCOUNTS)
       return DEFAULT_LOGIN_ACCOUNTS;
     }
     // Auto-migrate: Ensure Super Admin is linked to the member record and has new password
@@ -430,7 +391,6 @@ export function getStoredAccounts(): LoginAccount[] {
       parsed[0].linkedAnggotaId = "26.0000";
       parsed[0].passwordHash = "#h1ppa23";
       localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(parsed));
-      syncToServer(ACCOUNTS_KEY, parsed);
     }
     return parsed;
   } catch (e) {
@@ -586,7 +546,6 @@ export function getCurrentRole(): string {
   const stored = localStorage.getItem(CURRENT_ROLE_KEY);
   if (!stored) {
     localStorage.setItem(CURRENT_ROLE_KEY, "Super Admin");
-    syncToServer(CURRENT_ROLE_KEY, "Super Admin")
     return "Super Admin";
   }
   return stored;
@@ -606,7 +565,6 @@ export function getWaTemplate(): string {
   const stored = localStorage.getItem(WA_TEMPLATE_KEY);
   if (!stored) {
     localStorage.setItem(WA_TEMPLATE_KEY, DEFAULT_WA_TEMPLATE);
-    syncToServer(WA_TEMPLATE_KEY, DEFAULT_WA_TEMPLATE)
     return DEFAULT_WA_TEMPLATE;
   }
   return stored;
@@ -644,7 +602,6 @@ export function getWaConfig(): WaConfig {
   const stored = localStorage.getItem(WA_CONFIG_KEY);
   if (!stored || stored === "null") {
     localStorage.setItem(WA_CONFIG_KEY, JSON.stringify(DEFAULT_WA_CONFIG));
-    syncToServer(WA_CONFIG_KEY, DEFAULT_WA_CONFIG)
     return DEFAULT_WA_CONFIG;
   }
   try {
@@ -668,7 +625,6 @@ export function getPeriodeJabatan(): string {
   const stored = localStorage.getItem(PERIODE_JABATAN_KEY);
   if (!stored || stored === "null") {
     localStorage.setItem(PERIODE_JABATAN_KEY, "2026 - 2028");
-    syncToServer(PERIODE_JABATAN_KEY, "2026 - 2028")
     return "2026 - 2028";
   }
   return stored;
@@ -721,7 +677,6 @@ export function getWaTemplateKajian(): string {
   const stored = localStorage.getItem(WA_TEMPLATE_KAJIAN_KEY);
   if (!stored) {
     localStorage.setItem(WA_TEMPLATE_KAJIAN_KEY, DEFAULT_WA_TEMPLATE_KAJIAN);
-    syncToServer(WA_TEMPLATE_KAJIAN_KEY, DEFAULT_WA_TEMPLATE_KAJIAN)
     return DEFAULT_WA_TEMPLATE_KAJIAN;
   }
   return stored;
@@ -739,7 +694,6 @@ export function getWaTemplateUmum(): string {
   const stored = localStorage.getItem(WA_TEMPLATE_UMUM_KEY);
   if (!stored) {
     localStorage.setItem(WA_TEMPLATE_UMUM_KEY, DEFAULT_WA_TEMPLATE_UMUM);
-    syncToServer(WA_TEMPLATE_UMUM_KEY, DEFAULT_WA_TEMPLATE_UMUM)
     return DEFAULT_WA_TEMPLATE_UMUM;
   }
   return stored;
