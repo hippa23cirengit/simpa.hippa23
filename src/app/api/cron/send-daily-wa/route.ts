@@ -116,13 +116,22 @@ export async function GET(req: Request) {
       for (const member of membersWithWa) {
         // Build message
         const message = template
-          .replace(/\{\{NAMA\}\}/g, member.name)
-          .replace(/\{\{KEGIATAN\}\}/g, event.title)
-          .replace(/\{\{PEMATERI\}\}/g, event.speaker || "-")
-          .replace(/\{\{TEMA\}\}/g, event.theme || "-")
-          .replace(/\{\{TANGGAL\}\}/g, formatDateIndo(event.date))
-          .replace(/\{\{JAM\}\}/g, event.time)
-          .replace(/\{\{LOKASI\}\}/g, event.location || "-")
+          .replace(/\{\{NAMA\}\}/gi, member.name)
+          .replace(/\{NAMA\}/gi, member.name)
+          .replace(/\{\{KEGIATAN\}\}/gi, event.title)
+          .replace(/\{KEGIATAN\}/gi, event.title)
+          .replace(/\{\{PEMATERI\}\}/gi, event.speaker || "-")
+          .replace(/\{PEMATERI\}/gi, event.speaker || "-")
+          .replace(/\{\{TEMA\}\}/gi, event.theme || "-")
+          .replace(/\{TEMA\}/gi, event.theme || "-")
+          .replace(/\{\{TANGGAL\}\}/gi, formatDateIndo(event.date))
+          .replace(/\{TANGGAL\}/gi, formatDateIndo(event.date))
+          .replace(/\{\{JAM\}\}/gi, event.time)
+          .replace(/\{JAM\}/gi, event.time)
+          .replace(/\{\{WAKTU\}\}/gi, event.time)
+          .replace(/\{WAKTU\}/gi, event.time)
+          .replace(/\{\{LOKASI\}\}/gi, event.location || "-")
+          .replace(/\{LOKASI\}/gi, event.location || "-")
 
         // Format recipient phone number
         let cleanPhone = (member.whatsapp || "").trim().replace(/[^0-9]/g, "")

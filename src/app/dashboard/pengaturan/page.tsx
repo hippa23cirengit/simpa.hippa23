@@ -397,23 +397,33 @@ export default function PengaturanPage() {
   // Parse template variables for mockup preview
   const getPreviewText = (rawTemplate: string) => {
     if (!rawTemplate) return ""
-    if (activeTemplateTab === "kajian") {
-      return rawTemplate
-        .replace(/\{\{NAMA\}\}/g, "Budi Santoso")
-        .replace(/\{\{KEGIATAN\}\}/g, "Peran Pemuda di Era Digital")
-        .replace(/\{\{PEMATERI\}\}/g, "Ustadz Hanan Attaki")
-        .replace(/\{\{TEMA\}\}/g, "Fikih Dakwah Pemuda")
-        .replace(/\{\{TANGGAL\}\}/g, "Sabtu, 22 Agustus 2026")
-        .replace(/\{\{JAM\}\}/g, "19:30")
-        .replace(/\{\{LOKASI\}\}/g, "Masjid Al-Ikhlas Cirengit")
-    } else {
-      return rawTemplate
-        .replace(/\{\{NAMA\}\}/g, "Budi Santoso")
-        .replace(/\{\{KEGIATAN\}\}/g, "Olahraga Futsal Rutin Pemuda")
-        .replace(/\{\{TANGGAL\}\}/g, "Minggu, 23 Agustus 2026")
-        .replace(/\{\{JAM\}\}/g, "16:00")
-        .replace(/\{\{LOKASI\}\}/g, "Futsal Center Cirengit")
+    
+    const replaceHelper = (tpl: string, isKajian: boolean) => {
+      let res = tpl
+        .replace(/\{\{NAMA\}\}/gi, "Budi Santoso")
+        .replace(/\{NAMA\}/gi, "Budi Santoso")
+        .replace(/\{\{KEGIATAN\}\}/gi, isKajian ? "Peran Pemuda di Era Digital" : "Olahraga Futsal Rutin Pemuda")
+        .replace(/\{KEGIATAN\}/gi, isKajian ? "Peran Pemuda di Era Digital" : "Olahraga Futsal Rutin Pemuda")
+        .replace(/\{\{TANGGAL\}\}/gi, isKajian ? "Sabtu, 22 Agustus 2026" : "Minggu, 23 Agustus 2026")
+        .replace(/\{TANGGAL\}/gi, isKajian ? "Sabtu, 22 Agustus 2026" : "Minggu, 23 Agustus 2026")
+        .replace(/\{\{JAM\}\}/gi, isKajian ? "19:30" : "16:00")
+        .replace(/\{JAM\}/gi, isKajian ? "19:30" : "16:00")
+        .replace(/\{\{WAKTU\}\}/gi, isKajian ? "19:30" : "16:00")
+        .replace(/\{WAKTU\}/gi, isKajian ? "19:30" : "16:00")
+        .replace(/\{\{LOKASI\}\}/gi, isKajian ? "Masjid Al-Ikhlas Cirengit" : "Futsal Center Cirengit")
+        .replace(/\{LOKASI\}/gi, isKajian ? "Masjid Al-Ikhlas Cirengit" : "Futsal Center Cirengit");
+        
+      if (isKajian) {
+        res = res
+          .replace(/\{\{PEMATERI\}\}/gi, "Ustadz Hanan Attaki")
+          .replace(/\{PEMATERI\}/gi, "Ustadz Hanan Attaki")
+          .replace(/\{\{TEMA\}\}/gi, "Fikih Dakwah Pemuda")
+          .replace(/\{TEMA\}/gi, "Fikih Dakwah Pemuda");
+      }
+      return res;
     }
+    
+    return replaceHelper(rawTemplate, activeTemplateTab === "kajian");
   }
 
   // Render WhatsApp formatting (*bold*, _italic_) to HTML Elements
