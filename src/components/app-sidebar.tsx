@@ -122,12 +122,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
-                  render={<Link href={item.url} />}
-                  isActive={isActive}
+                  render={<Link href={item.url} aria-current={isActive ? "page" : undefined} />}
                   tooltip={item.title}
                   className={`flex items-center gap-3 px-3 py-5 rounded-xl font-body-md text-sm font-semibold transition-all duration-200 group-data-[collapsible=icon]:!w-10 group-data-[collapsible=icon]:!h-10 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:!mx-auto group-data-[collapsible=icon]:justify-center ${
                     isActive
-                      ? "!bg-[#F7A440] !text-white hover:!bg-[#e09132] hover:!text-white shadow-sm"
+                      ? "bg-[#F7A440] text-white shadow-sm hover:bg-[#e09132] hover:text-white"
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
