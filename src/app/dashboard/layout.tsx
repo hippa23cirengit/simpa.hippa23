@@ -190,48 +190,9 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
             </button>
             
             <div className="hidden sm:block pl-4 border-l border-slate-200">
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <button className="flex items-center gap-3 cursor-pointer p-1 rounded-xl hover:bg-slate-50 transition-colors text-left focus:outline-none" />
-                  }
-                >
-                  <div className="text-right">
-                    <p className="text-xs text-[#F7A440] font-extrabold leading-none">{getSubLabel()}</p>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-200 flex items-center justify-center text-xs font-bold text-[#895200] overflow-hidden shrink-0">
-                    {userPhoto ? (
-                      <img
-                        src={userPhoto}
-                        alt="Profile Photo"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      userName ? userName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "AF"
-                    )}
-                  </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-48 rounded-xl shadow-lg border border-slate-200/80 p-1.5 mt-2" align="end">
-                  <DropdownMenuItem
-                    onClick={() => router.push("/dashboard/profil")}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px] text-slate-500">account_circle</span>
-                    Profil Lengkap
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="my-1.5" />
-                  <DropdownMenuItem
-                    onClick={() => {
-                      clearSession();
-                      router.replace("/login");
-                    }}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 cursor-pointer transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">logout</span>
-                    Keluar
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <span className="text-xs font-extrabold text-[#F7A440] uppercase tracking-wider select-none">
+                {getSubLabel()}
+              </span>
             </div>
           </div>
         </header>
