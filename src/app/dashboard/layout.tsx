@@ -197,8 +197,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                   }
                 >
                   <div className="text-right">
-                    <p className="font-label-md text-xs text-slate-800 font-bold leading-none">{userName}</p>
-                    <p className="text-[10px] text-[#F7A440] font-bold leading-none mt-1">{getSubLabel()}</p>
+                    <p className="text-xs text-[#F7A440] font-extrabold leading-none">{getSubLabel()}</p>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-200 flex items-center justify-center text-xs font-bold text-[#895200] overflow-hidden shrink-0">
                     {userPhoto ? (
