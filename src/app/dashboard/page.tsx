@@ -31,6 +31,7 @@ export default function AdminDashboard() {
   const [periodeJabatan, setPeriodeJabatan] = useState("2026 - 2028");
   const [ketuaName, setKetuaName] = useState("-");
   const [sekretarisName, setSekretarisName] = useState("-");
+  const [bendaharaName, setBendaharaName] = useState("-");
   const [loading, setLoading] = useState(true);
 
   const loadDashboardData = () => {
@@ -40,9 +41,11 @@ export default function AdminDashboard() {
     const tasykil = getStoredTasykil();
     const ketuaObj = rawMembers.find((m) => m.id === tasykil.pimhar.ketua);
     const sekObj = rawMembers.find((m) => m.id === tasykil.pimhar.sekretaris);
+    const bendaharaObj = rawMembers.find((m) => m.id === tasykil.pimhar.bendahara);
 
     setKetuaName(ketuaObj ? ketuaObj.name : "-");
     setSekretarisName(sekObj ? sekObj.name : "-");
+    setBendaharaName(bendaharaObj ? bendaharaObj.name : "-");
 
     const storedApplicants = localStorage.getItem("simpa_calon_anggota");
     if (storedApplicants) {
@@ -293,6 +296,10 @@ export default function AdminDashboard() {
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">Sekretaris</span>
                 <span className="font-semibold text-slate-800">{sekretarisName === "-" ? "Belum ditentukan" : sekretarisName}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">Bendahara</span>
+                <span className="font-semibold text-slate-800">{bendaharaName === "-" ? "Belum ditentukan" : bendaharaName}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">Periode Jabatan</span>

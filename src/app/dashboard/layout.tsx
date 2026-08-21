@@ -133,7 +133,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   if (initialLoading || !authorized) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-bold text-slate-400 gap-3">
+      <div className="w-full min-h-screen bg-slate-50 flex flex-col items-center justify-center font-bold text-slate-400 gap-3">
         <div className="w-8 h-8 border-4 border-[#F7A440] border-t-transparent rounded-full animate-spin"></div>
         <span className="text-xs tracking-wider text-slate-400 font-semibold uppercase">Menghubungkan ke Supabase...</span>
       </div>

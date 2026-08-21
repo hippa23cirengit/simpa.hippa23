@@ -12,7 +12,9 @@ import {
   TasykilState,
   Bidang,
   getCurrentRole,
-  getStoredAcl
+  getStoredAcl,
+  getPeriodeJabatan,
+  savePeriodeJabatan
 } from "@/common/lib/mock-db"
 import { customConfirm, showToast } from "@/common/lib/alert"
 
@@ -35,11 +37,15 @@ export default function Tasykil() {
   const [newPenasehatName, setNewPenasehatName] = useState("")
   
   const [searchQuery, setSearchQuery] = useState("")
+  
+  const [periodeJabatan, setPeriodeJabatan] = useState("2026 - 2028")
+  const [isPeriodeSaved, setIsPeriodeSaved] = useState(false)
 
   const loadData = () => {
     setMembers(getStoredMembers())
     setTasykil(getStoredTasykil())
     setCurrentRole(getCurrentRole())
+    setPeriodeJabatan(getPeriodeJabatan())
   }
 
   // Load state on mount
@@ -54,6 +60,30 @@ export default function Tasykil() {
       window.removeEventListener("simpa_role_changed", handleRoleChange)
     }
   }, [])
+
+  const handleSavePeriode = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (isReadOnly) return
+    const confirmed = await customConfirm({
+      title: "Simpan Periode Jabatan",
+      message: `Apakah Anda yakin ingin memperbarui periode jabatan kepengurusan menjadi "${periodeJabatan.trim()}"?`,
+      type: "warning",
+      confirmText: "Ya, Simpan",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
+    savePeriodeJabatan(periodeJabatan.trim())
+    setIsPeriodeSaved(true)
+    showToast({
+      message: "Periode jabatan kepengurusan berhasil disimpan!",
+      type: "success"
+    })
+    setTimeout(() => {
+      setIsPeriodeSaved(false)
+    }, 3000)
+  }
 
   const activeAcl = getStoredAcl().find(r => r.role === currentRole)
   const isReadOnly = !activeAcl?.permissions.manageTasykil
@@ -327,6 +357,45 @@ export default function Tasykil() {
       <div>
         <h2 className="font-headline-lg text-2xl md:text-3xl font-extrabold text-[#1A1A1A] leading-tight">Tasykil Pengurus</h2>
         <p className="font-body-md text-sm text-slate-500 mt-1">Kelola pembagian penugasan, penasehat, serta departemen bidang organisasi.</p>
+      </div>
+
+      {/* Pengaturan Periode Kepengurusan */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+        <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
+          <h3 className="font-title-lg text-base font-bold text-slate-900 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#F7A440]">calendar_month</span>
+            Pengaturan Periode Kepengurusan
+          </h3>
+          {isPeriodeSaved && (
+            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full animate-fadeIn">
+              Periode Disimpan!
+            </span>
+          )}
+        </div>
+        <form onSubmit={handleSavePeriode} className="flex flex-col sm:flex-row items-end gap-4">
+          <div className="flex-1 space-y-1.5 w-full">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              Periode Jabatan Tasykil
+            </label>
+            <input
+              type="text"
+              required
+              disabled={isReadOnly}
+              value={periodeJabatan}
+              onChange={(e) => setPeriodeJabatan(e.target.value)}
+              placeholder="Contoh: 2026 - 2028"
+              className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 disabled:cursor-not-allowed transition-colors"
+            />
+          </div>
+          {!isReadOnly && (
+            <button
+              type="submit"
+              className="px-5 py-2.5 bg-[#1A1A1A] hover:bg-[#2C2C2C] active:bg-[#000] text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm shrink-0"
+            >
+              Simpan Periode
+            </button>
+          )}
+        </form>
       </div>
 
       {/* ======================= TABEL 1: DEWAN PENASEHAT ======================= */}

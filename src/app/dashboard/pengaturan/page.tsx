@@ -26,7 +26,6 @@ export default function PengaturanPage() {
   
   const [isSaved, setIsSaved] = useState(false)
   const [isConfigSaved, setIsConfigSaved] = useState(false)
-  const [isPeriodeSaved, setIsPeriodeSaved] = useState(false)
 
   // Wa Config State
   const [waConfig, setWaConfig] = useState<WaConfig>({
@@ -57,9 +56,6 @@ export default function PengaturanPage() {
     reason: "Memeriksa status koneksi server...",
     qrUrl: null
   })
-
-  // Periode Jabatan State
-  const [periodeJabatan, setPeriodeJabatanInput] = useState("2026 - 2028")
 
   // Test message states
   const [testPhone, setTestPhone] = useState("")
@@ -223,7 +219,6 @@ export default function PengaturanPage() {
     setTemplateUmum(getWaTemplateUmum())
     const cfg = getWaConfig()
     setWaConfig(cfg)
-    setPeriodeJabatanInput(getPeriodeJabatan())
 
     // Perform live connection check on mount
     checkLiveConnection(cfg)
@@ -301,29 +296,7 @@ export default function PengaturanPage() {
     }, 3000)
   }
 
-  const handleSavePeriode = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!canManage) return
-    const confirmed = await customConfirm({
-      title: "Simpan Periode Jabatan",
-      message: `Apakah Anda yakin ingin memperbarui periode jabatan kepengurusan menjadi "${periodeJabatan.trim()}"?`,
-      type: "warning",
-      confirmText: "Ya, Simpan",
-      cancelText: "Batal"
-    })
 
-    if (!confirmed) return
-
-    savePeriodeJabatan(periodeJabatan.trim())
-    setIsPeriodeSaved(true)
-    showToast({
-      message: "Periode jabatan kepengurusan berhasil disimpan!",
-      type: "success"
-    })
-    setTimeout(() => {
-      setIsPeriodeSaved(false)
-    }, 3000)
-  }
 
   const handleSendTest = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -491,44 +464,7 @@ export default function PengaturanPage() {
         </p>
       </div>
 
-      {/* Periode Jabatan Form Card */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-        <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
-          <h3 className="font-title-lg text-base font-bold text-slate-900 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#F7A440]">calendar_month</span>
-            Pengaturan Periode Kepengurusan
-          </h3>
-          {isPeriodeSaved && (
-            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-              Periode Disimpan!
-            </span>
-          )}
-        </div>
-        <form onSubmit={handleSavePeriode} className="flex flex-col sm:flex-row items-end gap-4">
-          <div className="flex-1 space-y-1.5 w-full">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              Periode Jabatan Tasykil
-            </label>
-            <input
-              type="text"
-              required
-              disabled={!canManage}
-              value={periodeJabatan}
-              onChange={(e) => setPeriodeJabatanInput(e.target.value)}
-              placeholder="Contoh: 2026 - 2028"
-              className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 disabled:cursor-not-allowed transition-colors"
-            />
-          </div>
-          {canManage && (
-            <button
-              type="submit"
-              className="px-5 py-2.5 bg-[#1A1A1A] hover:bg-[#2C2C2C] active:bg-[#000] text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm shrink-0"
-            >
-              Simpan Periode
-            </button>
-          )}
-        </form>
-      </div>
+
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Left Column: Real Live WhatsApp Device Connection Status */}
@@ -616,8 +552,8 @@ export default function PengaturanPage() {
             <button
               type="button"
               onClick={() => checkLiveConnection()}
-              disabled={deviceInfo.checking || isRestarting}
-              className="flex-1 py-2.5 px-4 text-center text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-xl transition duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50"
+              disabled={deviceInfo.checking || isRestarting || !canManage}
+              className="flex-1 py-2.5 px-4 text-center text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-xl transition duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className={`material-symbols-outlined text-[16px] ${deviceInfo.checking ? "animate-spin" : ""}`}>
                 sync
@@ -724,15 +660,17 @@ export default function PengaturanPage() {
                           placeholder="Masukkan Token dari md.fonnte.com"
                           className="w-full border border-slate-200 rounded-lg pl-3.5 pr-10 py-2 font-body-md text-sm text-slate-800 font-mono focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowToken(!showToken)}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">
-                            {showToken ? "visibility_off" : "visibility"}
-                          </span>
-                        </button>
+                        {canManage && (
+                          <button
+                            type="button"
+                            onClick={() => setShowToken(!showToken)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">
+                              {showToken ? "visibility_off" : "visibility"}
+                            </span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -769,15 +707,17 @@ export default function PengaturanPage() {
                         placeholder="Contoh: cirengit-super-secret-wa-token-123"
                         className="w-full border border-slate-200 rounded-lg pl-3.5 pr-10 py-2 font-body-md text-sm text-slate-800 font-mono focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowToken(!showToken)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">
-                          {showToken ? "visibility_off" : "visibility"}
-                        </span>
-                      </button>
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={() => setShowToken(!showToken)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">
+                            {showToken ? "visibility_off" : "visibility"}
+                          </span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </>
@@ -815,15 +755,17 @@ export default function PengaturanPage() {
                           placeholder="EAAW..."
                           className="w-full border border-slate-200 rounded-lg pl-3.5 pr-10 py-2 font-body-md text-sm text-slate-800 font-mono focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 transition-colors"
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowToken(!showToken)}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">
-                            {showToken ? "visibility_off" : "visibility"}
-                          </span>
-                        </button>
+                        {canManage && (
+                          <button
+                            type="button"
+                            onClick={() => setShowToken(!showToken)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">
+                              {showToken ? "visibility_off" : "visibility"}
+                            </span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

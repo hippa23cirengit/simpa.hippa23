@@ -202,9 +202,9 @@ export default function CetakKtaPage() {
 
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tanda Tangan Ketua</label>
-              <div className="flex items-center gap-3 mt-1">
+              <div className="flex flex-wrap items-center gap-2 mt-1">
                 {ktaSettings.signatureUrl ? (
-                  <img src={ktaSettings.signatureUrl} alt="Signature" className="h-10 object-contain border border-slate-200 rounded p-1 bg-white" />
+                  <img src={ktaSettings.signatureUrl} alt="Signature" className="h-10 max-w-[80px] object-contain border border-slate-200 rounded p-1 bg-white" />
                 ) : (
                   <div className="h-10 px-3 flex items-center justify-center border border-dashed border-slate-300 rounded text-xs text-slate-400 font-medium">Belum ada</div>
                 )}
