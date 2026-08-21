@@ -327,6 +327,13 @@ export default function PengaturanPage() {
 
   const handleSendTest = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!canManage) {
+      showToast({
+        message: "Anda tidak memiliki izin untuk mengirim pesan uji coba.",
+        type: "error"
+      })
+      return
+    }
     if (!testPhone.trim()) return
 
     setTestSent(true)
@@ -1006,10 +1013,13 @@ export default function PengaturanPage() {
             <input
               type="text"
               required
-              placeholder="Contoh: 0812XXXXXXXX"
+              disabled={!canManage}
+              placeholder={canManage ? "Contoh: 0812XXXXXXXX" : "Akses terbatas (hanya lihat)"}
               value={testPhone}
               onChange={(e) => setTestPhone(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+              className={`w-full border border-slate-200 rounded-lg px-3.5 py-2.5 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors ${
+                !canManage ? "bg-slate-50 cursor-not-allowed text-slate-400" : ""
+              }`}
             />
           </div>
           <div className="md:col-span-6 flex flex-col gap-1.5">
@@ -1024,7 +1034,7 @@ export default function PengaturanPage() {
           <div className="md:col-span-2 w-full">
             <button
               type="submit"
-              disabled={testSent}
+              disabled={testSent || !canManage}
               className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm flex items-center justify-center gap-1.5 h-[42px] disabled:bg-blue-400 disabled:cursor-not-allowed"
             >
               <span className="material-symbols-outlined text-[16px]">send</span>
