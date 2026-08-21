@@ -258,10 +258,15 @@ export async function POST(req: Request) {
             tempatLahir: m.tempatLahir || null,
             tanggalLahir: m.tanggalLahir || null,
             alamat: m.alamat || null,
+            rtRw: m.rtRw || null,
+            kelDesa: m.kelDesa || null,
+            kecamatan: m.kecamatan || null,
+            kabKota: m.kabKota || null,
             pekerjaan: m.pekerjaan || null,
             whatsapp: m.whatsapp || null,
             email: m.email || "",
-            profilePhoto: m.profilePhoto || null
+            profilePhoto: m.profilePhoto || null,
+            bergabungTahun: m.bergabungTahun || null
           },
           create: {
             id: m.id,
@@ -270,10 +275,16 @@ export async function POST(req: Request) {
             tempatLahir: m.tempatLahir || null,
             tanggalLahir: m.tanggalLahir || null,
             alamat: m.alamat || null,
+            rtRw: m.rtRw || null,
+            kelDesa: m.kelDesa || null,
+            kecamatan: m.kecamatan || null,
+            kabKota: m.kabKota || null,
             pekerjaan: m.pekerjaan || null,
             whatsapp: m.whatsapp || null,
             email: m.email || "",
-            profilePhoto: m.profilePhoto || null
+            profilePhoto: m.profilePhoto || null,
+            bergabungTahun: m.bergabungTahun || null,
+            createdAt: m.createdAt ? new Date(m.createdAt) : new Date()
           }
         })
       }
@@ -488,6 +499,14 @@ export async function POST(req: Request) {
         }
       }
     } 
+    else if (key === "simpa_kta_settings") {
+      const s = value as any
+      await prisma.ktaSettings.upsert({
+        where: { id: "default" },
+        update: { ketuaName: s.ketuaName || "", ketuaNpa: s.ketuaNpa || "", signatureUrl: s.signatureUrl || "" },
+        create: { id: "default", ketuaName: s.ketuaName || "", ketuaNpa: s.ketuaNpa || "", signatureUrl: s.signatureUrl || "" }
+      })
+    }
     else if (key === "simpa_wa_template") {
       const content = value as string
       const first = await prisma.waTemplate.findFirst()
@@ -521,6 +540,7 @@ async function fetchFreshData() {
   const dbPimhar = await prisma.pimhar.findMany()
   const dbBidang = await prisma.bidang.findMany({ include: { members: true } })
   const dbApplicants = await prisma.applicant.findMany()
+  const dbKtaSettings = await prisma.ktaSettings.findFirst()
 
   return compilePayload(
     dbAnggota,
@@ -531,7 +551,8 @@ async function fetchFreshData() {
     dbPenasehat,
     dbPimhar,
     dbBidang,
-    dbApplicants
+    dbApplicants,
+    dbKtaSettings
   )
 }
 
@@ -545,7 +566,8 @@ async function compilePayload(
   dbPenasehat: any[],
   dbPimhar: any[],
   dbBidang: any[],
-  dbApplicants: any[]
+  dbApplicants: any[],
+  dbKtaSettings: any | null
 ) {
   // tasykil.pimhar
   const pimharMap = {
@@ -591,10 +613,15 @@ async function compilePayload(
     tempatLahir: a.tempatLahir || "",
     tanggalLahir: a.tanggalLahir || "",
     alamat: a.alamat || "",
+    rtRw: a.rtRw || "",
+    kelDesa: a.kelDesa || "",
+    kecamatan: a.kecamatan || "",
     pekerjaan: a.pekerjaan || "",
     whatsapp: a.whatsapp || "",
     email: a.email || "",
-    profilePhoto: a.profilePhoto || undefined
+    profilePhoto: a.profilePhoto || "",
+    bergabungTahun: a.bergabungTahun || "",
+    createdAt: a.createdAt ? a.createdAt.toISOString() : new Date().toISOString()
   }))
 
   const simpa_members_state = membersRaw.map(m => {
@@ -694,6 +721,7 @@ async function compilePayload(
     simpa_tasykil,
     simpa_acl_rules,
     simpa_calon_anggota,
+    simpa_kta_settings: dbKtaSettings ? { ketuaName: dbKtaSettings.ketuaName, ketuaNpa: dbKtaSettings.ketuaNpa, signatureUrl: dbKtaSettings.signatureUrl } : { ketuaName: "", ketuaNpa: "", signatureUrl: "" },
     simpa_wa_template: dbTemplate?.content || "",
     simpa_wa_config: waConfig,
     simpa_periode_jabatan: settingsMap["simpa_periode_jabatan"] || "",

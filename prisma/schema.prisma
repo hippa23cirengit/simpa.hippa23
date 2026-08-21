@@ -13,10 +13,16 @@ model Anggota {
   tempatLahir  String?
   tanggalLahir String?
   alamat       String?
+  rtRw         String?         @map("rt_rw")
+  kelDesa      String?         @map("kel_desa")
+  kecamatan    String?
+  kabKota      String?         @map("kab_kota")
   pekerjaan    String?
   whatsapp     String?
   email        String
   profilePhoto String?         @map("profile_photo")
+  bergabungTahun String?       @map("bergabung_tahun")
+  createdAt    DateTime        @default(now()) @map("created_at")
   pimhar       Pimhar?
   bidang       AnggotaBidang?
   akunLogin    AkunLogin?
@@ -38,6 +44,15 @@ model Pimhar {
   anggota   Anggota? @relation(fields: [anggotaId], references: [id], onDelete: Cascade)
 
   @@map("pimhar")
+}
+
+model KtaSettings {
+  id           String @id @default("default")
+  ketuaName    String @map("ketua_name")
+  ketuaNpa     String @map("ketua_npa")
+  signatureUrl String @map("signature_url")
+
+  @@map("kta_settings")
 }
 
 model Bidang {

@@ -718,3 +718,13 @@ Do not sacrifice architecture for shorter code.
 # Golden Rule
 
 If a file cannot be explained in one sentence, it probably has more than one responsibility and should be split.
+
+---
+
+# Database Sync Rule
+
+When adding or modifying data fields in the frontend (mock-db, local storage, components), you MUST:
+1. Update `prisma/schema.prisma` with the new fields.
+2. Run `npx prisma db push` to push the changes to Supabase.
+3. Update the synchronization API (`src/app/api/db-sync/route.ts`) to ensure the new fields are included in the `create` and `update` queries.
+Never leave database modifications hanging only in local storage!
