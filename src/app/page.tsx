@@ -212,9 +212,12 @@ export default function PublicPortal() {
               <p className="text-xs text-slate-500">Himpunan Pelajar Persatuan Islam (Putra) Cirengit</p>
             </div>
           </div>
-          <p className="text-xs">
-            &copy; {new Date().getFullYear()} PJ. Pemuda Persis Cirengit. All rights reserved.
-          </p>
+          <div className="flex flex-col sm:items-end gap-2 text-xs text-center sm:text-right w-full sm:w-auto">
+            <p>
+              &copy; {new Date().getFullYear()} PJ. Pemuda Persis Cirengit. All rights reserved.
+            </p>
+            <Link href="/daftar" className="text-slate-800 hover:text-slate-500 transition-colors" title="Pendaftaran Anggota">Daftar</Link>
+          </div>
         </div>
       </footer>
     </div>

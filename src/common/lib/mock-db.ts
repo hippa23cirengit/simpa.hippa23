@@ -5,11 +5,17 @@ export interface Member {
   status: "Aktif" | "Tidak Aktif" | "Alumni";
   tempatLahir: string;
   tanggalLahir: string;
-  alamat: string;
-  pekerjaan: string;
-  whatsapp: string;
-  email: string; // Added for password reset
-  profilePhoto?: string; // Supabase Storage public URL
+  alamat: string; // Digunakan sebagai Alamat Lengkap/Nama Jalan
+  rtRw?: string;
+  kelDesa?: string;
+  kecamatan?: string;
+  kabKota?: string;
+  pekerjaan?: string;
+  whatsapp?: string;
+  email?: string;
+  profilePhoto?: string;
+  bergabungTahun?: string;
+  createdAt?: string;
 }
 
 export interface Bidang {
@@ -96,6 +102,50 @@ export const DEFAULT_TASYKIL: TasykilState = {
 
 const MEMBERS_KEY = "simpa_members_state"
 const TASYKIL_KEY = "simpa_tasykil"
+const KTA_SETTINGS_KEY = "simpa_kta_settings"
+
+export interface KtaSettings {
+  ketuaName: string;
+  ketuaNpa: string;
+  signatureUrl: string;
+}
+
+export const DEFAULT_KTA_SETTINGS: KtaSettings = {
+  ketuaName: "Nama Ketua",
+  ketuaNpa: "00.0000",
+  signatureUrl: ""
+}
+
+export function getStoredKtaSettings(): KtaSettings {
+  if (typeof window === "undefined") return DEFAULT_KTA_SETTINGS;
+  const data = localStorage.getItem(KTA_SETTINGS_KEY);
+  return data ? JSON.parse(data) : DEFAULT_KTA_SETTINGS;
+}
+
+export function saveStoredKtaSettings(settings: KtaSettings) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(KTA_SETTINGS_KEY, JSON.stringify(settings))
+    syncToServer(KTA_SETTINGS_KEY, settings)
+  }
+}
+
+export function generateNextNpa(members: Member[], year: number = new Date().getFullYear()): string {
+  const year2Digits = String(year).slice(-2)
+  const thisYearPrefix = `${year2Digits}.`
+  const yearMembers = members.filter(m => m.id.startsWith(thisYearPrefix))
+  
+  let nextSeq = 1
+  if (yearMembers.length > 0) {
+    const seqs = yearMembers.map(m => {
+      const parts = m.id.split(".")
+      return parts.length > 1 ? parseInt(parts[1], 10) : 0
+    })
+    nextSeq = Math.max(...seqs) + 1
+  }
+  
+  const seq = String(nextSeq).padStart(4, "0")
+  return `${year2Digits}.${seq}`
+}
 
 // Backend sync helper
 function syncToServer(key: string, value: any) {
@@ -110,7 +160,8 @@ function syncToServer(key: string, value: any) {
     })
     .then(async (res) => {
       if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(`HTTP error! status: ${res.status} - ${errData.error || 'Unknown server error'}`);
       }
       const data = await res.json();
       if (data.status) {

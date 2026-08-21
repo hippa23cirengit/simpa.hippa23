@@ -11,7 +11,8 @@ import {
   createMemberAccount,
   getStoredApplicants,
   saveStoredApplicants,
-  Applicant
+  Applicant,
+  generateNextNpa
 } from "@/common/lib/mock-db"
 import { customAlert, customConfirm, showToast } from "@/common/lib/alert"
 
@@ -134,19 +135,7 @@ export default function CalonAnggota() {
   const handleAccept = async (app: Applicant) => {
     // 1. Promote to Member
     const rawMembers = getStoredMembers()
-    const year2Digits = String(new Date().getFullYear()).slice(-2)
-    const thisYearPrefix = `${year2Digits}.`
-    const yearMembers = rawMembers.filter(m => m.id.startsWith(thisYearPrefix))
-    let nextSeq = 1
-    if (yearMembers.length > 0) {
-      const seqs = yearMembers.map(m => {
-        const parts = m.id.split(".")
-        return parts.length > 1 ? parseInt(parts[1], 10) : 0
-      })
-      nextSeq = Math.max(...seqs) + 1
-    }
-    const seq = String(nextSeq).padStart(4, "0")
-    const newId = `${year2Digits}.${seq}`
+    const newId = generateNextNpa(rawMembers)
 
     const newMember: Member = {
       id: newId,
@@ -158,7 +147,9 @@ export default function CalonAnggota() {
       alamat: app.alamat,
       pekerjaan: app.pekerjaan,
       whatsapp: app.contact,
-      email: `${app.name.toLowerCase().replace(/\s+/g, ".")}@gmail.com`
+      email: `${app.name.toLowerCase().replace(/\s+/g, ".")}@gmail.com`,
+      bergabungTahun: String(new Date().getFullYear()),
+      createdAt: new Date().toISOString()
     }
 
     saveStoredMembers([...rawMembers, newMember])
@@ -180,13 +171,8 @@ export default function CalonAnggota() {
 
     createMemberAccount(newMember, adminWa)
 
-    // 2. Change applicant status to Diterima
-    const updated = applicants.map(a => {
-      if (a.id === app.id) {
-        return { ...a, status: "Diterima" as const }
-      }
-      return a
-    })
+    // 2. Remove applicant from CAANG
+    const updated = applicants.filter(a => a.id !== app.id)
     saveApplicantsState(updated)
 
     setIsModalOpen(false)
@@ -210,12 +196,7 @@ export default function CalonAnggota() {
     })
 
     if (confirmed) {
-      const updated = applicants.map(a => {
-        if (a.id === app.id) {
-          return { ...a, status: "Ditolak" as const }
-        }
-        return a
-      })
+      const updated = applicants.filter(a => a.id !== app.id)
       saveApplicantsState(updated)
       setIsModalOpen(false)
       showToast({
