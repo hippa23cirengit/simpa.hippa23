@@ -1,6 +1,5 @@
 import { ApplicantRepository } from "../repositories/applicant.repository";
 import { RegisterApplicantInput, RegisterApplicantSchema } from "../schemas/register.schema";
-import { randomUUID } from "crypto";
 
 export class RegisterApplicantUseCase {
   private repository: ApplicantRepository;
@@ -13,9 +12,29 @@ export class RegisterApplicantUseCase {
     // 1. Validasi Input via Zod
     const validated = RegisterApplicantSchema.parse(input);
     
-    // 2. Siapkan data default
+    // 2. Siapkan data default & nomor pendaftaran sequential
+    const currentYear = new Date().getFullYear();
+    const yearStr = String(currentYear);
     const date = new Date().toISOString().split("T")[0]; // Tanggal Pendaftaran: YYYY-MM-DD
-    const id = randomUUID(); 
+    
+    // Ambil prefix secara dinamis dari database
+    let prefix = "REG";
+    try {
+      prefix = await this.repository.getPrefix();
+    } catch (e) {
+      console.error("Gagal mengambil prefix pendaftaran:", e);
+    }
+
+    // Hitung sequence
+    let count = 0;
+    try {
+      count = await this.repository.countApplicantsByPrefixAndYear(prefix, yearStr);
+    } catch (e) {
+      console.error("Gagal menghitung sequence pendaftaran:", e);
+    }
+
+    const seq = String(count + 1).padStart(3, "0");
+    const id = `${prefix}-${yearStr}-${seq}`;
 
     // 3. Simpan ke Database
     await this.repository.create({

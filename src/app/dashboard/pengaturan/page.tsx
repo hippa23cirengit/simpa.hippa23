@@ -14,6 +14,8 @@ import {
   saveWaConfig,
   getPeriodeJabatan,
   savePeriodeJabatan,
+  getRegistrationPrefix,
+  saveRegistrationPrefix,
   WaConfig
 } from "@/common/lib/mock-db"
 import { customAlert, customConfirm, showToast } from "@/common/lib/alert"
@@ -26,6 +28,8 @@ export default function PengaturanPage() {
   
   const [isSaved, setIsSaved] = useState(false)
   const [isConfigSaved, setIsConfigSaved] = useState(false)
+  const [regPrefix, setRegPrefixInput] = useState("REG")
+  const [isPrefixSaved, setIsPrefixSaved] = useState(false)
 
   // Wa Config State
   const [waConfig, setWaConfig] = useState<WaConfig>({
@@ -219,6 +223,7 @@ export default function PengaturanPage() {
     setTemplateUmum(getWaTemplateUmum())
     const cfg = getWaConfig()
     setWaConfig(cfg)
+    setRegPrefixInput(getRegistrationPrefix())
 
     // Perform live connection check on mount
     checkLiveConnection(cfg)
@@ -296,7 +301,39 @@ export default function PengaturanPage() {
     }, 3000)
   }
 
+  const handleSavePrefix = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!canManage) return
+    const prefixClean = regPrefix.trim().toUpperCase().replace(/[^A-Z0-9_-]/gi, "")
+    if (!prefixClean) {
+      showToast({
+        message: "Prefix tidak valid!",
+        type: "error"
+      })
+      return
+    }
 
+    const confirmed = await customConfirm({
+      title: "Simpan Prefix Pendaftaran",
+      message: `Apakah Anda yakin ingin memperbarui prefix nomor pendaftaran menjadi "${prefixClean}"?`,
+      type: "warning",
+      confirmText: "Ya, Simpan",
+      cancelText: "Batal"
+    })
+
+    if (!confirmed) return
+
+    saveRegistrationPrefix(prefixClean)
+    setRegPrefixInput(prefixClean)
+    setIsPrefixSaved(true)
+    showToast({
+      message: "Prefix pendaftaran berhasil disimpan!",
+      type: "success"
+    })
+    setTimeout(() => {
+      setIsPrefixSaved(false)
+    }, 3000)
+  }
 
   const handleSendTest = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -464,7 +501,45 @@ export default function PengaturanPage() {
         </p>
       </div>
 
-
+      {/* Pengaturan Pendaftaran Calon Anggota */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+        <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
+          <h3 className="font-title-lg text-base font-bold text-slate-900 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#F7A440]">id_card</span>
+            Pengaturan Pendaftaran Calon Anggota
+          </h3>
+          {isPrefixSaved && (
+            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full animate-fadeIn">
+              Prefix Disimpan!
+            </span>
+          )}
+        </div>
+        <form onSubmit={handleSavePrefix} className="flex flex-col sm:flex-row items-end gap-4">
+          <div className="flex-1 space-y-1.5 w-full">
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              Prefix Nomor Pendaftaran (ID)
+            </label>
+            <input
+              type="text"
+              required
+              disabled={!canManage}
+              value={regPrefix}
+              onChange={(e) => setRegPrefixInput(e.target.value)}
+              placeholder="Contoh: REG"
+              className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] disabled:bg-slate-50 disabled:cursor-not-allowed transition-colors font-mono"
+            />
+            <p className="text-[10px] text-slate-400 font-medium">Prefix ini akan digunakan untuk meng-generate nomor pendaftaran otomatis (misal: {regPrefix.trim()}-2026-001).</p>
+          </div>
+          {canManage && (
+            <button
+              type="submit"
+              className="px-5 py-2.5 bg-[#1A1A1A] hover:bg-[#2C2C2C] active:bg-[#000] text-white font-bold rounded-xl text-xs transition duration-200 shadow-sm shrink-0"
+            >
+              Simpan Prefix
+            </button>
+          )}
+        </form>
+      </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Left Column: Real Live WhatsApp Device Connection Status */}

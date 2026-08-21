@@ -12,7 +12,8 @@ import {
   getStoredApplicants,
   saveStoredApplicants,
   Applicant,
-  generateNextNpa
+  generateNextNpa,
+  getRegistrationPrefix
 } from "@/common/lib/mock-db"
 import { customAlert, customConfirm, showToast } from "@/common/lib/alert"
 
@@ -112,9 +113,13 @@ export default function CalonAnggota() {
     e.preventDefault()
     if (!formName.trim() || !formContact.trim() || !formEmail.trim()) return
 
-    const seq = String(applicants.length + 1).padStart(3, "0")
+    const prefix = getRegistrationPrefix()
+    const currentYear = new Date().getFullYear()
+    const matchingApplicants = applicants.filter(a => a.id.startsWith(`${prefix}-${currentYear}-`))
+    const seq = String(matchingApplicants.length + 1).padStart(3, "0")
+
     const newApp: Applicant = {
-      id: `REG-2026-${seq}`,
+      id: `${prefix}-${currentYear}-${seq}`,
       name: formName,
       date: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
       contact: formContact,

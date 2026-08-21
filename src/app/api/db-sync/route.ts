@@ -169,7 +169,7 @@ export async function GET() {
           }
 
           // Seed System Settings
-          const settingsToSeed = ["simpa_wa_config", "simpa_periode_jabatan", "simpa_wa_template_kajian", "simpa_wa_template_umum"]
+          const settingsToSeed = ["simpa_wa_config", "simpa_periode_jabatan", "simpa_wa_template_kajian", "simpa_wa_template_umum", "simpa_reg_prefix"]
           for (const key of settingsToSeed) {
             if (seedData[key]) {
               await prisma.systemSetting.upsert({
@@ -226,7 +226,7 @@ export async function POST(req: Request) {
     console.log(`POST /api/db-sync: Updating key "${key}" in Supabase...`)
 
     // Sync to Supabase relational tables or system setting table based on the key
-    if (["simpa_wa_config", "simpa_periode_jabatan", "simpa_wa_template_kajian", "simpa_wa_template_umum"].includes(key)) {
+    if (["simpa_wa_config", "simpa_periode_jabatan", "simpa_wa_template_kajian", "simpa_wa_template_umum", "simpa_reg_prefix"].includes(key)) {
       await prisma.systemSetting.upsert({
         where: { key },
         update: {
@@ -749,6 +749,7 @@ async function compilePayload(
     simpa_wa_config: waConfig,
     simpa_periode_jabatan: settingsMap["simpa_periode_jabatan"] || "",
     simpa_wa_template_kajian: settingsMap["simpa_wa_template_kajian"] || "",
-    simpa_wa_template_umum: settingsMap["simpa_wa_template_umum"] || ""
+    simpa_wa_template_umum: settingsMap["simpa_wa_template_umum"] || "",
+    simpa_reg_prefix: settingsMap["simpa_reg_prefix"] || "REG"
   }
 }

@@ -697,6 +697,7 @@ export const DEFAULT_WA_CONFIG: WaConfig = {
 
 const WA_CONFIG_KEY = "simpa_wa_config";
 const PERIODE_JABATAN_KEY = "simpa_periode_jabatan";
+const REG_PREFIX_KEY = "simpa_reg_prefix";
 
 export function getWaConfig(): WaConfig {
   if (typeof window === "undefined") return DEFAULT_WA_CONFIG;
@@ -735,6 +736,24 @@ export function savePeriodeJabatan(periode: string) {
   if (typeof window !== "undefined") {
     localStorage.setItem(PERIODE_JABATAN_KEY, periode);
     syncToServer(PERIODE_JABATAN_KEY, periode)
+    window.dispatchEvent(new Event("simpa_role_changed"));
+  }
+}
+
+export function getRegistrationPrefix(): string {
+  if (typeof window === "undefined") return "REG";
+  const stored = localStorage.getItem(REG_PREFIX_KEY);
+  if (!stored || stored === "null") {
+    localStorage.setItem(REG_PREFIX_KEY, "REG");
+    return "REG";
+  }
+  return stored;
+}
+
+export function saveRegistrationPrefix(prefix: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(REG_PREFIX_KEY, prefix);
+    syncToServer(REG_PREFIX_KEY, prefix)
     window.dispatchEvent(new Event("simpa_role_changed"));
   }
 }
