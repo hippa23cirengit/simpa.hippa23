@@ -28,6 +28,13 @@ export default function ProfilPage() {
   const [email, setEmail] = useState("")
   const [whatsapp, setWhatsapp] = useState("")
   const [alamat, setAlamat] = useState("")
+  const [rtRw, setRtRw] = useState("")
+  const [kelDesa, setKelDesa] = useState("")
+  const [kecamatan, setKecamatan] = useState("")
+  const [kabKota, setKabKota] = useState("")
+  const [tempatLahir, setTempatLahir] = useState("")
+  const [tanggalLahir, setTanggalLahir] = useState("")
+  const [pekerjaan, setPekerjaan] = useState("")
 
   // Password State
   const [oldPassword, setOldPassword] = useState("")
@@ -59,6 +66,14 @@ export default function ProfilPage() {
           setEmail(mem.email || "")
           setWhatsapp(mem.whatsapp || "")
           setUserPhoto(mem.profilePhoto || "/default pic.webp")
+          setAlamat(mem.alamat || "")
+          setRtRw(mem.rtRw || "")
+          setKelDesa(mem.kelDesa || "")
+          setKecamatan(mem.kecamatan || "")
+          setKabKota(mem.kabKota || "")
+          setTempatLahir(mem.tempatLahir || "")
+          setTanggalLahir(mem.tanggalLahir || "")
+          setPekerjaan(mem.pekerjaan || "")
         }
       }
     }
@@ -182,7 +197,20 @@ export default function ProfilPage() {
       const members = getStoredMembers()
       const updatedMembers = members.map((m) => {
         if (m.id === account.linkedAnggotaId) {
-          return { ...m, name, email, whatsapp, alamat }
+          return {
+            ...m,
+            name,
+            email,
+            whatsapp,
+            alamat,
+            rtRw,
+            kelDesa,
+            kecamatan,
+            kabKota,
+            tempatLahir,
+            tanggalLahir,
+            pekerjaan
+          }
         }
         return m
       })
@@ -376,6 +404,7 @@ export default function ProfilPage() {
                     </label>
                     <input
                       type="email"
+                      required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
@@ -388,8 +417,48 @@ export default function ProfilPage() {
                     </label>
                     <input
                       type="text"
+                      required
                       value={whatsapp}
                       onChange={(e) => setWhatsapp(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Tempat Lahir
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={tempatLahir}
+                      onChange={(e) => setTempatLahir(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Tanggal Lahir
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={tanggalLahir}
+                      onChange={(e) => setTanggalLahir(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Pekerjaan / Status
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={pekerjaan}
+                      onChange={(e) => setPekerjaan(e.target.value)}
                       className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
                     />
                   </div>
@@ -400,8 +469,62 @@ export default function ProfilPage() {
                     </label>
                     <input
                       type="text"
+                      required
                       value={alamat}
                       onChange={(e) => setAlamat(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      RT / RW
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: 03/03"
+                      value={rtRw}
+                      onChange={(e) => setRtRw(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Desa / Kelurahan
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={kelDesa}
+                      onChange={(e) => setKelDesa(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Kecamatan
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={kecamatan}
+                      onChange={(e) => setKecamatan(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Kabupaten / Kota
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={kabKota}
+                      onChange={(e) => setKabKota(e.target.value)}
                       className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
                     />
                   </div>

@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { getCurrentRole, getStoredAcl, syncDatabaseFromServer, getStoredAccounts, getStoredMembers } from "@/common/lib/mock-db"
+import { getCurrentRole, getStoredAcl, syncDatabaseFromServer, getStoredAccounts, getStoredMembers, getStoredEvents, getStoredApplicants } from "@/common/lib/mock-db"
 import { isLoggedIn, getSessionUser, clearSession } from "@/common/lib/auth"
 import { useDialog } from "@/common/components/dialog-provider"
 
@@ -33,6 +33,8 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [userPhoto, setUserPhoto] = React.useState("");
   const [initialLoading, setInitialLoading] = React.useState(true);
   const [isSyncing, setIsSyncing] = React.useState(false);
+  const [notifications, setNotifications] = React.useState<any[]>([]);
+  const [isNotifOpen, setIsNotifOpen] = React.useState(false);
 
   const loadUserData = () => {
     const user = getSessionUser();
@@ -106,6 +108,72 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     };
   }, [router]);
 
+  React.useEffect(() => {
+    if (typeof window === "undefined" || !authorized) return;
+
+    const checkNotifications = () => {
+      const list: any[] = [];
+      
+      // 1. Check Events
+      try {
+        const events = getStoredEvents();
+        const now = new Date();
+        events.forEach(e => {
+          if (!e.date || !e.time) return;
+          const eventDate = new Date(`${e.date}T${e.time}:00`);
+          const diffMs = eventDate.getTime() - now.getTime();
+          const diffHours = diffMs / (1000 * 60 * 60);
+          
+          if (diffHours > 0 && diffHours <= 24) {
+            list.push({
+              id: `event-${e.id}`,
+              type: "event",
+              title: "Jadwal Terdekat",
+              message: `${e.title} akan dimulai dalam ${Math.round(diffHours)} jam (${e.time} WIB)`,
+              link: "/dashboard/jadwal-kegiatan",
+              icon: "calendar_month",
+              color: "text-amber-600 bg-amber-50"
+            });
+          }
+        });
+      } catch (err) {
+        console.error("Gagal membaca notifikasi event:", err);
+      }
+
+      // 2. Check Applicants
+      try {
+        const applicants = getStoredApplicants();
+        applicants.forEach(a => {
+          if (a.status === "Menunggu") {
+            list.push({
+              id: `app-${a.id}`,
+              type: "applicant",
+              title: "Pendaftaran Baru",
+              message: `${a.name} telah mendaftar sebagai calon anggota`,
+              link: "/dashboard/calon-anggota",
+              icon: "person_add",
+              color: "text-blue-600 bg-blue-50"
+            });
+          }
+        });
+      } catch (err) {
+        console.error("Gagal membaca notifikasi pendaftar:", err);
+      }
+
+      setNotifications(list);
+    };
+
+    checkNotifications();
+
+    window.addEventListener("simpa_role_changed", checkNotifications);
+    const interval = setInterval(checkNotifications, 10000);
+
+    return () => {
+      window.removeEventListener("simpa_role_changed", checkNotifications);
+      clearInterval(interval);
+    };
+  }, [authorized]);
+
   const activeAcl = aclRules.find(r => r.role === currentRole);
 
   const menuItems = [
@@ -158,9 +226,60 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-2">
             
-            <button className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 hover:bg-[#F2F4F6]">
-              <span className="material-symbols-outlined text-[20px]">notifications</span>
-            </button>
+             {/* Bell Icon Dropdown (Mobile) */}
+            <div className="relative">
+              <button
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-slate-600 hover:bg-[#F2F4F6] relative ${isNotifOpen ? "text-[#F7A440] bg-slate-50" : ""}`}
+              >
+                <span className="material-symbols-outlined text-[20px]">notifications</span>
+                {notifications.length > 0 && (
+                  <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-red-500 text-[8px] font-extrabold text-white rounded-full flex items-center justify-center border border-white animate-pulse">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+
+              {isNotifOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)}></div>
+                  <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl border border-slate-200/80 shadow-lg py-2 z-50 animate-scaleIn origin-top-right">
+                    <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between">
+                      <h4 className="font-bold text-slate-800 text-sm">Notifikasi</h4>
+                      <span className="text-[10px] bg-[#F7A440]/10 text-[#895200] font-bold px-2 py-0.5 rounded-full">
+                        {notifications.length} Baru
+                      </span>
+                    </div>
+
+                    <div className="max-h-[300px] overflow-y-auto divide-y divide-slate-50">
+                      {notifications.length > 0 ? (
+                        notifications.map(n => (
+                          <Link
+                            key={n.id}
+                            href={n.link}
+                            onClick={() => setIsNotifOpen(false)}
+                            className="flex items-start gap-3 p-3.5 hover:bg-slate-50/50 transition-colors text-left"
+                          >
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${n.color}`}>
+                              <span className="material-symbols-outlined text-[18px]">{n.icon}</span>
+                            </div>
+                            <div className="flex-1 space-y-0.5">
+                              <h5 className="font-bold text-slate-800 text-xs leading-none">{n.title}</h5>
+                              <p className="text-[10px] text-slate-500 font-medium leading-relaxed break-words">{n.message}</p>
+                            </div>
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="py-8 text-center flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                          <span className="material-symbols-outlined text-[28px] text-slate-300">notifications_off</span>
+                          <span className="text-xs font-bold">Tidak ada notifikasi baru</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <button
               onClick={toggleSidebar}
               className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 hover:bg-[#F2F4F6]"
@@ -186,10 +305,60 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           {/* Header Actions */}
           <div className="flex items-center gap-4">
 
-            <button className="text-slate-500 hover:text-[#F7A440] transition-colors p-2 rounded-full hover:bg-slate-50 relative">
-              <span className="material-symbols-outlined text-[20px]">notifications</span>
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full"></span>
-            </button>
+            {/* Bell Icon Dropdown (Desktop) */}
+            <div className="relative">
+              <button
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className={`text-slate-500 hover:text-[#F7A440] transition-colors p-2 rounded-full hover:bg-slate-50 relative ${isNotifOpen ? "text-[#F7A440] bg-slate-50" : ""}`}
+              >
+                <span className="material-symbols-outlined text-[20px]">notifications</span>
+                {notifications.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-[9px] font-extrabold text-white rounded-full flex items-center justify-center border border-white animate-pulse">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+
+              {isNotifOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)}></div>
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-slate-200/80 shadow-lg py-2 z-50 animate-scaleIn origin-top-right">
+                    <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between">
+                      <h4 className="font-bold text-slate-800 text-sm">Notifikasi</h4>
+                      <span className="text-[10px] bg-[#F7A440]/10 text-[#895200] font-bold px-2 py-0.5 rounded-full">
+                        {notifications.length} Baru
+                      </span>
+                    </div>
+
+                    <div className="max-h-[300px] overflow-y-auto divide-y divide-slate-50">
+                      {notifications.length > 0 ? (
+                        notifications.map(n => (
+                          <Link
+                            key={n.id}
+                            href={n.link}
+                            onClick={() => setIsNotifOpen(false)}
+                            className="flex items-start gap-3 p-3.5 hover:bg-slate-50/50 transition-colors text-left"
+                          >
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${n.color}`}>
+                              <span className="material-symbols-outlined text-[18px]">{n.icon}</span>
+                            </div>
+                            <div className="flex-1 space-y-0.5">
+                              <h5 className="font-bold text-slate-800 text-xs leading-none">{n.title}</h5>
+                              <p className="text-[10px] text-slate-500 font-medium leading-relaxed break-words">{n.message}</p>
+                            </div>
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="py-8 text-center flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                          <span className="material-symbols-outlined text-[28px] text-slate-300">notifications_off</span>
+                          <span className="text-xs font-bold">Tidak ada notifikasi baru</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             
             <div className="hidden sm:flex flex-col pl-4 border-l border-slate-200 justify-center">
               <span className="text-[9px] font-semibold text-slate-800 tracking-wide mb-0.5">Anda Login Sebagai</span>
