@@ -421,48 +421,39 @@ export default function Tasykil() {
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 font-bold text-slate-500">
-                  <th className="py-3 px-4 w-60">Jabatan</th>
+                  <th className="py-3 px-4 w-28 md:w-40">Jabatan</th>
                   <th className="py-3 px-4">Nama Penasehat</th>
-                  {!isReadOnly && <th className="py-3 px-4 w-28 text-center">Aksi</th>}
+                  {!isReadOnly && <th className="py-3 px-4 w-20 text-center">Aksi</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                <tr className="hover:bg-slate-50/30 transition-colors">
-                  <td className="py-4 px-4 font-bold text-slate-700">Penasehat</td>
-                  <td className="py-4 px-4">
-                    {tasykil.penasehat.length > 0 ? (
-                      <div className="flex flex-col gap-1.5 py-1">
-                        {tasykil.penasehat.map((name, index) => (
-                          <div key={index} className="text-xs text-slate-800 font-bold h-5 flex items-center">
-                            {name}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-slate-400 font-semibold italic">Belum memiliki penasehat</span>
-                    )}
-                  </td>
-                  {!isReadOnly && (
-                    <td className="py-4 px-4 text-center">
-                      {tasykil.penasehat.length > 0 ? (
-                        <div className="flex flex-col gap-1.5 py-1">
-                          {tasykil.penasehat.map((_, index) => (
-                            <div key={index} className="h-5 flex items-center justify-center">
-                              <button
-                                onClick={() => handleRemovePenasehat(index)}
-                                className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
-                              >
-                                Hapus
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-slate-300 font-mono italic">-</span>
+                {tasykil.penasehat.length > 0 ? (
+                  tasykil.penasehat.map((name, index) => (
+                    <tr key={index} className="hover:bg-slate-50/30 transition-colors">
+                      <td className="py-3.5 px-4 font-bold text-slate-700">Penasehat</td>
+                      <td className="py-3.5 px-4 text-xs text-slate-800 font-bold break-words max-w-[180px] sm:max-w-none">
+                        {name}
+                      </td>
+                      {!isReadOnly && (
+                        <td className="py-3.5 px-4 text-center">
+                          <button
+                            onClick={() => handleRemovePenasehat(index)}
+                            className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
+                          >
+                            Hapus
+                          </button>
+                        </td>
                       )}
+                    </tr>
+                  ))
+                ) : (
+                  <tr className="hover:bg-slate-50/30 transition-colors">
+                    <td className="py-4 px-4 font-bold text-slate-700">Penasehat</td>
+                    <td className="py-4 px-4 text-slate-400 font-semibold italic" colSpan={!isReadOnly ? 2 : 1}>
+                      Belum memiliki penasehat
                     </td>
-                  )}
-                </tr>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
