@@ -4,7 +4,7 @@ import * as React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl, createMemberAccount, getStoredAccounts } from "@/common/lib/mock-db"
+import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl, createMemberAccount, getStoredAccounts, generateNextNpa } from "@/common/lib/mock-db"
 import { customConfirm, showToast } from "@/common/lib/alert"
 
 export default function TambahAnggotaPage() {
@@ -21,8 +21,13 @@ export default function TambahAnggotaPage() {
   const [tempatLahir, setTempatLahir] = useState("")
   const [tanggalLahir, setTanggalLahir] = useState("")
   const [alamat, setAlamat] = useState("")
+  const [rtRw, setRtRw] = useState("")
+  const [kelDesa, setKelDesa] = useState("")
+  const [kecamatan, setKecamatan] = useState("")
+  const [kabKota, setKabKota] = useState("")
   const [pekerjaan, setPekerjaan] = useState("")
   const [whatsapp, setWhatsapp] = useState("")
+  const [bergabungTahun, setBergabungTahun] = useState(String(new Date().getFullYear()))
 
 
 
@@ -56,27 +61,15 @@ export default function TambahAnggotaPage() {
       } catch (e) {}
     }
     
-    // Pre-fill a suggested unique ID/NPA (YY.XXXX format)
-    const year2Digits = String(new Date().getFullYear()).slice(-2)
-    const thisYearPrefix = `${year2Digits}.`
-    const yearMembers = members.filter(m => m.id.startsWith(thisYearPrefix))
-    let nextSeq = 1
-    if (yearMembers.length > 0) {
-      const seqs = yearMembers.map(m => {
-        const parts = m.id.split(".")
-        return parts.length > 1 ? parseInt(parts[1], 10) : 0
-      })
-      nextSeq = Math.max(...seqs) + 1
-    }
-    const seq = String(nextSeq).padStart(4, "0")
-    setNpa(`${year2Digits}.${seq}`)
+    // Pre-fill a suggested unique ID/NPA (YY.XXXX format) using central generator
+    setNpa(generateNextNpa(members))
   }, [])
 
 
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim() || !npa.trim() || !email.trim()) return
+    if (!name.trim() || !npa.trim() || !email.trim() || !alamat.trim() || !rtRw.trim() || !kelDesa.trim() || !kecamatan.trim() || !kabKota.trim()) return
 
     const confirmed = await customConfirm({
       title: "Tambah Anggota Baru",
@@ -96,9 +89,15 @@ export default function TambahAnggotaPage() {
       tempatLahir: tempatLahir.trim(),
       tanggalLahir: tanggalLahir.trim(),
       alamat: alamat.trim(),
+      rtRw: rtRw.trim(),
+      kelDesa: kelDesa.trim(),
+      kecamatan: kecamatan.trim(),
+      kabKota: kabKota.trim(),
       pekerjaan: pekerjaan.trim(),
       whatsapp: whatsapp.trim(),
-      email: email.trim()
+      email: email.trim(),
+      bergabungTahun: bergabungTahun.trim() || String(new Date().getFullYear()),
+      createdAt: new Date().toISOString()
     }
 
     saveStoredMembers([...existingMembers, newMember])
@@ -200,9 +199,22 @@ export default function TambahAnggotaPage() {
                 className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 bg-white focus:outline-none focus:border-[#F7A440] transition-colors"
               >
                 <option value="Aktif">Aktif</option>
-                <option value="Tidak-Aktif">Tidak Aktif</option>
+                <option value="Tidak Aktif">Tidak Aktif</option>
                 <option value="Alumni">Alumni</option>
               </select>
+            </div>
+
+            {/* Tahun Bergabung */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tahun Bergabung *</label>
+              <input
+                type="text"
+                required
+                value={bergabungTahun}
+                onChange={(e) => setBergabungTahun(e.target.value)}
+                placeholder="Misal: 2026"
+                className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+              />
             </div>
 
             {/* Tempat Lahir */}
@@ -253,15 +265,69 @@ export default function TambahAnggotaPage() {
             </div>
 
             {/* Alamat */}
-            <div className="flex flex-col gap-1.5 md:col-span-2">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Alamat Lengkap</label>
-              <textarea
-                rows={3}
-                value={alamat}
-                onChange={(e) => setAlamat(e.target.value)}
-                placeholder="Masukkan alamat domisili lengkap"
-                className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors resize-none leading-relaxed"
-              />
+            {/* Grup Alamat */}
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-2 mt-2 border-t border-slate-100">
+              <h3 className="md:col-span-2 text-[13px] font-bold text-slate-800 uppercase tracking-wider mb-1">Data Alamat Domisili</h3>
+              
+              <div className="flex flex-col gap-1.5 md:col-span-2">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Alamat Lengkap / Nama Jalan *</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={alamat}
+                  onChange={(e) => setAlamat(e.target.value)}
+                  placeholder="Contoh: Jl. Raya Cirengit No. 12"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors resize-none leading-relaxed"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">RT / RW *</label>
+                <input
+                  type="text"
+                  required
+                  value={rtRw}
+                  onChange={(e) => setRtRw(e.target.value)}
+                  placeholder="Contoh: 01/05"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kelurahan / Desa *</label>
+                <input
+                  type="text"
+                  required
+                  value={kelDesa}
+                  onChange={(e) => setKelDesa(e.target.value)}
+                  placeholder="Contoh: Cirengit"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kecamatan *</label>
+                <input
+                  type="text"
+                  required
+                  value={kecamatan}
+                  onChange={(e) => setKecamatan(e.target.value)}
+                  placeholder="Contoh: Cangkuang"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kabupaten / Kota *</label>
+                <input
+                  type="text"
+                  required
+                  value={kabKota}
+                  onChange={(e) => setKabKota(e.target.value)}
+                  placeholder="Contoh: Kabupaten Bandung"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+                />
+              </div>
             </div>
 
           </div>

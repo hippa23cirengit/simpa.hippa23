@@ -84,16 +84,25 @@ export default function DetailAnggota() {
           </div>
         </div>
 
-        {/* Edit Profile Button (Visible only to authorized roles) */}
-        {canEdit && (
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-2 self-start sm:self-auto">
+          {canEdit && (
+            <Link
+              href={`/dashboard/data-anggota/edit/${member.id}`}
+              className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 transition duration-200 shadow-sm text-xs"
+            >
+              <span className="material-symbols-outlined text-[16px]">edit</span>
+              Ubah Profil
+            </Link>
+          )}
           <Link
-            href={`/dashboard/data-anggota/edit/${member.id}`}
-            className="bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 transition duration-200 shadow-sm text-xs self-start sm:self-auto"
+            href={`/dashboard/data-anggota/kta/${member.id}`}
+            className="bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 transition duration-200 shadow-sm text-xs"
           >
-            <span className="material-symbols-outlined text-[16px]">edit</span>
-            Ubah Profil
+            <span className="material-symbols-outlined text-[16px]">badge</span>
+            Cetak KTA
           </Link>
-        )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -165,6 +174,14 @@ export default function DetailAnggota() {
                   <p className="text-slate-400 font-medium mb-1">Alamat Email (Gmail)</p>
                   <p className="font-bold text-[#F7A440] font-semibold">{member.email || "-"}</p>
                 </div>
+                <div>
+                  <p className="text-slate-400 font-medium mb-1">Tahun Bergabung</p>
+                  <p className="font-bold text-slate-800">{member.bergabungTahun || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-medium mb-1">Terdaftar Pada</p>
+                  <p className="font-bold text-slate-800">{member.createdAt ? new Date(member.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-"}</p>
+                </div>
               </div>
             </div>
 
@@ -175,8 +192,16 @@ export default function DetailAnggota() {
               </h4>
               <div className="space-y-4 text-xs">
                 <div>
-                  <p className="text-slate-400 font-medium mb-1">Alamat Tinggal</p>
-                  <p className="font-bold text-slate-800 leading-relaxed">{member.alamat}</p>
+                  <p className="text-slate-400 font-medium mb-1">Alamat Lengkap (Domisili)</p>
+                  <div className="font-bold text-slate-800 leading-relaxed">
+                    <p>{member.alamat}</p>
+                    <p className="text-slate-600 font-semibold text-[11px] mt-0.5">
+                      {member.rtRw ? `RT/RW: ${member.rtRw}` : ""} 
+                      {member.kelDesa ? ` | Kel/Desa: ${member.kelDesa}` : ""} 
+                      {member.kecamatan ? ` | Kec. ${member.kecamatan}` : ""} 
+                      {member.kabKota ? ` | ${member.kabKota}` : ""}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 border border-slate-100 rounded-xl p-4 mt-2">
                   <div>

@@ -106,7 +106,7 @@ export default function DataAnggota() {
       `"${m.status}"`,
       `"${(m.tempatLahir || "").replace(/"/g, '""')}"`,
       `"${m.tanggalLahir || ""}"`,
-      `"${(m.alamat || "").replace(/"/g, '""')}"`,
+      `"${[m.alamat, m.rtRw ? `RT/RW ${m.rtRw}` : null, m.kelDesa ? `Kel. ${m.kelDesa}` : null, m.kecamatan ? `Kec. ${m.kecamatan}` : null, m.kabKota].filter(Boolean).join(", ").replace(/"/g, '""')}"`,
       `"${(m.pekerjaan || "").replace(/"/g, '""')}"`,
       `"${m.whatsapp || ""}"`,
       `"${m.email || ""}"`
@@ -132,7 +132,14 @@ export default function DataAnggota() {
           <p className="font-body-md text-sm text-slate-500 mt-1">Kelola seluruh data anggota HIPPA dalam satu tempat.</p>
         </div>
 
-        <div className="flex items-center gap-3 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+          <Link
+            href="/dashboard/data-anggota/kta-massal"
+            className="bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-bold py-2.5 px-4 rounded-lg flex items-center gap-1.5 transition duration-300 shadow-sm text-xs"
+          >
+            <span className="material-symbols-outlined text-[18px]">print</span>
+            Cetak Massal KTA
+          </Link>
           <button
             onClick={handleExportExcel}
             className="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-2.5 px-4 rounded-lg flex items-center gap-1.5 transition duration-300 shadow-sm text-xs"

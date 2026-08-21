@@ -24,8 +24,13 @@ export default function EditAnggotaPage() {
   const [tempatLahir, setTempatLahir] = useState("")
   const [tanggalLahir, setTanggalLahir] = useState("")
   const [alamat, setAlamat] = useState("")
+  const [rtRw, setRtRw] = useState("")
+  const [kelDesa, setKelDesa] = useState("")
+  const [kecamatan, setKecamatan] = useState("")
+  const [kabKota, setKabKota] = useState("")
   const [pekerjaan, setPekerjaan] = useState("")
   const [whatsapp, setWhatsapp] = useState("")
+  const [bergabungTahun, setBergabungTahun] = useState("")
 
   // Profile Photo Upload State
   const [profilePhoto, setProfilePhoto] = useState("")
@@ -53,9 +58,14 @@ export default function EditAnggotaPage() {
       setTempatLahir(member.tempatLahir || "")
       setTanggalLahir(member.tanggalLahir || "")
       setAlamat(member.alamat || "")
+      setRtRw(member.rtRw || "")
+      setKelDesa(member.kelDesa || "")
+      setKecamatan(member.kecamatan || "")
+      setKabKota(member.kabKota || "")
       setPekerjaan(member.pekerjaan || "")
       setWhatsapp(member.whatsapp || "")
       setProfilePhoto(member.profilePhoto || "")
+      setBergabungTahun(member.bergabungTahun || "")
     }
   }, [memberId])
 
@@ -66,34 +76,23 @@ export default function EditAnggotaPage() {
     setUploading(true)
 
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://buylslyfndjjyqhqvpyk.supabase.co"
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_KgKMdTFKj6yO9gvwHdHARw_Ot_3N8Dd"
-      const bucketName = "profilephoto"
-      const fileExt = file.name.split(".").pop()
-      const filePath = `avatar_${memberId}_${Date.now()}.${fileExt}`
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("memberId", memberId)
 
-      const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucketName}/${filePath}`
-
-      const res = await fetch(uploadUrl, {
+      const res = await fetch("/api/upload-photo", {
         method: "POST",
-        headers: {
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`,
-          "Content-Type": file.type
-        },
-        body: file
+        body: formData
       })
 
       const resData = await res.json()
       if (!res.ok) {
-        const errMsg = resData.message || resData.error || JSON.stringify(resData)
-        throw new Error(errMsg)
+        throw new Error(resData.error || "Gagal mengunggah foto")
       }
 
-      const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`
-      setProfilePhoto(publicUrl)
+      setProfilePhoto(resData.url)
       showToast({
-        message: "Foto profil berhasil diunggah!",
+        message: "Foto profil berhasil dikompresi (WebP) dan diunggah!",
         type: "success"
       })
     } catch (err: any) {
@@ -108,7 +107,7 @@ export default function EditAnggotaPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim() || !npa.trim() || !email.trim()) return
+    if (!name.trim() || !npa.trim() || !email.trim() || !alamat.trim() || !rtRw.trim() || !kelDesa.trim() || !kecamatan.trim() || !kabKota.trim()) return
 
     const confirmed = await customConfirm({
       title: "Simpan Perubahan Profil",
@@ -130,10 +129,15 @@ export default function EditAnggotaPage() {
           tempatLahir: tempatLahir.trim(),
           tanggalLahir: tanggalLahir.trim(),
           alamat: alamat.trim(),
+          rtRw: rtRw.trim(),
+          kelDesa: kelDesa.trim(),
+          kecamatan: kecamatan.trim(),
+          kabKota: kabKota.trim(),
           pekerjaan: pekerjaan.trim(),
           whatsapp: whatsapp.trim(),
           email: email.trim(),
-          profilePhoto: profilePhoto || undefined
+          profilePhoto: profilePhoto || undefined,
+          bergabungTahun: bergabungTahun.trim() || undefined
         }
       }
       return m
@@ -292,6 +296,18 @@ export default function EditAnggotaPage() {
               </select>
             </div>
 
+            {/* Tahun Bergabung */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tahun Bergabung</label>
+              <input
+                type="text"
+                value={bergabungTahun}
+                onChange={(e) => setBergabungTahun(e.target.value)}
+                placeholder="Misal: 2026"
+                className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+              />
+            </div>
+
             {/* Tempat Lahir */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tempat Lahir</label>
@@ -339,16 +355,69 @@ export default function EditAnggotaPage() {
               />
             </div>
 
-            {/* Alamat */}
-            <div className="flex flex-col gap-1.5 md:col-span-2">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Alamat Lengkap</label>
-              <textarea
-                rows={3}
-                value={alamat}
-                onChange={(e) => setAlamat(e.target.value)}
-                placeholder="Masukkan alamat domisili lengkap"
-                className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors resize-none leading-relaxed"
-              />
+            {/* Grup Alamat */}
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-2 mt-2 border-t border-slate-100">
+              <h3 className="md:col-span-2 text-[13px] font-bold text-slate-800 uppercase tracking-wider mb-1">Data Alamat Domisili</h3>
+              
+              <div className="flex flex-col gap-1.5 md:col-span-2">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Alamat Lengkap / Nama Jalan *</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={alamat}
+                  onChange={(e) => setAlamat(e.target.value)}
+                  placeholder="Contoh: Jl. Raya Cirengit No. 12"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors resize-none leading-relaxed"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">RT / RW *</label>
+                <input
+                  type="text"
+                  required
+                  value={rtRw}
+                  onChange={(e) => setRtRw(e.target.value)}
+                  placeholder="Contoh: 01/05"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kelurahan / Desa *</label>
+                <input
+                  type="text"
+                  required
+                  value={kelDesa}
+                  onChange={(e) => setKelDesa(e.target.value)}
+                  placeholder="Contoh: Cirengit"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kecamatan *</label>
+                <input
+                  type="text"
+                  required
+                  value={kecamatan}
+                  onChange={(e) => setKecamatan(e.target.value)}
+                  placeholder="Contoh: Cangkuang"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kabupaten / Kota *</label>
+                <input
+                  type="text"
+                  required
+                  value={kabKota}
+                  onChange={(e) => setKabKota(e.target.value)}
+                  placeholder="Contoh: Kabupaten Bandung"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
+                />
+              </div>
             </div>
 
           </div>
