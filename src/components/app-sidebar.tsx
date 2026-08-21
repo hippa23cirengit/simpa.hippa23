@@ -101,13 +101,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="border-b border-slate-100 p-4 group-data-[collapsible=icon]:p-1.5 transition-all duration-200">
         {/* Brand Header */}
         <div className="flex items-center gap-3 px-1 py-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 transition-all duration-200">
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={40}
-            height={40}
-            className="object-contain shrink-0 w-10 h-10 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 transition-all duration-200"
-          />
+          <div className="relative shrink-0 w-12 h-12 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8 transition-all duration-200">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              fill
+              className="object-contain"
+            />
+          </div>
           <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
             <span className="truncate font-bold text-slate-800">SIMPA HIPPA</span>
             <span className="block text-[9px] font-semibold text-[#F7A440] uppercase tracking-wider leading-tight whitespace-normal break-words mt-0.5">Sistem Informasi Manajemen Pengurus & Anggota</span>
