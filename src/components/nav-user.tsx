@@ -5,6 +5,7 @@ import { clearSession } from "@/common/lib/auth"
 import {
   Avatar,
   AvatarFallback,
+  AvatarImage,
 } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -64,6 +65,7 @@ export function NavUser({
           >
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8 rounded-full border border-amber-200">
+                {user.avatar && <AvatarImage src={user.avatar} className="object-cover" />}
                 <AvatarFallback className="bg-amber-500/10 text-[#895200] text-xs font-bold font-sans">
                   {initials}
                 </AvatarFallback>
@@ -83,19 +85,22 @@ export function NavUser({
             align="start"
             sideOffset={8}
           >
-            <DropdownMenuLabel className="px-2 py-1.5 text-left text-xs">
-              <div className="flex items-center gap-2">
-                <Avatar className="h-7 w-7 rounded-full border border-amber-200">
-                  <AvatarFallback className="bg-amber-500/10 text-[#895200] text-[10px] font-bold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-[11px] leading-tight">
-                  <span className="truncate font-bold text-slate-800">{user.name}</span>
-                  <span className="text-[9px] text-slate-400 font-medium truncate">{user.email}</span>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="px-2 py-1.5 text-left text-xs">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-7 w-7 rounded-full border border-amber-200">
+                    {user.avatar && <AvatarImage src={user.avatar} className="object-cover" />}
+                    <AvatarFallback className="bg-amber-500/10 text-[#895200] text-[10px] font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-[11px] leading-tight">
+                    <span className="truncate font-bold text-slate-800">{user.name}</span>
+                    <span className="text-[9px] text-slate-400 font-medium truncate">{user.email}</span>
+                  </div>
                 </div>
-              </div>
-            </DropdownMenuLabel>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator className="my-1.5" />
             <DropdownMenuGroup>
               <DropdownMenuItem

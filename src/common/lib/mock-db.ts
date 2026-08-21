@@ -95,23 +95,44 @@ export const DEFAULT_TASYKIL: TasykilState = {
 }
 
 const MEMBERS_KEY = "simpa_members_state"
-const TASYKIL_KEY = "simpa_tasykil_state"
+const TASYKIL_KEY = "simpa_tasykil"
 
 // Backend sync helper
 function syncToServer(key: string, value: any) {
   if (typeof window !== "undefined") {
+    // Notify UI that a sync has started
+    window.dispatchEvent(new CustomEvent("simpa_sync_status", { detail: { status: "syncing" } }));
+
     fetch("/api/db-sync", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key, value })
-    }).catch(e => console.error("Gagal sinkronisasi data ke server:", e))
+    })
+    .then(async (res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      if (data.status) {
+        window.dispatchEvent(new CustomEvent("simpa_sync_status", { detail: { status: "success" } }));
+      } else {
+        window.dispatchEvent(new CustomEvent("simpa_sync_status", { detail: { status: "error", error: data.reason || "Gagal menyimpan ke database." } }));
+      }
+    })
+    .catch(e => {
+      console.error("Gagal sinkronisasi data ke server:", e);
+      window.dispatchEvent(new CustomEvent("simpa_sync_status", { detail: { status: "error", error: e.message || "Gagal menghubungi server." } }));
+    });
   }
 }
 
-export async function syncDatabaseFromServer() {
-  if (typeof window === "undefined") return
+export async function syncDatabaseFromServer(): Promise<boolean> {
+  if (typeof window === "undefined") return false
   try {
     const res = await fetch("/api/db-sync")
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
     const resData = await res.json()
     if (resData.status && resData.data) {
       const data = resData.data
@@ -121,9 +142,12 @@ export async function syncDatabaseFromServer() {
       })
       // Dispatch event to sync UI
       window.dispatchEvent(new Event("simpa_role_changed"))
+      return true
     }
+    return false
   } catch (e) {
     console.error("Gagal sinkronisasi data dari server:", e)
+    return false
   }
 }
 
@@ -136,8 +160,8 @@ export function getStoredMembers(): Member[] {
   }
   try {
     const parsed = JSON.parse(stored) as Member[]
-    // Migration: Reset if legacy format or first member is not Najmi
-    if (parsed.length === 0 || parsed[0].id !== "26.0000" || parsed[0].name !== "Najmi Shofwan Al-Azhar") {
+    // Migration: Reset only if not an array or doesn't contain Najmi
+    if (!Array.isArray(parsed) || parsed.length === 0 || !parsed.some(m => m.id === "26.0000")) {
       localStorage.setItem(MEMBERS_KEY, JSON.stringify(DEFAULT_MEMBERS))
       localStorage.setItem(TASYKIL_KEY, JSON.stringify(DEFAULT_TASYKIL))
       return DEFAULT_MEMBERS
@@ -381,15 +405,16 @@ export function getStoredAccounts(): LoginAccount[] {
   }
   try {
     const parsed = JSON.parse(stored) as LoginAccount[];
-    // Migration: If Najmi is not the first account, reset to ensure sync
-    if (parsed.length === 0 || parsed[0].npa !== "26.0000") {
+    // Migration: Reset only if not an array or doesn't contain Najmi
+    if (!Array.isArray(parsed) || parsed.length === 0 || !parsed.some(a => a.npa === "26.0000")) {
       localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(DEFAULT_LOGIN_ACCOUNTS));
       return DEFAULT_LOGIN_ACCOUNTS;
     }
     // Auto-migrate: Ensure Super Admin is linked to the member record and has new password
-    if (parsed[0].npa === "26.0000" && (!parsed[0].linkedAnggotaId || parsed[0].passwordHash === "cirengit23")) {
-      parsed[0].linkedAnggotaId = "26.0000";
-      parsed[0].passwordHash = "#h1ppa23";
+    const adminAcc = parsed.find(a => a.npa === "26.0000");
+    if (adminAcc && (!adminAcc.linkedAnggotaId || adminAcc.passwordHash === "cirengit23")) {
+      adminAcc.linkedAnggotaId = "26.0000";
+      adminAcc.passwordHash = "#h1ppa23";
       localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(parsed));
     }
     return parsed;

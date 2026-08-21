@@ -16,21 +16,45 @@ import {
 } from "@/components/ui/sidebar"
 
 
-import { getCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
+import { getCurrentRole, getStoredAcl, getStoredAccounts, getStoredMembers } from "@/common/lib/mock-db"
+import { getSessionUser } from "@/common/lib/auth"
+import { NavUser } from "@/components/nav-user"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
 
   const [currentRole, setCurrentRoleState] = React.useState("Super Admin");
   const [aclRules, setAclRules] = React.useState<any[]>([]);
+  const [userData, setUserData] = React.useState({ name: "User", email: "", avatar: "" });
 
   React.useEffect(() => {
+    const loadSidebarUser = () => {
+      const sessionUser = getSessionUser();
+      if (sessionUser && sessionUser.name) {
+        const accounts = getStoredAccounts();
+        const acc = accounts.find(a => a.npa === sessionUser.npa);
+        let email = "";
+        let avatar = "";
+        if (acc && acc.linkedAnggotaId) {
+          const members = getStoredMembers();
+          const mem = members.find(m => m.id === acc.linkedAnggotaId);
+          if (mem) {
+            email = mem.email || "";
+            avatar = mem.profilePhoto || "";
+          }
+        }
+        setUserData({ name: sessionUser.name, email, avatar });
+      }
+    };
+
+    loadSidebarUser();
     setCurrentRoleState(getCurrentRole());
     setAclRules(getStoredAcl());
 
     const handleRoleChange = () => {
       setCurrentRoleState(getCurrentRole());
       setAclRules(getStoredAcl());
+      loadSidebarUser();
     };
 
     window.addEventListener("simpa_role_changed", handleRoleChange);
@@ -120,8 +144,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-slate-50 text-center group-data-[collapsible=icon]:hidden">
-        <p className="text-[9px] text-slate-400 font-medium">SIMPA HIPPA Cirengit &copy; 2026</p>
+      <SidebarFooter className="p-3 border-t border-slate-100/50">
+        <NavUser user={userData} />
+        <div className="text-center mt-2 group-data-[collapsible=icon]:hidden">
+          <p className="text-[9px] text-slate-400 font-medium">SIMPA HIPPA Cirengit &copy; 2026</p>
+        </div>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

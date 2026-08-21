@@ -29,16 +29,21 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [authorized, setAuthorized] = React.useState(false);
   const [userName, setUserName] = React.useState("");
   const [userPhoto, setUserPhoto] = React.useState("");
+  const [initialLoading, setInitialLoading] = React.useState(true);
+  const [isSyncing, setIsSyncing] = React.useState(false);
 
   const loadUserData = () => {
     const user = getSessionUser();
+    console.log("[DEBUG UserData] session user:", user);
     if (user && user.name) {
       setUserName(user.name);
       const accounts = getStoredAccounts();
       const acc = accounts.find(a => a.npa === user.npa);
+      console.log("[DEBUG UserData] found account:", acc);
       if (acc && acc.linkedAnggotaId) {
         const members = getStoredMembers();
         const mem = members.find(m => m.id === acc.linkedAnggotaId);
+        console.log("[DEBUG UserData] found member:", mem);
         if (mem && mem.profilePhoto) {
           setUserPhoto(mem.profilePhoto);
         } else {
@@ -56,12 +61,16 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     setAuthorized(true);
 
     // Initial database synchronization from server disk
-    syncDatabaseFromServer()
+    const performInitialSync = async () => {
+      setInitialLoading(true);
+      await syncDatabaseFromServer();
+      loadUserData();
+      setCurrentRoleState(getCurrentRole());
+      setAclRules(getStoredAcl());
+      setInitialLoading(false);
+    };
 
-    loadUserData();
-
-    setCurrentRoleState(getCurrentRole());
-    setAclRules(getStoredAcl());
+    performInitialSync();
 
     const handleRoleChange = () => {
       if (!isLoggedIn()) {
@@ -73,9 +82,25 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       setAclRules(getStoredAcl());
     };
 
+    const handleSyncStatus = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail.status === "syncing") {
+        setIsSyncing(true);
+      } else if (detail.status === "success") {
+        setIsSyncing(false);
+        loadUserData();
+      } else if (detail.status === "error") {
+        setIsSyncing(false);
+        alert(`❌ Gagal sinkronisasi data ke Supabase:\n${detail.error}`);
+      }
+    };
+
     window.addEventListener("simpa_role_changed", handleRoleChange);
+    window.addEventListener("simpa_sync_status", handleSyncStatus as EventListener);
+    
     return () => {
       window.removeEventListener("simpa_role_changed", handleRoleChange);
+      window.removeEventListener("simpa_sync_status", handleSyncStatus as EventListener);
     };
   }, [router]);
 
@@ -104,11 +129,11 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     return "Anggota Biasa";
   };
 
-  if (!authorized) {
+  if (initialLoading || !authorized) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-bold text-slate-400 gap-3">
         <div className="w-8 h-8 border-4 border-[#F7A440] border-t-transparent rounded-full animate-spin"></div>
-        <span className="text-xs tracking-wider text-slate-400 font-semibold uppercase">Memuat SIMPA...</span>
+        <span className="text-xs tracking-wider text-slate-400 font-semibold uppercase">Menghubungkan ke Supabase...</span>
       </div>
     );
   }
@@ -250,6 +275,16 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           </button>
         </nav>
       </SidebarInset>
+
+      {/* Glassmorphism Sync Overlay */}
+      {isSyncing && (
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] z-[9999] flex flex-col items-center justify-center gap-3 select-none pointer-events-auto">
+          <div className="bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 px-6 py-5 rounded-2xl shadow-xl flex flex-col items-center gap-3">
+            <div className="w-6 h-6 border-2 border-[#F7A440] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-xs font-extrabold text-slate-700 tracking-wide">Menyinkronkan ke Supabase...</span>
+          </div>
+        </div>
+      )}
     </>
   );
 }

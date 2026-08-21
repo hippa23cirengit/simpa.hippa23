@@ -4,7 +4,7 @@ import * as React from "react"
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { getStoredMembers, getStoredTasykil, syncRoles, Member } from "@/common/lib/mock-db"
+import { getStoredMembers, getStoredTasykil, syncRoles, Member, getCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
 
 export default function DetailAnggota() {
   const params = useParams()
@@ -12,6 +12,7 @@ export default function DetailAnggota() {
   const id = params.id as string
 
   const [member, setMember] = useState<Member | null>(null)
+  const [currentRole, setCurrentRole] = useState("Super Admin")
 
   useEffect(() => {
     if (!id) return
@@ -22,7 +23,11 @@ export default function DetailAnggota() {
     if (found) {
       setMember(found)
     }
+    setCurrentRole(getCurrentRole())
   }, [id])
+
+  const activeAcl = getStoredAcl().find(r => r.role === currentRole)
+  const canEdit = activeAcl?.permissions.manageDataAnggota
 
   if (!member) {
     return (
@@ -65,23 +70,37 @@ export default function DetailAnggota() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Back Button Header */}
-      <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard/data-anggota"
-          className="w-9 h-9 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 transition shadow-sm"
-        >
-          <span className="material-symbols-outlined text-[20px]">chevron_left</span>
-        </Link>
-        <div>
-          <h2 className="font-headline-lg text-xl md:text-2xl font-extrabold text-[#1A1A1A]">Detail Profil Anggota</h2>
-          <p className="font-body-md text-xs text-slate-400">Kembali ke daftar manajemen data anggota.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/data-anggota"
+            className="w-9 h-9 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 transition shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+          </Link>
+          <div>
+            <h2 className="font-headline-lg text-xl md:text-2xl font-extrabold text-[#1A1A1A]">Detail Profil Anggota</h2>
+            <p className="font-body-md text-xs text-slate-400">Kembali ke daftar manajemen data anggota.</p>
+          </div>
         </div>
+
+        {/* Edit Profile Button (Visible only to authorized roles) */}
+        {canEdit && (
+          <Link
+            href={`/dashboard/data-anggota/edit/${member.id}`}
+            className="bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 transition duration-200 shadow-sm text-xs self-start sm:self-auto"
+          >
+            <span className="material-symbols-outlined text-[16px]">edit</span>
+            Ubah Profil
+          </Link>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left Column - Card Profile */}
         <div className="md:col-span-1 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col items-center text-center">
-          <div className="w-24 h-24 rounded-full bg-amber-500/10 border-2 border-amber-200 flex items-center justify-center font-bold text-3xl text-[#895200] shadow-inner mb-4 overflow-hidden shrink-0">
+          {/* Rounded Square profile photo shape */}
+          <div className="w-24 h-24 rounded-2xl bg-amber-500/10 border-2 border-amber-200 flex items-center justify-center font-bold text-3xl text-[#895200] shadow-inner mb-4 overflow-hidden shrink-0">
             {member.profilePhoto ? (
               <img
                 src={member.profilePhoto}
@@ -94,7 +113,11 @@ export default function DetailAnggota() {
           </div>
           
           <h3 className="font-bold text-slate-800 text-base leading-snug">{member.name}</h3>
-          <p className="text-xs text-slate-400 font-mono mt-1 font-semibold">{member.id}</p>
+          
+          {/* Highlighted NPA Label */}
+          <div className="mt-2 bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold text-slate-600 tracking-wider">
+            NPA: {member.id}
+          </div>
 
           <div className="flex flex-col gap-2 w-full mt-6 pt-6 border-t border-slate-100">
             <div className="flex justify-between items-center text-xs">

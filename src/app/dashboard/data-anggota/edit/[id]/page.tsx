@@ -27,7 +27,9 @@ export default function EditAnggotaPage() {
   const [pekerjaan, setPekerjaan] = useState("")
   const [whatsapp, setWhatsapp] = useState("")
 
-
+  // Profile Photo Upload State
+  const [profilePhoto, setProfilePhoto] = useState("")
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     const role = getCurrentRole()
@@ -53,8 +55,54 @@ export default function EditAnggotaPage() {
       setAlamat(member.alamat || "")
       setPekerjaan(member.pekerjaan || "")
       setWhatsapp(member.whatsapp || "")
+      setProfilePhoto(member.profilePhoto || "")
     }
   }, [memberId])
+
+  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !memberId) return
+
+    setUploading(true)
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://buylslyfndjjyqhqvpyk.supabase.co"
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_KgKMdTFKj6yO9gvwHdHARw_Ot_3N8Dd"
+      const bucketName = "profilephoto"
+      const fileExt = file.name.split(".").pop()
+      const filePath = `avatar_${memberId}_${Date.now()}.${fileExt}`
+
+      const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucketName}/${filePath}`
+
+      const res = await fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`,
+          "Content-Type": file.type
+        },
+        body: file
+      })
+
+      const resData = await res.json()
+      if (!res.ok) {
+        const errMsg = resData.message || resData.error || JSON.stringify(resData)
+        throw new Error(errMsg)
+      }
+
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`
+      setProfilePhoto(publicUrl)
+      showToast({
+        message: "Foto profil berhasil diunggah!",
+        type: "success"
+      })
+    } catch (err: any) {
+      console.error(err)
+      alert("Gagal mengunggah foto profil: " + err.message)
+    } finally {
+      setUploading(false)
+    }
+  }
 
 
 
@@ -84,7 +132,8 @@ export default function EditAnggotaPage() {
           alamat: alamat.trim(),
           pekerjaan: pekerjaan.trim(),
           whatsapp: whatsapp.trim(),
-          email: email.trim()
+          email: email.trim(),
+          profilePhoto: profilePhoto || null
         }
       }
       return m
@@ -153,6 +202,45 @@ export default function EditAnggotaPage() {
         <form onSubmit={handleSave} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
             
+            {/* Foto Profil Section */}
+            <div className="flex flex-col items-center justify-center md:col-span-2 pb-6 border-b border-slate-100">
+              <div className="w-24 h-24 rounded-2xl bg-amber-500/10 border-2 border-amber-200 flex items-center justify-center font-bold text-3xl text-[#895200] shadow-inner mb-3 overflow-hidden shrink-0 relative group">
+                {profilePhoto ? (
+                  <img
+                    src={profilePhoto}
+                    alt={name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  name ? name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "AG"
+                )}
+                {uploading && (
+                  <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
+              
+              {(currentRole === "Super Admin" || currentRole === "PIMHAR") ? (
+                <div className="flex flex-col items-center gap-1.5">
+                  <label className="cursor-pointer bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 transition flex items-center gap-1.5 shadow-sm">
+                    <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                    {profilePhoto ? "Ubah Foto Profil" : "Unggah Foto Profil"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUploadPhoto}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                  <p className="text-[10px] text-slate-400 font-semibold">Format JPG/PNG, maks. 2MB. Hanya Super Admin & PIMHAR.</p>
+                </div>
+              ) : (
+                <p className="text-[10px] text-slate-400 font-semibold italic">Hanya Super Admin & PIMHAR yang dapat mengubah foto profil.</p>
+              )}
+            </div>
+
             {/* Nama Lengkap */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Nama Lengkap *</label>
