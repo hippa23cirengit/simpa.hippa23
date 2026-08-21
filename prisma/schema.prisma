@@ -86,6 +86,8 @@ model RoleAkses {
   manageJadwalKegiatan Boolean @default(false) @map("manage_jadwal_kegiatan")
   viewPengaturan       Boolean @default(false) @map("view_pengaturan")
   managePengaturan     Boolean @default(false) @map("manage_pengaturan")
+  viewKeuangan         Boolean @default(false) @map("view_keuangan")
+  manageKeuangan       Boolean @default(false) @map("manage_keuangan")
   akunLogins           AkunLogin[]
 
   @@map("role_akses")
@@ -100,6 +102,8 @@ model AkunLogin {
   linkedAnggotaId String?   @unique @map("linked_anggota_id")
   anggota         Anggota?  @relation(fields: [linkedAnggotaId], references: [id], onDelete: SetNull)
   roleAkses       RoleAkses @relation(fields: [role], references: [roleName], onDelete: Restrict)
+  resetToken       String?   @unique @map("reset_token")
+  resetTokenExpiry DateTime? @map("reset_token_expiry")
 
   @@map("akun_login")
 }
@@ -136,11 +140,15 @@ model Applicant {
   id           String @id @default(uuid())
   name         String
   date         String // YYYY-MM-DD
-  contact      String // WhatsApp number
+  contact      String? // WhatsApp number (Optional)
   status       String // 'Menunggu' | 'Proses' | 'Diterima' | 'Ditolak'
   tempatLahir  String
   tanggalLahir String
   alamat       String
+  rtRw         String?
+  kelDesa      String?
+  kecamatan    String?
+  kabKota      String?
   pekerjaan    String
 
   @@map("applicant")
@@ -158,4 +166,31 @@ model SystemSetting {
   value String @db.Text
 
   @@map("system_setting")
+}
+
+model KasTransaksi {
+  id         String   @id @default(uuid())
+  tipe       String   // 'pemasukan' | 'pengeluaran'
+  jumlah     Int      // Nominal dalam Rupiah
+  deskripsi  String
+  kategori   String   
+  tanggal    String   // YYYY-MM-DD
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("kas_transaksi")
+}
+
+model KasKategori {
+  id    String @id @default(uuid())
+  nama  String
+  tipe  String // 'pemasukan' | 'pengeluaran'
+
+  @@map("kas_kategori")
+}
+
+model KasSetting {
+  id          String @id @default("default")
+  saldoAwal   Int    @default(0) @map("saldo_awal")
+
+  @@map("kas_setting")
 }

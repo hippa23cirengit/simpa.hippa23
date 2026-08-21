@@ -5,10 +5,10 @@ import { RegisterApplicantInput } from "../schemas/register.schema";
 
 const registerApplicantUseCase = new RegisterApplicantUseCase();
 
-export async function registerApplicantAction(input: RegisterApplicantInput) {
+export async function registerApplicantAction(input: RegisterApplicantInput): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
     const result = await registerApplicantUseCase.execute(input);
-    return result;
+    return { success: true, id: result.id };
   } catch (error: any) {
     console.error("Failed to register applicant:", error);
     

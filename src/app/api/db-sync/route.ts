@@ -19,6 +19,7 @@ export async function GET() {
       }
     })
     const dbApplicants = await prisma.applicant.findMany()
+    const dbKtaSettings = await prisma.ktaSettings.findFirst()
 
     // 2. Self-healing / Seeding: If the Supabase database is completely empty, populate it using db.json
     if (dbAnggota.length === 0) {
@@ -48,7 +49,9 @@ export async function GET() {
                   viewJadwalKegiatan: r.permissions.viewJadwalKegiatan,
                   manageJadwalKegiatan: r.permissions.manageJadwalKegiatan,
                   viewPengaturan: r.permissions.viewPengaturan,
-                  managePengaturan: r.permissions.managePengaturan
+                  managePengaturan: r.permissions.managePengaturan,
+                  viewKeuangan: r.permissions.viewKeuangan || false,
+                  manageKeuangan: r.permissions.manageKeuangan || false
                 }
               })
             }
@@ -200,7 +203,8 @@ export async function GET() {
       dbPenasehat,
       dbPimhar,
       dbBidang,
-      dbApplicants
+      dbApplicants,
+      dbKtaSettings
     )
 
     return NextResponse.json({ status: true, data: compiledData })
@@ -391,22 +395,30 @@ export async function POST(req: Request) {
           update: {
             name: a.name,
             date: a.date,
-            contact: a.contact,
+            contact: a.contact || null,
             status: a.status,
             tempatLahir: a.tempatLahir,
             tanggalLahir: a.tanggalLahir,
             alamat: a.alamat,
+            rtRw: a.rtRw || null,
+            kelDesa: a.kelDesa || null,
+            kecamatan: a.kecamatan || null,
+            kabKota: a.kabKota || null,
             pekerjaan: a.pekerjaan
           },
           create: {
             id: a.id,
             name: a.name,
             date: a.date,
-            contact: a.contact,
+            contact: a.contact || null,
             status: a.status,
             tempatLahir: a.tempatLahir,
             tanggalLahir: a.tanggalLahir,
             alamat: a.alamat,
+            rtRw: a.rtRw || null,
+            kelDesa: a.kelDesa || null,
+            kecamatan: a.kecamatan || null,
+            kabKota: a.kabKota || null,
             pekerjaan: a.pekerjaan
           }
         })
@@ -428,7 +440,9 @@ export async function POST(req: Request) {
             viewJadwalKegiatan: r.permissions.viewJadwalKegiatan,
             manageJadwalKegiatan: r.permissions.manageJadwalKegiatan,
             viewPengaturan: r.permissions.viewPengaturan,
-            managePengaturan: r.permissions.managePengaturan
+            managePengaturan: r.permissions.managePengaturan,
+            viewKeuangan: r.permissions.viewKeuangan || false,
+            manageKeuangan: r.permissions.manageKeuangan || false
           },
           create: {
             roleName: r.role,
@@ -442,7 +456,9 @@ export async function POST(req: Request) {
             viewJadwalKegiatan: r.permissions.viewJadwalKegiatan,
             manageJadwalKegiatan: r.permissions.manageJadwalKegiatan,
             viewPengaturan: r.permissions.viewPengaturan,
-            managePengaturan: r.permissions.managePengaturan
+            managePengaturan: r.permissions.managePengaturan,
+            viewKeuangan: r.permissions.viewKeuangan || false,
+            manageKeuangan: r.permissions.manageKeuangan || false
           }
         })
       }
@@ -706,11 +722,15 @@ async function compilePayload(
     id: a.id,
     name: a.name,
     date: a.date,
-    contact: a.contact,
+    contact: a.contact || "",
     status: a.status,
     tempatLahir: a.tempatLahir,
     tanggalLahir: a.tanggalLahir,
     alamat: a.alamat,
+    rtRw: a.rtRw || "",
+    kelDesa: a.kelDesa || "",
+    kecamatan: a.kecamatan || "",
+    kabKota: a.kabKota || "",
     pekerjaan: a.pekerjaan
   }))
 
