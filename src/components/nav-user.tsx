@@ -59,19 +59,19 @@ export function NavUser({
             render={
               <SidebarMenuButton
                 size="lg"
-                className="w-full flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:border-amber-200 hover:bg-slate-50/50 transition-all duration-200 text-left aria-expanded:bg-slate-50 aria-expanded:border-amber-200"
+                className="w-full flex items-center justify-between p-2.5 h-auto min-h-12 py-2 rounded-xl border border-slate-100 hover:border-amber-200 hover:bg-slate-50/50 transition-all duration-200 text-left aria-expanded:bg-slate-50 aria-expanded:border-amber-200"
               />
             }
           >
-            <div className="flex items-center gap-3">
-              <Avatar className="h-8 w-8 rounded-full border border-amber-200">
+            <div className="flex items-center gap-3 min-w-0">
+              <Avatar className="h-8 w-8 rounded-full border border-amber-200 shrink-0">
                 {user.avatar && <AvatarImage src={user.avatar} className="object-cover" />}
                 <AvatarFallback className="bg-amber-500/10 text-[#895200] text-xs font-bold font-sans">
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-xs leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-bold text-slate-800 leading-snug">{user.name}</span>
+              <div className="grid flex-1 text-left text-xs leading-tight group-data-[collapsible=icon]:hidden min-w-0">
+                <span className="whitespace-normal break-words font-bold text-slate-800 leading-snug">{user.name}</span>
                 <span className="truncate text-[10px] text-slate-500 font-medium leading-none mt-0.5">{user.email}</span>
               </div>
             </div>
