@@ -812,6 +812,7 @@ export interface Applicant {
   name: string;
   date: string;
   contact: string | null;
+  email?: string | null;
   status: "Menunggu" | "Proses" | "Diterima" | "Ditolak";
   tempatLahir: string;
   tanggalLahir: string;

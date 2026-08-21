@@ -150,6 +150,7 @@ model Applicant {
   kecamatan    String?
   kabKota      String?
   pekerjaan    String
+  email        String?
 
   @@map("applicant")
 }

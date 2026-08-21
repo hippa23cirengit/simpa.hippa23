@@ -36,6 +36,7 @@ export default function CalonAnggota() {
   const [formTanggalLahir, setFormTanggalLahir] = useState("")
   const [formAlamat, setFormAlamat] = useState("")
   const [formPekerjaan, setFormPekerjaan] = useState("")
+  const [formEmail, setFormEmail] = useState("")
 
   const loadData = () => {
     setCurrentRole(getCurrentRole())
@@ -98,6 +99,7 @@ export default function CalonAnggota() {
   const handleOpenAdd = () => {
     setFormName("")
     setFormContact("")
+    setFormEmail("")
     setFormTempatLahir("")
     setFormTanggalLahir("")
     setFormAlamat("")
@@ -108,7 +110,7 @@ export default function CalonAnggota() {
   // Add Candidate handler
   const handleAddApplicant = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formName.trim() || !formContact.trim()) return
+    if (!formName.trim() || !formContact.trim() || !formEmail.trim()) return
 
     const seq = String(applicants.length + 1).padStart(3, "0")
     const newApp: Applicant = {
@@ -116,6 +118,7 @@ export default function CalonAnggota() {
       name: formName,
       date: new Date().toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
       contact: formContact,
+      email: formEmail,
       status: "Menunggu",
       tempatLahir: formTempatLahir,
       tanggalLahir: formTanggalLahir,
@@ -151,7 +154,7 @@ export default function CalonAnggota() {
       kabKota: app.kabKota || "",
       pekerjaan: app.pekerjaan,
       whatsapp: app.contact || "",
-      email: `${app.name.toLowerCase().replace(/\s+/g, ".")}@gmail.com`,
+      email: app.email || `${app.name.toLowerCase().replace(/\s+/g, ".")}@gmail.com`,
       bergabungTahun: String(new Date().getFullYear()),
       createdAt: new Date().toISOString()
     }
@@ -386,6 +389,10 @@ export default function CalonAnggota() {
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Pekerjaan</p>
                   <p className="text-slate-800 mt-1">{selectedApp.pekerjaan || "-"}</p>
                 </div>
+                <div className="border-b border-slate-50 pb-2 col-span-2">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Email</p>
+                  <p className="text-slate-800 mt-1">{selectedApp.email || "-"}</p>
+                </div>
                 <div className="col-span-2">
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Alamat Lengkap Domisili</p>
                   <p className="text-slate-800 mt-1 leading-relaxed">{selectedApp.alamat || "-"}</p>
@@ -479,6 +486,19 @@ export default function CalonAnggota() {
                     value={formContact}
                     onChange={(e) => setFormContact(e.target.value)}
                     placeholder="Contoh: 081234567890"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#F7A440] transition-colors"
+                  />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Email *</label>
+                  <input
+                    type="email"
+                    required
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                    placeholder="Contoh: budi.santoso@gmail.com"
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#F7A440] transition-colors"
                   />
                 </div>

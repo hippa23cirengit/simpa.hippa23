@@ -10,6 +10,7 @@ export default function DaftarPage() {
   const [formData, setFormData] = useState({
     name: "", 
     contact: "", 
+    email: "",
     tempatLahir: "", 
     tanggalLahir: "", 
     alamat: "", 
@@ -107,6 +108,19 @@ export default function DaftarPage() {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Masukkan nama lengkap"
+                className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-[#F7A440] focus:ring-4 focus:ring-[#F7A440]/10 outline-none transition font-medium text-slate-800 placeholder:font-normal"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Email <span className="text-red-500">*</span></label>
+              <input 
+                type="email" 
+                name="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Contoh: budi.santoso@gmail.com"
                 className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-[#F7A440] focus:ring-4 focus:ring-[#F7A440]/10 outline-none transition font-medium text-slate-800 placeholder:font-normal"
               />
             </div>

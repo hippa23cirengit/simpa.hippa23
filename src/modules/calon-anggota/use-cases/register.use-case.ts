@@ -22,6 +22,7 @@ export class RegisterApplicantUseCase {
       id,
       name: validated.name,
       contact: validated.contact || null,
+      email: validated.email || null,
       tempatLahir: validated.tempatLahir || null,
       tanggalLahir: validated.tanggalLahir || null,
       alamat: validated.alamat || null,

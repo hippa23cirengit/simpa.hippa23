@@ -3,6 +3,7 @@ import { z } from "zod";
 export const RegisterApplicantSchema = z.object({
   name: z.string().min(1, "Nama lengkap wajib diisi"),
   contact: z.string().optional(),
+  email: z.string().email("Format email tidak valid").min(1, "Email wajib diisi"),
   tempatLahir: z.string().optional(),
   tanggalLahir: z.string().optional(),
   alamat: z.string().optional(),
