@@ -17,12 +17,14 @@ import {
 
 import { getCurrentRole, getStoredAcl, syncDatabaseFromServer, getStoredAccounts, getStoredMembers } from "@/common/lib/mock-db"
 import { isLoggedIn, getSessionUser, clearSession } from "@/common/lib/auth"
+import { useDialog } from "@/common/components/dialog-provider"
 
 // Child content wrapper to access useSidebar safely
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { toggleSidebar, openMobile } = useSidebar();
+  const { showAlert } = useDialog();
 
   const [currentRole, setCurrentRoleState] = React.useState("Super Admin");
   const [aclRules, setAclRules] = React.useState<any[]>([]);
@@ -44,10 +46,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         const members = getStoredMembers();
         const mem = members.find(m => m.id === acc.linkedAnggotaId);
         console.log("[DEBUG UserData] found member:", mem);
-        if (mem && mem.profilePhoto) {
-          setUserPhoto(mem.profilePhoto);
+        if (mem) {
+          setUserPhoto(mem.profilePhoto || "/default pic.webp");
         } else {
-          setUserPhoto("");
+          setUserPhoto("/default pic.webp");
         }
       }
     }
@@ -91,7 +93,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         loadUserData();
       } else if (detail.status === "error") {
         setIsSyncing(false);
-        alert(`❌ Gagal sinkronisasi data ke Supabase:\n${detail.error}`);
+        showAlert(`Gagal sinkronisasi data ke Supabase:\n${detail.error}`, "Sinkronisasi Gagal", "danger");
       }
     };
 
@@ -124,7 +126,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   const getSubLabel = () => {
     if (currentRole === "Super Admin") return "Administrator";
-    if (currentRole === "PIMHAR") return "Ketua Harian";
+    if (currentRole === "PIMHAR") return "Pimpinan Harian";
     if (currentRole.startsWith("Bidang")) return currentRole;
     return "Anggota Biasa";
   };
@@ -150,7 +152,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               alt="HIPPA Logo"
               width={32}
               height={32}
-              className="rounded-full object-cover"
+              className="object-contain shrink-0"
             />
             <h1 className="font-title-lg text-base font-bold text-[#F7A440] leading-none">SIMPA</h1>
           </div>
@@ -189,8 +191,9 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full"></span>
             </button>
             
-            <div className="hidden sm:block pl-4 border-l border-slate-200">
-              <span className="text-xs font-extrabold text-[#F7A440] uppercase tracking-wider select-none">
+            <div className="hidden sm:flex flex-col pl-4 border-l border-slate-200 justify-center">
+              <span className="text-[9px] font-semibold text-slate-800 tracking-wide mb-0.5">Anda Login Sebagai</span>
+              <span className="text-xs font-extrabold text-[#F7A440] uppercase tracking-wider select-none leading-none">
                 {getSubLabel()}
               </span>
             </div>

@@ -13,6 +13,10 @@ export default function DaftarPage() {
     tempatLahir: "", 
     tanggalLahir: "", 
     alamat: "", 
+    rtRw: "",
+    kelDesa: "",
+    kecamatan: "",
+    kabKota: "",
     pekerjaan: ""
   })
   
@@ -77,10 +81,10 @@ export default function DaftarPage() {
             alt="Logo HIPPA" 
             width={72} 
             height={72} 
-            className="mx-auto mb-4 drop-shadow-md rounded-full"
+            className="mx-auto mb-4 drop-shadow-md object-contain"
           />
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Formulir Pendaftaran</h1>
-          <p className="text-slate-600 mt-2 font-medium">Himpunan Pelajar Persatuan Islam Cirengit</p>
+          <p className="text-slate-600 mt-2 font-medium">Himpunan Pelajar Persatuan Islam Putra (HIPPA) Cirengit</p>
         </div>
 
         {/* Form Card */}
@@ -108,11 +112,10 @@ export default function DaftarPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">No. WhatsApp <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-bold text-slate-700 mb-2">No. WhatsApp <span className="text-slate-400 font-normal text-xs ml-1">(Opsional)</span></label>
               <input 
                 type="tel" 
                 name="contact"
-                required
                 value={formData.contact}
                 onChange={handleChange}
                 placeholder="Contoh: 08123456789"
@@ -156,16 +159,52 @@ export default function DaftarPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Alamat Lengkap</label>
-              <textarea 
+            <div className="space-y-4">
+              <label className="block text-sm font-bold text-slate-700 mb-1">Alamat Lengkap</label>
+              <input 
+                type="text" 
                 name="alamat"
-                rows={3}
                 value={formData.alamat}
                 onChange={handleChange}
-                placeholder="Jl. / RT RW / Kelurahan / Kecamatan"
-                className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-[#F7A440] focus:ring-4 focus:ring-[#F7A440]/10 outline-none transition font-medium text-slate-800 placeholder:font-normal resize-none"
-              ></textarea>
+                placeholder="Nama Jalan / Kampung"
+                className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-[#F7A440] focus:ring-4 focus:ring-[#F7A440]/10 outline-none transition font-medium text-slate-800 placeholder:font-normal"
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <input 
+                  type="text" 
+                  name="rtRw"
+                  value={formData.rtRw}
+                  onChange={handleChange}
+                  placeholder="RT/RW"
+                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-[#F7A440] focus:ring-4 focus:ring-[#F7A440]/10 outline-none transition font-medium text-slate-800 placeholder:font-normal"
+                />
+                <input 
+                  type="text" 
+                  name="kelDesa"
+                  value={formData.kelDesa}
+                  onChange={handleChange}
+                  placeholder="Desa/Kelurahan"
+                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-[#F7A440] focus:ring-4 focus:ring-[#F7A440]/10 outline-none transition font-medium text-slate-800 placeholder:font-normal"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <input 
+                  type="text" 
+                  name="kecamatan"
+                  value={formData.kecamatan}
+                  onChange={handleChange}
+                  placeholder="Kecamatan"
+                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-[#F7A440] focus:ring-4 focus:ring-[#F7A440]/10 outline-none transition font-medium text-slate-800 placeholder:font-normal"
+                />
+                <input 
+                  type="text" 
+                  name="kabKota"
+                  value={formData.kabKota}
+                  onChange={handleChange}
+                  placeholder="Kabupaten/Kota"
+                  className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-[#F7A440] focus:ring-4 focus:ring-[#F7A440]/10 outline-none transition font-medium text-slate-800 placeholder:font-normal"
+                />
+              </div>
             </div>
           </div>
 

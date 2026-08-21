@@ -6,11 +6,13 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { getStoredMembers, getStoredTasykil, syncRoles, Member, getStoredKtaSettings, saveStoredKtaSettings, KtaSettings } from "@/common/lib/mock-db"
 import { showToast } from "@/common/lib/alert"
+import { useDialog } from "@/common/components/dialog-provider"
 import { KtaCard } from "@/components/KtaCard"
 
 export default function CetakKtaPage() {
   const params = useParams()
   const router = useRouter()
+  const { showAlert } = useDialog()
   const id = params.id as string
 
   const [member, setMember] = useState<Member | null>(null)
@@ -70,7 +72,7 @@ export default function CetakKtaPage() {
       showToast({ message: "Tanda tangan berhasil diunggah!", type: "success" })
     } catch (err: any) {
       console.error(err)
-      alert("Gagal mengunggah tanda tangan: " + err.message)
+      await showAlert("Gagal mengunggah tanda tangan: " + err.message, "Upload Gagal", "danger")
     } finally {
       setUploading(false)
     }

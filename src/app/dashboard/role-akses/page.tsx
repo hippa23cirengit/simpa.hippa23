@@ -1,6 +1,8 @@
 "use client"
 
 import * as React from "react"
+import { Eye, Edit3, Trash2, X, Plus, Shield, Save } from "lucide-react"
+import { useDialog } from "@/common/components/dialog-provider"
 import {
   getStoredAcl,
   saveStoredAcl,
@@ -15,6 +17,7 @@ import {
 import { customConfirm, showToast } from "@/common/lib/alert"
 
 export default function RoleAksesPage() {
+  const { showConfirm, showPrompt, showAlert } = useDialog()
   const [aclList, setAclList] = React.useState<AclRule[]>([])
   const [accounts, setAccounts] = React.useState<LoginAccount[]>([])
   const [members, setMembers] = React.useState<Member[]>([])
@@ -206,23 +209,24 @@ export default function RoleAksesPage() {
     // Reset state
     setSelectedMemberId("")
     setSelectedRole("Anggota")
-    setPasswordInput("cirengit23")
+    setPasswordInput("#h1ppa23")
   }
 
-  const handleRemoveUser = (npa: string) => {
+  const handleRemoveUser = async (npa: string) => {
     if (npa === "26.0000") return // Prevent deleting Super Admin Najmi
-    if (confirm(`Apakah Anda yakin ingin mencabut hak akses login untuk NPA ${npa}?`)) {
+    const confirmed = await showConfirm(`Apakah Anda yakin ingin mencabut hak akses login untuk NPA ${npa}?`, "Hapus Akses")
+    if (confirmed) {
       const updated = accounts.filter(acc => acc.npa !== npa)
       setAccounts(updated)
       saveStoredAccounts(updated)
     }
   }
 
-  const handleResetUserPassword = (npa: string, memberName: string) => {
-    const newPass = prompt(`Masukkan password baru untuk ${memberName}:`, "cirengit23")
+  const handleResetUserPassword = async (npa: string, memberName: string) => {
+    const newPass = await showPrompt(`Masukkan password baru untuk ${memberName}:`, "Reset Password", "#h1ppa23")
     if (newPass === null) return
     if (!newPass.trim()) {
-      alert("Password tidak boleh kosong!")
+      await showAlert("Password tidak boleh kosong!", "Peringatan", "warning")
       return
     }
     
@@ -234,7 +238,7 @@ export default function RoleAksesPage() {
     })
     setAccounts(updated)
     saveStoredAccounts(updated)
-    alert("Password berhasil di-reset!")
+    await showAlert("Password berhasil di-reset!", "Sukses", "success")
   }
 
   const openEditRoleModal = (account: LoginAccount) => {
@@ -298,6 +302,13 @@ export default function RoleAksesPage() {
       icon: "settings",
       viewKey: "viewPengaturan" as keyof AclRule["permissions"],
       manageKey: "managePengaturan" as keyof AclRule["permissions"],
+    },
+    {
+      label: "Keuangan & Kas",
+      description: "Pengelolaan pemasukan, pengeluaran, dan kas",
+      icon: "payments",
+      viewKey: "viewKeuangan" as keyof AclRule["permissions"],
+      manageKey: "manageKeuangan" as keyof AclRule["permissions"],
     },
     {
       label: "Dashboard Utama",
@@ -646,7 +657,7 @@ export default function RoleAksesPage() {
                   type="text"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
-                  placeholder="cirengit23"
+                  placeholder="#h1ppa23"
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:border-[#F7A440]"
                 />
               </div>

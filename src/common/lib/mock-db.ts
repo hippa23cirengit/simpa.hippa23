@@ -64,6 +64,8 @@ export interface AclRule {
     manageJadwalKegiatan: boolean;
     viewPengaturan: boolean;
     managePengaturan: boolean;
+    viewKeuangan: boolean;
+    manageKeuangan: boolean;
   };
 }
 
@@ -292,7 +294,9 @@ export const DEFAULT_ACL: AclRule[] = [
       viewJadwalKegiatan: true,
       manageJadwalKegiatan: true,
       viewPengaturan: true,
-      managePengaturan: true
+      managePengaturan: true,
+      viewKeuangan: true,
+      manageKeuangan: true
     }
   },
   {
@@ -308,7 +312,9 @@ export const DEFAULT_ACL: AclRule[] = [
       viewJadwalKegiatan: true,
       manageJadwalKegiatan: true,
       viewPengaturan: false,
-      managePengaturan: false
+      managePengaturan: false,
+      viewKeuangan: true,
+      manageKeuangan: true
     }
   },
   {
@@ -324,7 +330,9 @@ export const DEFAULT_ACL: AclRule[] = [
       viewJadwalKegiatan: true,
       manageJadwalKegiatan: false,
       viewPengaturan: false,
-      managePengaturan: false
+      managePengaturan: false,
+      viewKeuangan: false,
+      manageKeuangan: false
     }
   }
 ];
@@ -375,6 +383,14 @@ export function getStoredAcl(): AclRule[] {
         parsed = [...DEFAULT_ACL];
         changed = true;
       }
+      
+      // Migration: Ensure PIMHAR has Keuangan access
+      const pimharIndex = parsed.findIndex(r => r.role === "PIMHAR");
+      if (pimharIndex !== -1 && !parsed[pimharIndex].permissions.viewKeuangan) {
+        parsed[pimharIndex].permissions.viewKeuangan = true;
+        parsed[pimharIndex].permissions.manageKeuangan = true;
+        changed = true;
+      }
     } catch (e) {
       parsed = [...DEFAULT_ACL];
       changed = true;
@@ -400,7 +416,9 @@ export function getStoredAcl(): AclRule[] {
           viewJadwalKegiatan: true,
           manageJadwalKegiatan: false,
           viewPengaturan: false,
-          managePengaturan: false
+          managePengaturan: false,
+          viewKeuangan: false,
+          manageKeuangan: false
         }
       });
       changed = true;
@@ -562,7 +580,7 @@ export function createMemberAccount(newMember: Member, adminWa: string) {
   }
 
   const hasMemberWa = newMember.whatsapp && newMember.whatsapp.trim() !== "";
-  const targetNumber = hasMemberWa ? newMember.whatsapp.trim() : adminWa;
+  const targetNumber = (newMember.whatsapp && newMember.whatsapp.trim() !== "") ? newMember.whatsapp.trim() : adminWa;
 
   if (!targetNumber || targetNumber.trim() === "") {
     console.log("No valid WA number to send to.");
@@ -786,11 +804,15 @@ export interface Applicant {
   id: string;
   name: string;
   date: string;
-  contact: string;
+  contact: string | null;
   status: "Menunggu" | "Proses" | "Diterima" | "Ditolak";
   tempatLahir: string;
   tanggalLahir: string;
   alamat: string;
+  rtRw?: string | null;
+  kelDesa?: string | null;
+  kecamatan?: string | null;
+  kabKota?: string | null;
   pekerjaan: string;
 }
 

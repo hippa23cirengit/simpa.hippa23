@@ -256,15 +256,11 @@ export default function AdminDashboard() {
               {recentMembers.map((member) => (
                 <div key={member.id} className="flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-full border flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden ${member.avatarColor}`}>
-                    {member.profilePhoto ? (
-                      <img
-                        src={member.profilePhoto}
-                        alt={member.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      member.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
-                    )}
+                    <img
+                      src={member.profilePhoto || "/default pic.webp"}
+                      alt={member.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="flex-grow min-w-0">
                     <h4 className="font-bold text-slate-800 text-xs truncate">{member.name}</h4>

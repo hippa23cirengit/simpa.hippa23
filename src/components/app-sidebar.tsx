@@ -40,7 +40,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           const mem = members.find(m => m.id === acc.linkedAnggotaId);
           if (mem) {
             email = mem.email || "";
-            avatar = mem.profilePhoto || "";
+            avatar = mem.profilePhoto || "/default pic.webp";
           }
         }
         setUserData({ name: sessionUser.name, email, avatar });
@@ -71,27 +71,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { title: "Tasykil", url: "/dashboard/tasykil", icon: "groups" },
     { title: "Calon Anggota", url: "/dashboard/calon-anggota", icon: "person_add" },
     { title: "Jadwal Kegiatan", url: "/dashboard/jadwal-kegiatan", icon: "calendar_month" },
+    { title: "Keuangan", url: "/dashboard/keuangan", icon: "account_balance_wallet" },
     { title: "Role & Akses", url: "/dashboard/role-akses", icon: "admin_panel_settings" },
     { title: "Pengaturan", url: "/dashboard/pengaturan", icon: "settings" },
   ];
 
   const filteredNavItems = navItems.filter(item => {
+    if (currentRole === "Super Admin") return true; // VIP Bypass: Super Admin sees EVERYTHING
+    
     if (item.url === "/dashboard/role-akses") {
-      return currentRole === "Super Admin"; // Only Super Admin has access to ACL rules
+      return false; // Only Super Admin has access to ACL rules, which is handled above
     }
+    
     if (!activeAcl) return true;
     if (item.url === "/dashboard") return activeAcl.permissions.dashboard;
     if (item.url === "/dashboard/data-anggota") return activeAcl.permissions.viewDataAnggota;
     if (item.url === "/dashboard/tasykil") return activeAcl.permissions.viewTasykil;
     if (item.url === "/dashboard/calon-anggota") return activeAcl.permissions.viewCalonAnggota;
     if (item.url === "/dashboard/jadwal-kegiatan") return activeAcl.permissions.viewJadwalKegiatan;
+    if (item.url === "/dashboard/keuangan") return activeAcl.permissions.viewKeuangan;
     if (item.url === "/dashboard/pengaturan") return activeAcl.permissions.viewPengaturan;
     return true;
   });
 
   const getSubLabel = () => {
     if (currentRole === "Super Admin") return "Administrator";
-    if (currentRole === "PIMHAR") return "Ketua Harian";
+    if (currentRole === "PIMHAR") return "Pimpinan Harian";
     if (currentRole.startsWith("Bidang")) return currentRole;
     return "Anggota Biasa";
   };

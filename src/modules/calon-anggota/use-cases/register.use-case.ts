@@ -21,10 +21,14 @@ export class RegisterApplicantUseCase {
     await this.repository.create({
       id,
       name: validated.name,
-      contact: validated.contact,
+      contact: validated.contact || null,
       tempatLahir: validated.tempatLahir || null,
       tanggalLahir: validated.tanggalLahir || null,
       alamat: validated.alamat || null,
+      rtRw: validated.rtRw || null,
+      kelDesa: validated.kelDesa || null,
+      kecamatan: validated.kecamatan || null,
+      kabKota: validated.kabKota || null,
       pekerjaan: validated.pekerjaan || null,
       status: "Menunggu",
       date

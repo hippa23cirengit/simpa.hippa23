@@ -5,11 +5,13 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { getStoredMembers, saveStoredMembers, getStoredTasykil, syncRoles, Member, getCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
 import { customAlert, customConfirm, showToast } from "@/common/lib/alert"
+import ImportExcelModal from "./components/import-excel-modal"
 
 export default function DataAnggota() {
   const [members, setMembers] = useState<Member[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [currentRole, setCurrentRole] = useState("Super Admin")
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 
   const loadData = () => {
     const rawMembers = getStoredMembers()
@@ -149,13 +151,22 @@ export default function DataAnggota() {
           </button>
 
           {!isReadOnly && (
-            <Link
-              href="/dashboard/data-anggota/tambah"
-              className="bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition duration-300 shadow-sm text-xs"
-            >
-              <span className="material-symbols-outlined text-[18px]">add</span>
-              Tambah Anggota
-            </Link>
+            <>
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-2.5 px-4 rounded-lg flex items-center gap-1.5 transition duration-300 shadow-sm text-xs"
+              >
+                <span className="material-symbols-outlined text-[18px]">upload_file</span>
+                Import Excel
+              </button>
+              <Link
+                href="/dashboard/data-anggota/tambah"
+                className="bg-[#F7A440] hover:bg-[#e09132] active:bg-[#c97e25] text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition duration-300 shadow-sm text-xs"
+              >
+                <span className="material-symbols-outlined text-[18px]">add</span>
+                Tambah Anggota
+              </Link>
+            </>
           )}
         </div>
       </div>
@@ -212,15 +223,11 @@ export default function DataAnggota() {
                     <td className="py-4 px-4 text-center text-slate-400 pl-6">{idx + 1}</td>
                     <td className="py-4 px-4">
                       <div className={`w-10 h-10 rounded-full border flex items-center justify-center font-bold text-xs overflow-hidden shrink-0 ${avatarColor}`}>
-                        {member.profilePhoto ? (
-                          <img
-                            src={member.profilePhoto}
-                            alt={member.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          initials
-                        )}
+                        <img
+                          src={member.profilePhoto || "/default pic.webp"}
+                          alt={member.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     </td>
                     <td className="py-4 px-4">
@@ -286,6 +293,12 @@ export default function DataAnggota() {
           </div>
         </div>
       </div>
+
+      <ImportExcelModal 
+        isOpen={isImportModalOpen} 
+        onClose={() => setIsImportModalOpen(false)} 
+        onSuccess={loadData} 
+      />
     </div>
   )
 }

@@ -58,8 +58,7 @@ export default function ProfilPage() {
           setMember(mem)
           setEmail(mem.email || "")
           setWhatsapp(mem.whatsapp || "")
-          setAlamat(mem.alamat || "")
-          setUserPhoto(mem.profilePhoto || "")
+          setUserPhoto(mem.profilePhoto || "/default pic.webp")
         }
       }
     }
@@ -266,14 +265,8 @@ export default function ProfilPage() {
                 <div className="w-6 h-6 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
                 <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">Uploading</span>
               </div>
-            ) : userPhoto ? (
-              <img
-                src={userPhoto}
-                alt="Profile Photo"
-                className="w-full h-full object-cover"
-              />
             ) : (
-              <span className="text-3xl font-bold text-[#895200]">{initials}</span>
+              <img src={userPhoto || "/default pic.webp"} alt="Profile" className="w-full h-full object-cover" />
             )}
             
             {/* Hover overlay for changing picture */}

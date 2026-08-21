@@ -145,8 +145,12 @@ export default function CalonAnggota() {
       tempatLahir: app.tempatLahir,
       tanggalLahir: app.tanggalLahir,
       alamat: app.alamat,
+      rtRw: app.rtRw || "",
+      kelDesa: app.kelDesa || "",
+      kecamatan: app.kecamatan || "",
+      kabKota: app.kabKota || "",
       pekerjaan: app.pekerjaan,
-      whatsapp: app.contact,
+      whatsapp: app.contact || "",
       email: `${app.name.toLowerCase().replace(/\s+/g, ".")}@gmail.com`,
       bergabungTahun: String(new Date().getFullYear()),
       createdAt: new Date().toISOString()

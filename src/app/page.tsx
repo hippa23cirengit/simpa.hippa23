@@ -72,12 +72,12 @@ export default function PublicPortal() {
             <Image
               src="/logo.png"
               alt="Logo HIPPA Cirengit"
-              width={40}
-              height={40}
-              className="rounded-full object-cover"
+              width={44}
+              height={44}
+              className="object-contain shrink-0"
             />
             <div>
-              <h1 className="font-title-lg text-[18px] font-bold text-slate-900 leading-tight">SIMPA HIPPA</h1>
+              <h1 className="font-title-lg text-sm sm:text-[16px] font-bold text-slate-900 leading-tight">Himpunan Pelajar Persatuan Islam Putra (HIPPA)</h1>
               <p className="text-[11px] text-slate-500 font-medium tracking-wide uppercase">Cirengit</p>
             </div>
           </div>
@@ -102,7 +102,7 @@ export default function PublicPortal() {
             Sistem Informasi Manajemen Pengurus & Anggota
           </h1>
           <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto mb-8 leading-relaxed">
-            Selamat datang di portal SIMPA Himpunan Pelajar Persatuan Islam (HIPPA) Cirengit. Kami hadir untuk mewujudkan tata kelola organisasi yang tertib, modern, transparan, dan berkelanjutan.
+            Selamat datang di portal SIMPA Himpunan Pelajar Persatuan Islam Putra (HIPPA) Cirengit. Kami hadir untuk mewujudkan tata kelola organisasi yang tertib, modern, transparan, dan berkelanjutan.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
@@ -128,7 +128,7 @@ export default function PublicPortal() {
             Kegiatan Terdekat & Mendatang
           </h2>
           <p className="mt-3 text-slate-500 text-sm sm:text-base max-w-xl mx-auto">
-            Jadwal kegiatan berkala, rapat koordinasi, kajian rutin, dan program kerja Himpunan Pelajar Persatuan Islam (HIPPA) Cirengit.
+            Jadwal kegiatan berkala, rapat koordinasi, kajian rutin, dan program kerja Himpunan Pelajar Persatuan Islam Putra (HIPPA) Cirengit.
           </p>
         </div>
 
@@ -205,11 +205,11 @@ export default function PublicPortal() {
               alt="Logo HIPPA Cirengit"
               width={36}
               height={36}
-              className="rounded-full grayscale opacity-70 object-cover"
+              className="object-contain shrink-0 grayscale opacity-70"
             />
             <div>
               <p className="text-white font-semibold text-sm">SIMPA HIPPA Cirengit</p>
-              <p className="text-xs text-slate-500">Himpunan Pelajar Persatuan Islam (Putra) Cirengit</p>
+              <p className="text-xs text-slate-500">Himpunan Pelajar Persatuan Islam Putra (HIPPA) Cirengit</p>
             </div>
           </div>
           <div className="flex flex-col sm:items-end gap-2 text-xs text-center sm:text-right w-full sm:w-auto">

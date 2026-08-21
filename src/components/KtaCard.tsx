@@ -26,7 +26,7 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
         style={{ 
           width: "85.6mm", 
           height: "54mm", 
-          backgroundImage: 'url("/2.png")', 
+          backgroundImage: 'url("/belakang revisi.png")', 
           backgroundSize: '100% 100%',
           backgroundRepeat: 'no-repeat',
           WebkitPrintColorAdjust: 'exact',
@@ -44,7 +44,7 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
       style={{ 
         width: "85.6mm", 
         height: "54mm", 
-        backgroundImage: 'url("/1 no data no pic.png")', 
+        backgroundImage: 'url("/depan-revisi.png")', 
         backgroundSize: '100% 100%',
         backgroundRepeat: 'no-repeat',
         color: "#000",
@@ -54,7 +54,7 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
       }}
     >
       {/* === KOORDINAT TEKS DATA PRIBADI === */}
-      <div className="absolute font-semibold text-[#1a1a1a] text-[8px] leading-snug flex flex-col gap-[3.5%]" style={{ left: "33.5%", top: "25%", width: "40%", height: "60%" }}>
+      <div className="absolute font-semibold text-[#1a1a1a] text-[8px] leading-snug flex flex-col gap-[3.5%]" style={{ left: "33.5%", top: "25.6%", width: "40%", height: "60%" }}>
         <div style={{ position: "absolute", top: "0%" }}>{member.name.toUpperCase()}</div>
         <div style={{ position: "absolute", top: "11%" }}>{member.id}</div>
         <div style={{ position: "absolute", top: "21.5%" }}>{member.tempatLahir}</div>
@@ -75,16 +75,12 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
         className="absolute overflow-hidden rounded-[8px] flex items-center justify-center"
         style={{
           left: "74.3%",
-          top: "26.2%",
+          top: "27.5%",
           width: "17.1%",
           height: "38.2%"
         }}
       >
-        {member.profilePhoto ? (
-          <img src={member.profilePhoto} alt="Foto" className="w-full h-full object-cover" />
-        ) : (
-          <span className="text-[10px] text-slate-400 font-semibold text-center">Belum ada<br/>Foto</span>
-        )}
+        <img src={member.profilePhoto || "/default pic.webp"} alt="Foto" className="w-full h-full object-cover" />
       </div>
 
       {/* === KOORDINAT TANDA TANGAN & KETUA === */}
@@ -97,11 +93,11 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
         </div>
         
         {/* Nama Ketua */}
-        <div className="font-bold text-[7px] border-b border-black w-full pb-[1px] mb-[2px]">
-          {ktaSettings.ketuaName.toUpperCase() || "NAMA KETUA"}
+        <div className="font-bold text-[5.5px] underline underline-offset-1">
+          {ktaSettings.ketuaName || "Nama Ketua"}
         </div>
         {/* NPA Ketua */}
-        <div className="font-bold text-[6px]">
+        <div className="font-bold text-[5px] -mt-[1px]">
           NPA. {ktaSettings.ketuaNpa || "00.0000"}
         </div>
       </div>

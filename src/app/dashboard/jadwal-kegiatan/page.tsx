@@ -13,6 +13,7 @@ import {
   getWaConfig,
   syncDatabaseFromServer
 } from "@/common/lib/mock-db"
+import { useDialog } from "@/common/components/dialog-provider"
 
 export default function JadwalKegiatan() {
   const daysOfWeek = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"]
@@ -20,7 +21,8 @@ export default function JadwalKegiatan() {
     "Januari", "Februari", "Maret", "April", "Mei", "Juni",
     "Juli", "Agustus", "September", "Oktober", "November", "Desember"
   ]
-
+  
+  const { showAlert, showConfirm } = useDialog()
   const [currentRole, setCurrentRole] = useState("Super Admin")
   const [events, setEvents] = useState<ScheduledEvent[]>([])
   
@@ -243,14 +245,14 @@ export default function JadwalKegiatan() {
     setIsModalOpen(true)
   }
 
-  const handleSaveEvent = (e: React.FormEvent) => {
+  const handleSaveEvent = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formTitle.trim() || !formDate || !formTime) return
 
     // Validasi: Tidak boleh membuat/mengedit kegiatan di tanggal masa lalu
     const todayStr = new Date().toISOString().split("T")[0] // YYYY-MM-DD hari ini
     if (!editingEvent && formDate < todayStr) {
-      alert("❌ Tidak dapat membuat kegiatan di tanggal yang sudah lewat. Silakan pilih tanggal hari ini atau yang akan datang.")
+      await showAlert("Tidak dapat membuat kegiatan di tanggal yang sudah lewat. Silakan pilih tanggal hari ini atau yang akan datang.", "Tanggal Tidak Valid", "danger")
       return
     }
 
@@ -293,8 +295,9 @@ export default function JadwalKegiatan() {
     loadData()
   }
 
-  const handleDeleteEvent = (eventId: string, eventTitle: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus agenda "${eventTitle}"?`)) {
+  const handleDeleteEvent = async (eventId: string, eventTitle: string) => {
+    const confirmed = await showConfirm(`Apakah Anda yakin ingin menghapus agenda "${eventTitle}"?`, "Hapus Agenda", "danger")
+    if (confirmed) {
       const rawEvents = getStoredEvents()
       const filtered = rawEvents.filter(evt => evt.id !== eventId)
       saveStoredEvents(filtered)
@@ -304,7 +307,8 @@ export default function JadwalKegiatan() {
 
   // Broadcast to WA Queue
   const handleBroadcastEvent = async (event: ScheduledEvent) => {
-    if (!confirm(`Apakah Anda yakin ingin mengirim notifikasi WhatsApp untuk kegiatan "${event.title}" ke seluruh anggota aktif?`)) {
+    const confirmed = await showConfirm(`Apakah Anda yakin ingin mengirim notifikasi WhatsApp untuk kegiatan "${event.title}" ke seluruh anggota aktif?`, "Kirim Notifikasi", "warning")
+    if (!confirmed) {
       return
     }
 
@@ -320,7 +324,7 @@ export default function JadwalKegiatan() {
       setBroadcastingId(null)
 
       if (data.status === true) {
-        alert("✅ Notifikasi berhasil dimasukkan ke antrean! Pesan akan terkirim secara bertahap (1 menit per pesan) di latar belakang.")
+        await showAlert("Notifikasi berhasil dimasukkan ke antrean! Pesan akan terkirim secara bertahap (1 menit per pesan) di latar belakang.", "Berhasil", "success")
         
         // Start 10s cooldown
         setCooldowns((prev) => ({ ...prev, [event.id]: 10 }))
@@ -329,11 +333,11 @@ export default function JadwalKegiatan() {
         await syncDatabaseFromServer()
         loadData()
       } else {
-        alert(`❌ Gagal memicu notifikasi: ${data.reason || "Alasan tidak diketahui"}`)
+        await showAlert(`Gagal memicu notifikasi: ${data.reason || "Alasan tidak diketahui"}`, "Gagal", "danger")
       }
     } catch (err: any) {
       setBroadcastingId(null)
-      alert(`Terjadi kesalahan jaringan: ${err.message || err}`)
+      await showAlert(`Terjadi kesalahan jaringan: ${err.message || err}`, "Kesalahan", "danger")
     }
   }
 

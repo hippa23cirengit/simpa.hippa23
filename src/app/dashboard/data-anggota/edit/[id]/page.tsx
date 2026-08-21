@@ -6,10 +6,12 @@ import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl } from "@/common/lib/mock-db"
 import { customConfirm, showToast } from "@/common/lib/alert"
+import { useDialog } from "@/common/components/dialog-provider"
 
 export default function EditAnggotaPage() {
   const router = useRouter()
   const params = useParams()
+  const { showAlert } = useDialog()
   const memberId = params?.id as string
 
   const [currentRole, setCurrentRole] = useState("Super Admin")
@@ -97,7 +99,7 @@ export default function EditAnggotaPage() {
       })
     } catch (err: any) {
       console.error(err)
-      alert("Gagal mengunggah foto profil: " + err.message)
+      await showAlert("Gagal mengunggah foto profil: " + err.message, "Upload Gagal", "danger")
     } finally {
       setUploading(false)
     }
@@ -209,15 +211,11 @@ export default function EditAnggotaPage() {
             {/* Foto Profil Section */}
             <div className="flex flex-col items-center justify-center md:col-span-2 pb-6 border-b border-slate-100">
               <div className="w-24 h-24 rounded-2xl bg-amber-500/10 border-2 border-amber-200 flex items-center justify-center font-bold text-3xl text-[#895200] shadow-inner mb-3 overflow-hidden shrink-0 relative group">
-                {profilePhoto ? (
-                  <img
-                    src={profilePhoto}
-                    alt={name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  name ? name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "AG"
-                )}
+                <img
+                  src={profilePhoto || "/default pic.webp"}
+                  alt="Profile Photo"
+                  className="w-full h-full object-cover"
+                />
                 {uploading && (
                   <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center">
                     <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -229,7 +227,7 @@ export default function EditAnggotaPage() {
                 <div className="flex flex-col items-center gap-1.5">
                   <label className="cursor-pointer bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 transition flex items-center gap-1.5 shadow-sm">
                     <span className="material-symbols-outlined text-[16px]">upload_file</span>
-                    {profilePhoto ? "Ubah Foto Profil" : "Unggah Foto Profil"}
+                    Ubah Foto Profil
                     <input
                       type="file"
                       accept="image/*"
