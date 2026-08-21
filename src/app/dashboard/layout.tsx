@@ -36,6 +36,64 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = React.useState<any[]>([]);
   const [isNotifOpen, setIsNotifOpen] = React.useState(false);
 
+  // Swipe & dismiss notification states
+  const [dismissedIds, setDismissedIds] = React.useState<string[]>([]);
+  const [touchStart, setTouchStart] = React.useState<number | null>(null);
+  const [swipingId, setSwipingId] = React.useState<string | null>(null);
+  const [swipeOffset, setSwipeOffset] = React.useState<number>(0);
+  const [dismissingId, setDismissingId] = React.useState<string | null>(null);
+
+  // Load dismissed notifications from localStorage on mount
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("simpa_dismissed_notifications");
+      if (stored) {
+        try {
+          setDismissedIds(JSON.parse(stored));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
+  const dismissNotification = (id: string) => {
+    setDismissingId(id);
+    setTimeout(() => {
+      setDismissedIds(prev => {
+        const next = [...prev, id];
+        if (typeof window !== "undefined") {
+          localStorage.setItem("simpa_dismissed_notifications", JSON.stringify(next));
+        }
+        return next;
+      });
+      setDismissingId(null);
+    }, 300); // Wait for transition
+  };
+
+  const handleTouchStart = (e: React.TouchEvent, id: string) => {
+    setTouchStart(e.targetTouches[0].clientX);
+    setSwipingId(id);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const currentX = e.targetTouches[0].clientX;
+    const diff = currentX - touchStart;
+    setSwipeOffset(diff);
+  };
+
+  const handleTouchEnd = () => {
+    if (swipingId) {
+      if (Math.abs(swipeOffset) > 80) {
+        dismissNotification(swipingId);
+      }
+    }
+    setTouchStart(null);
+    setSwipingId(null);
+    setSwipeOffset(0);
+  };
+
   const loadUserData = () => {
     const user = getSessionUser();
     console.log("[DEBUG UserData] session user:", user);
@@ -160,7 +218,9 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         console.error("Gagal membaca notifikasi pendaftar:", err);
       }
 
-      setNotifications(list);
+      // Filter out dismissed notification IDs
+      const activeList = list.filter(item => !dismissedIds.includes(item.id));
+      setNotifications(activeList);
     };
 
     checkNotifications();
@@ -172,7 +232,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       window.removeEventListener("simpa_role_changed", checkNotifications);
       clearInterval(interval);
     };
-  }, [authorized]);
+  }, [authorized, dismissedIds]);
 
   const activeAcl = aclRules.find(r => r.role === currentRole);
 
@@ -253,22 +313,52 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
                     <div className="max-h-[300px] overflow-y-auto divide-y divide-slate-50">
                       {notifications.length > 0 ? (
-                        notifications.map(n => (
-                          <Link
-                            key={n.id}
-                            href={n.link}
-                            onClick={() => setIsNotifOpen(false)}
-                            className="flex items-start gap-3 p-3.5 hover:bg-slate-50/50 transition-colors text-left"
-                          >
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${n.color}`}>
-                              <span className="material-symbols-outlined text-[18px]">{n.icon}</span>
+                        notifications.map(n => {
+                          const isSwiping = swipingId === n.id;
+                          const isDismissing = dismissingId === n.id;
+                          const itemStyle = isSwiping
+                            ? { transform: `translateX(${swipeOffset}px)`, opacity: 1 - Math.abs(swipeOffset) / 150, transition: "none" }
+                            : isDismissing
+                            ? { transform: `translateX(${swipeOffset > 0 ? '150%' : '-150%'})`, opacity: 0, maxHeight: 0, padding: 0, margin: 0, overflow: "hidden", transition: "all 0.3s ease" }
+                            : { transition: "transform 0.2s ease, opacity 0.2s ease, max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease" };
+
+                          return (
+                            <div
+                              key={n.id}
+                              style={itemStyle}
+                              className="relative group overflow-hidden"
+                              onTouchStart={(e) => handleTouchStart(e, n.id)}
+                              onTouchMove={handleTouchMove}
+                              onTouchEnd={handleTouchEnd}
+                            >
+                              <Link
+                                href={n.link}
+                                onClick={() => setIsNotifOpen(false)}
+                                className="flex items-start gap-3 p-3.5 hover:bg-slate-50/50 transition-colors text-left w-full pr-10"
+                              >
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${n.color}`}>
+                                  <span className="material-symbols-outlined text-[18px]">{n.icon}</span>
+                                </div>
+                                <div className="flex-1 space-y-0.5">
+                                  <h5 className="font-bold text-slate-800 text-xs leading-none">{n.title}</h5>
+                                  <p className="text-[10px] text-slate-500 font-medium leading-relaxed break-words">{n.message}</p>
+                                </div>
+                              </Link>
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  dismissNotification(n.id);
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-400 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 duration-200 z-10"
+                                title="Hapus"
+                              >
+                                <span className="material-symbols-outlined text-[14px]">close</span>
+                              </button>
                             </div>
-                            <div className="flex-1 space-y-0.5">
-                              <h5 className="font-bold text-slate-800 text-xs leading-none">{n.title}</h5>
-                              <p className="text-[10px] text-slate-500 font-medium leading-relaxed break-words">{n.message}</p>
-                            </div>
-                          </Link>
-                        ))
+                          );
+                        })
                       ) : (
                         <div className="py-8 text-center flex flex-col items-center justify-center gap-1.5 text-slate-400">
                           <span className="material-symbols-outlined text-[28px] text-slate-300">notifications_off</span>
@@ -332,22 +422,52 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
                     <div className="max-h-[300px] overflow-y-auto divide-y divide-slate-50">
                       {notifications.length > 0 ? (
-                        notifications.map(n => (
-                          <Link
-                            key={n.id}
-                            href={n.link}
-                            onClick={() => setIsNotifOpen(false)}
-                            className="flex items-start gap-3 p-3.5 hover:bg-slate-50/50 transition-colors text-left"
-                          >
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${n.color}`}>
-                              <span className="material-symbols-outlined text-[18px]">{n.icon}</span>
+                        notifications.map(n => {
+                          const isSwiping = swipingId === n.id;
+                          const isDismissing = dismissingId === n.id;
+                          const itemStyle = isSwiping
+                            ? { transform: `translateX(${swipeOffset}px)`, opacity: 1 - Math.abs(swipeOffset) / 150, transition: "none" }
+                            : isDismissing
+                            ? { transform: `translateX(${swipeOffset > 0 ? '150%' : '-150%'})`, opacity: 0, maxHeight: 0, padding: 0, margin: 0, overflow: "hidden", transition: "all 0.3s ease" }
+                            : { transition: "transform 0.2s ease, opacity 0.2s ease, max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease" };
+
+                          return (
+                            <div
+                              key={n.id}
+                              style={itemStyle}
+                              className="relative group overflow-hidden"
+                              onTouchStart={(e) => handleTouchStart(e, n.id)}
+                              onTouchMove={handleTouchMove}
+                              onTouchEnd={handleTouchEnd}
+                            >
+                              <Link
+                                href={n.link}
+                                onClick={() => setIsNotifOpen(false)}
+                                className="flex items-start gap-3 p-3.5 hover:bg-slate-50/50 transition-colors text-left w-full pr-10"
+                              >
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${n.color}`}>
+                                  <span className="material-symbols-outlined text-[18px]">{n.icon}</span>
+                                </div>
+                                <div className="flex-1 space-y-0.5">
+                                  <h5 className="font-bold text-slate-800 text-xs leading-none">{n.title}</h5>
+                                  <p className="text-[10px] text-slate-500 font-medium leading-relaxed break-words">{n.message}</p>
+                                </div>
+                              </Link>
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  dismissNotification(n.id);
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-400 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 duration-200 z-10"
+                                title="Hapus"
+                              >
+                                <span className="material-symbols-outlined text-[14px]">close</span>
+                              </button>
                             </div>
-                            <div className="flex-1 space-y-0.5">
-                              <h5 className="font-bold text-slate-800 text-xs leading-none">{n.title}</h5>
-                              <p className="text-[10px] text-slate-500 font-medium leading-relaxed break-words">{n.message}</p>
-                            </div>
-                          </Link>
-                        ))
+                          );
+                        })
                       ) : (
                         <div className="py-8 text-center flex flex-col items-center justify-center gap-1.5 text-slate-400">
                           <span className="material-symbols-outlined text-[28px] text-slate-300">notifications_off</span>
