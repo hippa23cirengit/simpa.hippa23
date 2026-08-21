@@ -247,6 +247,13 @@ export default function JadwalKegiatan() {
     e.preventDefault()
     if (!formTitle.trim() || !formDate || !formTime) return
 
+    // Validasi: Tidak boleh membuat/mengedit kegiatan di tanggal masa lalu
+    const todayStr = new Date().toISOString().split("T")[0] // YYYY-MM-DD hari ini
+    if (!editingEvent && formDate < todayStr) {
+      alert("❌ Tidak dapat membuat kegiatan di tanggal yang sudah lewat. Silakan pilih tanggal hari ini atau yang akan datang.")
+      return
+    }
+
     const rawEvents = getStoredEvents()
 
     if (editingEvent) {
@@ -730,6 +737,7 @@ export default function JadwalKegiatan() {
                       type="date"
                       required
                       value={formDate}
+                      min={!editingEvent ? new Date().toISOString().split("T")[0] : undefined}
                       onChange={(e) => setFormDate(e.target.value)}
                       className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#F7A440] transition-colors"
                     />
