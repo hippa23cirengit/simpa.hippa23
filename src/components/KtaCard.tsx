@@ -26,14 +26,23 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
         style={{ 
           width: "85.6mm", 
           height: "54mm", 
-          backgroundImage: 'url("/revisi-kta-belakang.png")', 
-          backgroundSize: '100% 100%',
-          backgroundRepeat: 'no-repeat',
           WebkitPrintColorAdjust: 'exact',
-          printColorAdjust: 'exact'
+          printColorAdjust: 'exact',
+          transform: "translate3d(0,0,0)",
+          backfaceVisibility: "hidden",
+          WebkitBackfaceVisibility: "hidden"
         }}
       >
-        {/* Sisi belakang sudah statis */}
+        <img 
+          src="/revisi-kta-belakang.png" 
+          alt="KTA Belakang" 
+          className="absolute inset-0 w-full h-full object-fill z-0 pointer-events-none"
+          style={{
+            imageRendering: "-webkit-optimize-contrast",
+            // @ts-ignore
+            imageRendering: "crisp-edges"
+          }}
+        />
       </div>
     )
   }
@@ -44,17 +53,28 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
       style={{ 
         width: "85.6mm", 
         height: "54mm", 
-        backgroundImage: 'url("/depan-revisi.png")', 
-        backgroundSize: '100% 100%',
-        backgroundRepeat: 'no-repeat',
         color: "#000",
         fontFamily: "Arial, sans-serif",
         WebkitPrintColorAdjust: 'exact',
-        printColorAdjust: 'exact'
+        printColorAdjust: 'exact',
+        transform: "translate3d(0,0,0)",
+        backfaceVisibility: "hidden",
+        WebkitBackfaceVisibility: "hidden"
       }}
     >
+      <img 
+        src="/depan-revisi.png" 
+        alt="KTA Depan" 
+        className="absolute inset-0 w-full h-full object-fill z-0 pointer-events-none"
+        style={{
+          imageRendering: "-webkit-optimize-contrast",
+          // @ts-ignore
+          imageRendering: "crisp-edges"
+        }}
+      />
+
       {/* === KOORDINAT TEKS DATA PRIBADI === */}
-      <div className="absolute font-semibold text-[#1a1a1a] text-[8px] leading-snug flex flex-col gap-[3.5%]" style={{ left: "33.5%", top: "25.6%", width: "40%", height: "60%" }}>
+      <div className="absolute font-semibold text-[#1a1a1a] text-[8px] leading-snug flex flex-col gap-[3.5%] z-10" style={{ left: "33.5%", top: "25.6%", width: "40%", height: "60%" }}>
         <div style={{ position: "absolute", top: "0%" }}>{member.name.toUpperCase()}</div>
         <div style={{ position: "absolute", top: "11%" }}>{member.id}</div>
         <div style={{ position: "absolute", top: "21.5%" }}>{member.tempatLahir}</div>
@@ -72,7 +92,7 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
 
       {/* === KOORDINAT PAS FOTO === */}
       <div 
-        className="absolute overflow-hidden rounded-[8px] flex items-center justify-center"
+        className="absolute overflow-hidden rounded-[8px] flex items-center justify-center z-10"
         style={{
           left: "74.3%",
           top: "27.5%",
@@ -80,15 +100,33 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
           height: "38.2%"
         }}
       >
-        <img src={member.profilePhoto || "/default pic.webp"} alt="Foto" className="w-full h-full object-cover" />
+        <img 
+          src={member.profilePhoto || "/default pic.webp"} 
+          alt="Foto" 
+          className="w-full h-full object-cover" 
+          style={{
+            imageRendering: "-webkit-optimize-contrast",
+            // @ts-ignore
+            imageRendering: "crisp-edges"
+          }}
+        />
       </div>
 
       {/* === KOORDINAT TANDA TANGAN & KETUA === */}
-      <div className="absolute flex flex-col items-center justify-center text-center" style={{ left: "71%", top: "70%", width: "23%" }}>
+      <div className="absolute flex flex-col items-center justify-center text-center z-10" style={{ left: "71%", top: "70%", width: "23%" }}>
         {/* Tanda Tangan */}
         <div className="h-8 w-full flex items-center justify-center mb-1 relative">
           {ktaSettings.signatureUrl ? (
-            <img src={ktaSettings.signatureUrl} alt="Signature" className="h-9 absolute object-contain mix-blend-multiply translate-y-3" />
+            <img 
+              src={ktaSettings.signatureUrl} 
+              alt="Signature" 
+              className="h-9 absolute object-contain mix-blend-multiply translate-y-3" 
+              style={{
+                imageRendering: "-webkit-optimize-contrast",
+                // @ts-ignore
+                imageRendering: "crisp-edges"
+              }}
+            />
           ) : null}
         </div>
         
