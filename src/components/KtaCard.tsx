@@ -26,7 +26,7 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
         style={{ 
           width: "85.6mm", 
           height: "54mm", 
-          backgroundImage: 'url("/belakang revisi.png")', 
+          backgroundImage: 'url("/revisi-kta-belakang.png")', 
           backgroundSize: '100% 100%',
           backgroundRepeat: 'no-repeat',
           WebkitPrintColorAdjust: 'exact',
