@@ -133,7 +133,7 @@ export default function EditAnggotaPage() {
           pekerjaan: pekerjaan.trim(),
           whatsapp: whatsapp.trim(),
           email: email.trim(),
-          profilePhoto: profilePhoto || null
+          profilePhoto: profilePhoto || undefined
         }
       }
       return m
