@@ -331,7 +331,7 @@ export const DEFAULT_ACL: AclRule[] = [
       manageJadwalKegiatan: false,
       viewPengaturan: false,
       managePengaturan: false,
-      viewKeuangan: false,
+      viewKeuangan: true,
       manageKeuangan: false
     }
   }
@@ -389,6 +389,13 @@ export function getStoredAcl(): AclRule[] {
       if (pimharIndex !== -1 && !parsed[pimharIndex].permissions.viewKeuangan) {
         parsed[pimharIndex].permissions.viewKeuangan = true;
         parsed[pimharIndex].permissions.manageKeuangan = true;
+        changed = true;
+      }
+
+      // Migration: Ensure Anggota has Keuangan view access
+      const anggotaIndex = parsed.findIndex(r => r.role === "Anggota");
+      if (anggotaIndex !== -1 && !parsed[anggotaIndex].permissions.viewKeuangan) {
+        parsed[anggotaIndex].permissions.viewKeuangan = true;
         changed = true;
       }
     } catch (e) {

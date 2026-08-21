@@ -296,13 +296,15 @@ export default function KeuanganPage() {
                 ))}
               </select>
             </div>
-            <button 
-              onClick={handleExport}
-              className="flex items-center gap-2 text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition"
-            >
-              <span className="material-symbols-outlined text-[18px]">download</span>
-              Export Excel
-            </button>
+            {canManage && (
+              <button 
+                onClick={handleExport}
+                className="flex items-center gap-2 text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition"
+              >
+                <span className="material-symbols-outlined text-[18px]">download</span>
+                Export Excel
+              </button>
+            )}
           </div>
 
           {/* Table */}
