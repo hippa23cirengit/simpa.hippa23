@@ -107,6 +107,24 @@ export default function EditAnggotaPage() {
 
 
 
+  const handleDeletePhoto = async () => {
+    const confirmed = await customConfirm({
+      title: "Hapus Foto Profil",
+      message: "Apakah Anda yakin ingin menghapus foto profil ini? Foto akan dikembalikan ke gambar default setelah Anda menyimpan.",
+      type: "warning",
+      confirmText: "Ya, Hapus",
+      cancelText: "Batal"
+    })
+
+    if (confirmed) {
+      setProfilePhoto("")
+      showToast({
+        message: "Foto profil dihapus! Jangan lupa klik 'Ya, Simpan' untuk menyimpan perubahan.",
+        type: "success"
+      })
+    }
+  }
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim() || !npa.trim() || !email.trim() || !alamat.trim() || !rtRw.trim() || !kelDesa.trim() || !kecamatan.trim() || !kabKota.trim()) return
@@ -224,18 +242,31 @@ export default function EditAnggotaPage() {
               </div>
               
               {(currentRole === "Super Admin" || currentRole === "PIMHAR") ? (
-                <div className="flex flex-col items-center gap-1.5">
-                  <label className="cursor-pointer bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 transition flex items-center gap-1.5 shadow-sm">
-                    <span className="material-symbols-outlined text-[16px]">upload_file</span>
-                    Ubah Foto Profil
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleUploadPhoto}
-                      disabled={uploading}
-                      className="hidden"
-                    />
-                  </label>
+                <div className="flex flex-col items-center gap-2.5">
+                  <div className="flex items-center gap-2">
+                    <label className="cursor-pointer bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 transition flex items-center gap-1.5 shadow-sm">
+                      <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                      Ubah Foto Profil
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleUploadPhoto}
+                        disabled={uploading}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {profilePhoto && (
+                      <button
+                        type="button"
+                        onClick={handleDeletePhoto}
+                        className="cursor-pointer bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 rounded-xl px-4 py-2 text-xs font-bold transition flex items-center gap-1.5 shadow-sm animate-fadeIn"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                        Hapus Foto
+                      </button>
+                    )}
+                  </div>
                   <p className="text-[10px] text-slate-400 font-semibold">Format JPG/PNG, maks. 2MB. Hanya Super Admin & PIMHAR.</p>
                 </div>
               ) : (

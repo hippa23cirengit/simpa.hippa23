@@ -92,7 +92,7 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
 
       {/* === KOORDINAT PAS FOTO === */}
       <div 
-        className="absolute overflow-hidden rounded-[8px] flex items-center justify-center z-10"
+        className="absolute overflow-hidden rounded-[8px] flex items-center justify-center z-10 bg-[#cbd5e1] border border-slate-400"
         style={{
           left: "71.5%",
           top: "25.5%",
