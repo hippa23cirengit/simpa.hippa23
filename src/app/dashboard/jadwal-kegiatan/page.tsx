@@ -247,6 +247,17 @@ export default function JadwalKegiatan() {
     }
   }
 
+  const getMobileBadgeBgColor = (color: string) => {
+    switch (color) {
+      case "amber": return "bg-amber-500"
+      case "emerald": return "bg-emerald-600"
+      case "purple": return "bg-purple-600"
+      case "red": return "bg-red-600"
+      case "blue":
+      default: return "bg-blue-600"
+    }
+  }
+
   const getBadgeBgColor = (color: string) => {
     switch (color) {
       case "amber": return "bg-amber-500 hover:bg-amber-600"
@@ -480,27 +491,6 @@ export default function JadwalKegiatan() {
               let cellBg = "bg-white hover:bg-slate-50"
               if (!cell.isCurrentMonth) {
                 cellBg = "bg-slate-50/60 opacity-50"
-              } else if (cellEvents.length > 0) {
-                // Color the cell background on MOBILE ONLY according to the first event's color category
-                const firstColor = cellEvents[0].color
-                switch (firstColor) {
-                  case "amber":
-                    cellBg = "bg-amber-50 text-amber-900 md:bg-white md:text-slate-700 hover:bg-amber-100/80 md:hover:bg-slate-50"
-                    break
-                  case "emerald":
-                    cellBg = "bg-emerald-50 text-emerald-900 md:bg-white md:text-slate-700 hover:bg-emerald-100/80 md:hover:bg-slate-50"
-                    break
-                  case "purple":
-                    cellBg = "bg-purple-50 text-purple-900 md:bg-white md:text-slate-700 hover:bg-purple-100/80 md:hover:bg-slate-50"
-                    break
-                  case "red":
-                    cellBg = "bg-red-50 text-red-900 md:bg-white md:text-slate-700 hover:bg-red-100/80 md:hover:bg-slate-50"
-                    break
-                  case "blue":
-                  default:
-                    cellBg = "bg-blue-50 text-blue-900 md:bg-white md:text-slate-700 hover:bg-blue-100/80 md:hover:bg-slate-50"
-                    break
-                }
               } else if (cell.isToday) {
                 cellBg = "bg-amber-500/5 font-bold"
               } else if (isSelected) {
@@ -540,14 +530,15 @@ export default function JadwalKegiatan() {
                         {cell.day}
                       </span>
                     ) : (
-                      <span className={`font-semibold text-xs p-0.5 ${cell.isSunday ? "text-red-600 font-bold" : "text-current md:text-slate-700"}`}>
+                      <span className={`font-semibold text-xs p-0.5 ${cell.isSunday ? "text-red-600 font-bold" : "text-slate-700"}`}>
                         {cell.day}
                       </span>
                     )}
                   </div>
                   
-                  {/* Event labels inside cell (Desktop filled badges) */}
+                  {/* Event labels inside cell (Desktop filled badges & Mobile solid horizontal bars) */}
                   <div className="mt-1 flex flex-col gap-1 overflow-hidden w-full">
+                    {/* Desktop View */}
                     {cellEvents.slice(0, 2).map((event) => (
                       <div
                         key={event.id}
@@ -560,6 +551,23 @@ export default function JadwalKegiatan() {
                     {cellEvents.length > 2 && (
                       <div className="hidden md:block text-[8px] text-slate-500 font-bold px-1 mt-0.5">
                         +{cellEvents.length - 2} lainnya
+                      </div>
+                    )}
+
+                    {/* Mobile View: Solid horizontal bar indicator, placed below the date, never overlaps */}
+                    {cellEvents.length > 0 && (
+                      <div className="md:hidden flex flex-col gap-1 w-full px-0.5 mt-0.5">
+                        {cellEvents.slice(0, 3).map((event) => (
+                          <div
+                            key={event.id}
+                            className={`h-2.5 w-full rounded-sm shadow-sm ${getMobileBadgeBgColor(event.color)}`}
+                          />
+                        ))}
+                        {cellEvents.length > 3 && (
+                          <div className="text-[7.5px] text-slate-400 font-extrabold text-center leading-none mt-0.5">
+                            +{cellEvents.length - 3}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
