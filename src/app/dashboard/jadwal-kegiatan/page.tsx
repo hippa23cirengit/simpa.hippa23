@@ -480,6 +480,27 @@ export default function JadwalKegiatan() {
               let cellBg = "bg-white hover:bg-slate-50"
               if (!cell.isCurrentMonth) {
                 cellBg = "bg-slate-50/60 opacity-50"
+              } else if (cellEvents.length > 0) {
+                // Color the cell background on MOBILE ONLY according to the first event's color category
+                const firstColor = cellEvents[0].color
+                switch (firstColor) {
+                  case "amber":
+                    cellBg = "bg-amber-50 text-amber-900 md:bg-white md:text-slate-700 hover:bg-amber-100/80 md:hover:bg-slate-50"
+                    break
+                  case "emerald":
+                    cellBg = "bg-emerald-50 text-emerald-900 md:bg-white md:text-slate-700 hover:bg-emerald-100/80 md:hover:bg-slate-50"
+                    break
+                  case "purple":
+                    cellBg = "bg-purple-50 text-purple-900 md:bg-white md:text-slate-700 hover:bg-purple-100/80 md:hover:bg-slate-50"
+                    break
+                  case "red":
+                    cellBg = "bg-red-50 text-red-900 md:bg-white md:text-slate-700 hover:bg-red-100/80 md:hover:bg-slate-50"
+                    break
+                  case "blue":
+                  default:
+                    cellBg = "bg-blue-50 text-blue-900 md:bg-white md:text-slate-700 hover:bg-blue-100/80 md:hover:bg-slate-50"
+                    break
+                }
               } else if (cell.isToday) {
                 cellBg = "bg-amber-500/5 font-bold"
               } else if (isSelected) {
@@ -519,16 +540,9 @@ export default function JadwalKegiatan() {
                         {cell.day}
                       </span>
                     ) : (
-                      <span className={`font-semibold text-xs p-0.5 ${cell.isSunday ? "text-red-600 font-bold" : "text-slate-700"}`}>
+                      <span className={`font-semibold text-xs p-0.5 ${cell.isSunday ? "text-red-600 font-bold" : "text-current md:text-slate-700"}`}>
                         {cell.day}
                       </span>
-                    )}
-                    {cellEvents.length > 0 && (
-                      <div className="flex gap-1 p-0.5 shrink-0">
-                        {cellEvents.slice(0, 3).map(e => (
-                          <span key={e.id} className={`w-2 h-2 rounded-full shadow-sm ring-1 ring-white ${getDotsColor(e.color)}`} />
-                        ))}
-                      </div>
                     )}
                   </div>
                   
