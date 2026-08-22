@@ -323,7 +323,8 @@ export default function JadwalKegiatan() {
 
   const handleSaveEvent = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formTitle.trim() || !formDate || !formTime) return
+    if (!formTitle.trim() || !formDate || !formTime || !formLocation.trim()) return
+    if (formType === "kajian" && !formSpeaker.trim()) return
 
     // Validasi: Tidak boleh membuat/mengedit kegiatan di tanggal masa lalu
     const todayStr = new Date().toISOString().split("T")[0] // YYYY-MM-DD hari ini
@@ -914,9 +915,10 @@ export default function JadwalKegiatan() {
 
                 {/* Location */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Lokasi Tempat</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Lokasi Tempat *</label>
                   <input
                     type="text"
+                    required
                     value={formLocation}
                     onChange={(e) => setFormLocation(e.target.value)}
                     placeholder="Contoh: Masjid Al-Hikmah"
