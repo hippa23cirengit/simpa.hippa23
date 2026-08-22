@@ -130,16 +130,17 @@ export default function CetakKtaPage() {
             top: 0;
             width: 100%;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2mm 8mm; /* row-gap 2mm, col-gap 8mm */
+            padding-bottom: 0 !important;
           }
           .no-print {
             display: none !important;
           }
           @page {
             size: A4 portrait;
-            margin: 1cm;
+            margin: 5mm;
           }
         }
       `}} />
@@ -243,9 +244,13 @@ export default function CetakKtaPage() {
         </div>
 
         {/* Print Area Preview */}
-        <div className="lg:col-span-2 flex flex-col items-center gap-6 overflow-x-auto pb-8">
+        <div className="lg:col-span-2 flex flex-col items-center gap-6 pb-8 overflow-x-auto">
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-xs w-full max-w-[190mm] flex gap-2 no-print">
+            <span className="material-symbols-outlined text-[18px]">info</span>
+            <p><strong>Tips Cetak:</strong> Saat mencetak (CTRL+P), pastikan opsi <strong>"Background graphics"</strong> tercentang, dan ukuran kertas diset ke <strong>A4 Portrait</strong> dengan margin <strong>Minimum</strong> atau <strong>Default</strong>.</p>
+          </div>
           
-          <div id="print-area" className="flex flex-col gap-6">
+          <div id="print-area" className="flex flex-wrap justify-center gap-x-[8mm] gap-y-[2mm] max-w-[210mm]">
             <KtaCard member={member} ktaSettings={ktaSettings} side="front" />
             <KtaCard member={member} ktaSettings={ktaSettings} side="back" />
           </div>

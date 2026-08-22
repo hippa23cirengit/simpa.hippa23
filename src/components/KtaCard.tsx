@@ -22,7 +22,7 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
   if (side === "back") {
     return (
       <div 
-        className="relative bg-white shadow-xl rounded-[20px] overflow-hidden shrink-0 print:shadow-none print:break-inside-avoid" 
+        className="relative bg-white border border-slate-300 shadow-xl rounded-[20px] overflow-hidden shrink-0 print:shadow-none print:break-inside-avoid" 
         style={{ 
           width: "85.6mm", 
           height: "54mm", 
@@ -34,7 +34,7 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
         }}
       >
         <img 
-          src="/revisi-kta-belakang.png" 
+          src="/2 copy.png" 
           alt="KTA Belakang" 
           className="absolute inset-0 w-full h-full object-fill z-0 pointer-events-none"
           style={{
@@ -49,7 +49,7 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
 
   return (
     <div 
-      className="relative bg-white shadow-xl rounded-[20px] overflow-hidden shrink-0 print:shadow-none print:break-inside-avoid" 
+      className="relative bg-white border border-slate-300 shadow-xl rounded-[20px] overflow-hidden shrink-0 print:shadow-none print:break-inside-avoid" 
       style={{ 
         width: "85.6mm", 
         height: "54mm", 
@@ -63,7 +63,7 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
       }}
     >
       <img 
-        src="/depan-revisi.png" 
+        src="/1 copy.png" 
         alt="KTA Depan" 
         className="absolute inset-0 w-full h-full object-fill z-0 pointer-events-none"
         style={{
@@ -94,10 +94,10 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
       <div 
         className="absolute overflow-hidden rounded-[8px] flex items-center justify-center z-10"
         style={{
-          left: "74.3%",
-          top: "27.5%",
-          width: "17.1%",
-          height: "38.2%"
+          left: "71.5%",
+          top: "25.5%",
+          width: "22%",
+          height: "46%"
         }}
       >
         <img 
@@ -120,7 +120,7 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
             <img 
               src={ktaSettings.signatureUrl} 
               alt="Signature" 
-              className="h-9 absolute object-contain mix-blend-multiply translate-y-3" 
+              className="h-9 absolute object-contain mix-blend-multiply translate-y-4" 
               style={{
                 imageRendering: "-webkit-optimize-contrast",
                 // @ts-ignore
@@ -135,7 +135,7 @@ export function KtaCard({ member, ktaSettings, side }: KtaCardProps) {
           {ktaSettings.ketuaName || "Nama Ketua"}
         </div>
         {/* NPA Ketua */}
-        <div className="font-bold text-[5px] -mt-[1px]">
+        <div className="font-bold text-[5px] mt-[1px]">
           NPA. {ktaSettings.ketuaNpa || "00.0000"}
         </div>
       </div>
