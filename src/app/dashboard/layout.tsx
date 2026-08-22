@@ -265,9 +265,16 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   if (initialLoading || !authorized) {
     return (
-      <div className="w-full min-h-screen bg-slate-50 flex flex-col items-center justify-center font-bold text-slate-400 gap-3">
-        <div className="w-8 h-8 border-4 border-[#F7A440] border-t-transparent rounded-full animate-spin"></div>
-        <span className="text-xs tracking-wider text-slate-400 font-semibold uppercase">Menghubungkan ke Database...</span>
+      <div className="w-full min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
+        <Image
+          src="/logo.png"
+          alt="Logo HIPPA Cirengit"
+          width={64}
+          height={64}
+          className="object-contain shrink-0"
+          style={{ animation: 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
+        />
+        <span className="text-xs tracking-wider text-slate-400 font-bold uppercase animate-pulse">Menghubungkan ke Database...</span>
       </div>
     );
   }
@@ -535,8 +542,15 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       {/* Glassmorphism Sync Overlay */}
       {isSyncing && (
         <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] z-[9999] flex flex-col items-center justify-center gap-3 select-none pointer-events-auto">
-          <div className="bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 px-6 py-5 rounded-2xl shadow-xl flex flex-col items-center gap-3">
-            <div className="w-6 h-6 border-2 border-[#F7A440] border-t-transparent rounded-full animate-spin"></div>
+          <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200/80 px-8 py-6 rounded-2xl shadow-xl flex flex-col items-center gap-4 animate-fadeIn">
+            <Image
+              src="/logo.png"
+              alt="Logo HIPPA Cirengit"
+              width={40}
+              height={40}
+              className="object-contain shrink-0"
+              style={{ animation: 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
+            />
             <span className="text-xs font-extrabold text-slate-700 tracking-wide">Menyinkronkan ke Database...</span>
           </div>
         </div>
