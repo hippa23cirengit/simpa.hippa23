@@ -32,6 +32,9 @@ export default function AdminDashboard() {
   const [ketuaName, setKetuaName] = useState("-");
   const [sekretarisName, setSekretarisName] = useState("-");
   const [bendaharaName, setBendaharaName] = useState("-");
+  const [ketuaPhoto, setKetuaPhoto] = useState<string | undefined>(undefined);
+  const [sekretarisPhoto, setSekretarisPhoto] = useState<string | undefined>(undefined);
+  const [bendaharaPhoto, setBendaharaPhoto] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   const loadDashboardData = () => {
@@ -46,6 +49,9 @@ export default function AdminDashboard() {
     setKetuaName(ketuaObj ? ketuaObj.name : "-");
     setSekretarisName(sekObj ? sekObj.name : "-");
     setBendaharaName(bendaharaObj ? bendaharaObj.name : "-");
+    setKetuaPhoto(ketuaObj ? ketuaObj.profilePhoto : undefined);
+    setSekretarisPhoto(sekObj ? sekObj.profilePhoto : undefined);
+    setBendaharaPhoto(bendaharaObj ? bendaharaObj.profilePhoto : undefined);
 
     const storedApplicants = localStorage.getItem("simpa_calon_anggota");
     if (storedApplicants) {
@@ -289,19 +295,46 @@ export default function AdminDashboard() {
               Ringkasan Kepengurusan
             </h3>
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center py-0.5">
                 <span className="text-slate-500 font-medium">Ketua Umum</span>
-                <span className="font-semibold text-slate-800">{ketuaName === "-" ? "Belum ditentukan" : ketuaName}</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100 shrink-0 bg-slate-100 flex items-center justify-center">
+                    {ketuaName !== "-" && ketuaPhoto ? (
+                      <img src={ketuaPhoto} alt="Ketua" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="material-symbols-outlined text-[13px] text-slate-400">person</span>
+                    )}
+                  </div>
+                  <span className="font-semibold text-slate-800">{ketuaName === "-" ? "Belum ditentukan" : ketuaName}</span>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center py-0.5">
                 <span className="text-slate-500 font-medium">Sekretaris</span>
-                <span className="font-semibold text-slate-800">{sekretarisName === "-" ? "Belum ditentukan" : sekretarisName}</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100 shrink-0 bg-slate-100 flex items-center justify-center">
+                    {sekretarisName !== "-" && sekretarisPhoto ? (
+                      <img src={sekretarisPhoto} alt="Sekretaris" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="material-symbols-outlined text-[13px] text-slate-400">person</span>
+                    )}
+                  </div>
+                  <span className="font-semibold text-slate-800">{sekretarisName === "-" ? "Belum ditentukan" : sekretarisName}</span>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center py-0.5">
                 <span className="text-slate-500 font-medium">Bendahara</span>
-                <span className="font-semibold text-slate-800">{bendaharaName === "-" ? "Belum ditentukan" : bendaharaName}</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100 shrink-0 bg-slate-100 flex items-center justify-center">
+                    {bendaharaName !== "-" && bendaharaPhoto ? (
+                      <img src={bendaharaPhoto} alt="Bendahara" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="material-symbols-outlined text-[13px] text-slate-400">person</span>
+                    )}
+                  </div>
+                  <span className="font-semibold text-slate-800">{bendaharaName === "-" ? "Belum ditentukan" : bendaharaName}</span>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center py-0.5">
                 <span className="text-slate-500 font-medium">Periode Jabatan</span>
                 <span className="font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded text-xs">
                   {periodeJabatan}
