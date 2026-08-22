@@ -157,7 +157,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         loadUserData();
       } else if (detail.status === "error") {
         setIsSyncing(false);
-        showAlert(`Gagal sinkronisasi data ke Supabase:\n${detail.error}`, "Sinkronisasi Gagal", "danger");
+        showAlert(`Gagal sinkronisasi data ke Database:\n${detail.error}`, "Sinkronisasi Gagal", "danger");
       }
     };
 
@@ -267,7 +267,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     return (
       <div className="w-full min-h-screen bg-slate-50 flex flex-col items-center justify-center font-bold text-slate-400 gap-3">
         <div className="w-8 h-8 border-4 border-[#F7A440] border-t-transparent rounded-full animate-spin"></div>
-        <span className="text-xs tracking-wider text-slate-400 font-semibold uppercase">Menghubungkan ke Supabase...</span>
+        <span className="text-xs tracking-wider text-slate-400 font-semibold uppercase">Menghubungkan ke Database...</span>
       </div>
     );
   }
@@ -537,7 +537,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] z-[9999] flex flex-col items-center justify-center gap-3 select-none pointer-events-auto">
           <div className="bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 px-6 py-5 rounded-2xl shadow-xl flex flex-col items-center gap-3">
             <div className="w-6 h-6 border-2 border-[#F7A440] border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-xs font-extrabold text-slate-700 tracking-wide">Menyinkronkan ke Supabase...</span>
+            <span className="text-xs font-extrabold text-slate-700 tracking-wide">Menyinkronkan ke Database...</span>
           </div>
         </div>
       )}
