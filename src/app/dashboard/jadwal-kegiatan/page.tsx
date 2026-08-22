@@ -48,6 +48,49 @@ export default function JadwalKegiatan() {
   const [broadcastingId, setBroadcastingId] = useState<string | null>(null)
   const [cooldowns, setCooldowns] = useState<Record<string, number>>({})
 
+  // Tooltip/Popover States
+  const [hoveredDateStr, setHoveredDateStr] = useState<string | null>(null)
+  const [clickedDateStr, setClickedDateStr] = useState<string | null>(null)
+  const [longPressedDateStr, setLongPressedDateStr] = useState<string | null>(null)
+
+  // Refs for mobile long press
+  const longPressTimeoutRef = React.useRef<any>(null)
+  const isLongPressActive = React.useRef(false)
+
+  const handleTouchStart = (dateStr: string) => {
+    isLongPressActive.current = false;
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+    }
+    longPressTimeoutRef.current = setTimeout(() => {
+      isLongPressActive.current = true;
+      setLongPressedDateStr(dateStr);
+    }, 500);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent, dateStr: string) => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+    if (isLongPressActive.current) {
+      e.preventDefault();
+      setLongPressedDateStr(null);
+      isLongPressActive.current = false;
+    } else {
+      setSelectedDateStr(dateStr);
+      setClickedDateStr(null); // Clear active locked popovers on standard tap
+    }
+  };
+
+  const handleTouchMove = () => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+    setLongPressedDateStr(null);
+  };
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCooldowns((prev) => {
@@ -200,7 +243,29 @@ export default function JadwalKegiatan() {
       case "purple": return "bg-purple-500"
       case "red": return "bg-red-500"
       case "blue":
-      default: return "bg-blue-505"
+      default: return "bg-blue-500"
+    }
+  }
+
+  const getBadgeBgColor = (color: string) => {
+    switch (color) {
+      case "amber": return "bg-amber-500 hover:bg-amber-600"
+      case "emerald": return "bg-emerald-600 hover:bg-emerald-700"
+      case "purple": return "bg-purple-600 hover:bg-purple-700"
+      case "red": return "bg-red-600 hover:bg-red-700"
+      case "blue":
+      default: return "bg-blue-600 hover:bg-blue-700"
+    }
+  }
+
+  const getEventBorderColorHex = (color: string) => {
+    switch (color) {
+      case "amber": return "#f59e0b"
+      case "emerald": return "#10b981"
+      case "purple": return "#8b5cf6"
+      case "red": return "#ef4444"
+      case "blue":
+      default: return "#3b82f6"
     }
   }
 
@@ -411,34 +476,14 @@ export default function JadwalKegiatan() {
               const isSelected = selectedDateStr === cell.dateStr
               const cellEvents = events.filter(evt => evt.date === cell.dateStr)
 
-              let cellBg = "bg-white hover:bg-slate-50/50"
+              // Best Scenario Layout: Clean backgrounds with high contrast colored badges
+              let cellBg = "bg-white hover:bg-slate-50"
               if (!cell.isCurrentMonth) {
-                cellBg = "bg-slate-50 opacity-40"
-              } else if (cellEvents.length > 0) {
-                // Color the cell background according to the first event's color category
-                const firstColor = cellEvents[0].color
-                switch (firstColor) {
-                  case "amber":
-                    cellBg = "bg-amber-50/80 text-amber-900 hover:bg-amber-100/80"
-                    break
-                  case "emerald":
-                    cellBg = "bg-emerald-50/80 text-emerald-900 hover:bg-emerald-100/80"
-                    break
-                  case "purple":
-                    cellBg = "bg-purple-50/80 text-purple-900 hover:bg-purple-100/80"
-                    break
-                  case "red":
-                    cellBg = "bg-red-50/80 text-red-900 hover:bg-red-100/80"
-                    break
-                  case "blue":
-                  default:
-                    cellBg = "bg-blue-50/80 text-blue-900 hover:bg-blue-100/80"
-                    break
-                }
+                cellBg = "bg-slate-50/60 opacity-50"
               } else if (cell.isToday) {
-                cellBg = "bg-amber-500/10 font-bold"
+                cellBg = "bg-amber-500/5 font-bold"
               } else if (isSelected) {
-                cellBg = "bg-amber-50/90 font-bold"
+                cellBg = "bg-slate-50/50"
               }
 
               let borderOutline = "hover:ring-1 hover:ring-inset hover:ring-amber-300"
@@ -446,11 +491,27 @@ export default function JadwalKegiatan() {
                 borderOutline = "ring-2 ring-inset ring-[#F7A440] shadow-sm z-10 rounded-sm"
               }
 
+              const isHovered = hoveredDateStr === cell.dateStr
+              const isClicked = clickedDateStr === cell.dateStr
+              const isLongPressed = longPressedDateStr === cell.dateStr
+              const showPopup = (isHovered || isClicked || isLongPressed) && cellEvents.length > 0
+
               return (
                 <div
                   key={idx}
-                  onClick={() => setSelectedDateStr(cell.dateStr)}
-                  className={`min-h-[90px] md:min-h-[110px] p-1.5 border-r border-b border-slate-200/80 ${cellBg} ${borderOutline} flex flex-col justify-between cursor-pointer transition-all duration-150`}
+                  onClick={() => {
+                    setSelectedDateStr(cell.dateStr)
+                    if (cellEvents.length > 0) {
+                      // Toggle click lock on PC
+                      setClickedDateStr(clickedDateStr === cell.dateStr ? null : cell.dateStr)
+                    }
+                  }}
+                  onMouseEnter={() => setHoveredDateStr(cell.dateStr)}
+                  onMouseLeave={() => setHoveredDateStr(null)}
+                  onTouchStart={() => handleTouchStart(cell.dateStr)}
+                  onTouchEnd={(e) => handleTouchEnd(e, cell.dateStr)}
+                  onTouchMove={handleTouchMove}
+                  className={`min-h-[90px] md:min-h-[110px] p-1.5 border-r border-b border-slate-200/80 ${cellBg} ${borderOutline} flex flex-col justify-between cursor-pointer transition-all duration-150 relative`}
                 >
                   <div className="flex justify-between items-start">
                     {cell.isToday ? (
@@ -463,23 +524,23 @@ export default function JadwalKegiatan() {
                       </span>
                     )}
                     {cellEvents.length > 0 && (
-                      <div className="flex gap-0.5 p-0.5">
+                      <div className="flex gap-1 p-0.5 shrink-0">
                         {cellEvents.slice(0, 3).map(e => (
-                          <span key={e.id} className={`w-1.5 h-1.5 rounded-full ${getDotsColor(e.color)}`} />
+                          <span key={e.id} className={`w-2 h-2 rounded-full shadow-sm ring-1 ring-white ${getDotsColor(e.color)}`} />
                         ))}
                       </div>
                     )}
                   </div>
                   
-                  {/* Event labels inside cell (Desktop) */}
-                  <div className="mt-1 flex flex-col gap-0.5 overflow-hidden">
+                  {/* Event labels inside cell (Desktop filled badges) */}
+                  <div className="mt-1 flex flex-col gap-1 overflow-hidden w-full">
                     {cellEvents.slice(0, 2).map((event) => (
                       <div
                         key={event.id}
-                        className="hidden md:block text-[9px] font-bold truncate leading-snug px-1 text-slate-800"
+                        className={`hidden md:block text-[9px] font-bold truncate leading-snug px-1.5 py-0.5 rounded text-white shadow-sm transition-colors ${getBadgeBgColor(event.color)}`}
                         title={event.title}
                       >
-                        • {event.title}
+                        {event.title}
                       </div>
                     ))}
                     {cellEvents.length > 2 && (
@@ -488,6 +549,77 @@ export default function JadwalKegiatan() {
                       </div>
                     )}
                   </div>
+
+                  {/* Popup/Tooltip Detail Kegiatan (Hover, Click, Longpress) */}
+                  {showPopup && (
+                    <div 
+                      className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-[250px] sm:w-[300px] bg-white/95 backdrop-blur-[4px] border border-slate-200 shadow-xl rounded-xl p-4 z-50 animate-fadeIn pointer-events-auto flex flex-col text-left cursor-default gap-3"
+                      onClick={(e) => e.stopPropagation()} // Prevent cell click trigger
+                    >
+                      <div className="flex justify-between items-center border-b border-slate-100 pb-1.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          {formatDateDisplay(cell.dateStr)}
+                        </span>
+                        {isClicked && (
+                          <button 
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setClickedDateStr(null);
+                            }}
+                            className="w-5 h-5 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">close</span>
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-3.5 max-h-[220px] overflow-y-auto pr-1">
+                        {cellEvents.map((event) => (
+                          <div key={event.id} className="text-left border-l-[3px] pl-2.5 py-0.5 space-y-1" style={{ borderColor: getEventBorderColorHex(event.color) }}>
+                            <div className="flex justify-between items-start gap-1">
+                              <h5 className="font-extrabold text-slate-800 text-[11px] leading-snug">{event.title}</h5>
+                              <span className={`px-1.5 py-0.5 text-[8px] font-bold rounded uppercase tracking-wider whitespace-nowrap shrink-0 ${getColorClass(event.color)}`}>
+                                {event.color}
+                              </span>
+                            </div>
+                            
+                            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                              {event.type === "kajian" ? "📚 Kajian / Seminar" : "🏃‍♂️ Acara Umum"}
+                            </div>
+
+                            <div className="space-y-1 text-[9.5px] text-slate-500 font-semibold">
+                              <div className="flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[12px] text-slate-400">schedule</span>
+                                <span>{event.time} WIB</span>
+                              </div>
+                              {event.location && (
+                                <div className="flex items-start gap-1.5">
+                                  <span className="material-symbols-outlined text-[12px] text-slate-400 mt-0.5">location_on</span>
+                                  <span className="text-slate-600 leading-normal break-words">{event.location}</span>
+                                </div>
+                              )}
+                              {event.type === "kajian" && (
+                                <div className="flex flex-col gap-0.5 mt-1 py-1 px-2 bg-amber-500/5 border border-amber-200/30 rounded-lg text-[#895200]">
+                                  {event.theme && (
+                                    <div className="flex items-center gap-1">
+                                      <span className="material-symbols-outlined text-[12px]">topic</span>
+                                      <span className="truncate">Tema: <strong className="font-extrabold">{event.theme}</strong></span>
+                                    </div>
+                                  )}
+                                  {event.speaker && (
+                                    <div className="flex items-center gap-1">
+                                      <span className="material-symbols-outlined text-[12px]">record_voice_over</span>
+                                      <span className="truncate">Ust: <strong className="font-extrabold">{event.speaker}</strong></span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}
