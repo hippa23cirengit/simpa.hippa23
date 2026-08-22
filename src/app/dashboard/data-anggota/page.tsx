@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { getStoredMembers, saveStoredMembers, getStoredTasykil, syncRoles, Member, getCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
+import { getStoredMembers, saveStoredMembers, getStoredTasykil, syncRoles, Member, getCurrentRole, getStoredAcl, deleteMember } from "@/common/lib/mock-db"
 import { customAlert, customConfirm, showToast } from "@/common/lib/alert"
 import ImportExcelModal from "./components/import-excel-modal"
 
@@ -73,9 +73,7 @@ export default function DataAnggota() {
     })
 
     if (confirmed) {
-      const rawMembers = getStoredMembers()
-      const filtered = rawMembers.filter(m => m.id !== memberId)
-      saveStoredMembers(filtered)
+      deleteMember(memberId)
       showToast({
         message: `Anggota "${memberName}" berhasil dihapus!`,
         type: "success"

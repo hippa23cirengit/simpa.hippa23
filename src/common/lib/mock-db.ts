@@ -506,6 +506,49 @@ export function saveStoredAccounts(accounts: LoginAccount[]) {
   }
 }
 
+export function deleteMember(memberId: string) {
+  if (typeof window === "undefined") return;
+
+  // 1. Delete from members list
+  const members = getStoredMembers();
+  const filteredMembers = members.filter(m => m.id !== memberId);
+  saveStoredMembers(filteredMembers);
+
+  // 2. Delete associated login account
+  const accounts = getStoredAccounts();
+  const filteredAccounts = accounts.filter(acc => acc.npa !== memberId && acc.linkedAnggotaId !== memberId);
+  saveStoredAccounts(filteredAccounts);
+
+  // 3. Clear references in Tasykil
+  const tasykil = getStoredTasykil();
+  let tasykilChanged = false;
+
+  // Check pimhar
+  const pimharKeys = ["ketua", "wakilKetua", "sekretaris", "wakilSekretaris", "bendahara", "wakilBendahara"] as const;
+  for (const key of pimharKeys) {
+    if (tasykil.pimhar[key] === memberId) {
+      tasykil.pimhar[key] = "";
+      tasykilChanged = true;
+    }
+  }
+
+  // Check bidang members
+  tasykil.bidang = tasykil.bidang.map(b => {
+    if (b.members.includes(memberId)) {
+      tasykilChanged = true;
+      return {
+        ...b,
+        members: b.members.filter(id => id !== memberId)
+      };
+    }
+    return b;
+  });
+
+  if (tasykilChanged) {
+    saveStoredTasykil(tasykil);
+  }
+}
+
 export function saveStoredTasykil(state: TasykilState) {
   if (typeof window !== "undefined") {
     localStorage.setItem(TASYKIL_KEY, JSON.stringify(state));
