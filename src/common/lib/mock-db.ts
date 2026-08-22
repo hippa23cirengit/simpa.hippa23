@@ -62,11 +62,21 @@ export interface AclRule {
     manageCalonAnggota: boolean;
     viewJadwalKegiatan: boolean;
     manageJadwalKegiatan: boolean;
-    viewPengaturan: boolean;
-    managePengaturan: boolean;
+    viewPengaturanSistem: boolean;
+    managePengaturanSistem: boolean;
+    viewPengaturanWa: boolean;
+    managePengaturanWa: boolean;
     viewKeuangan: boolean;
     manageKeuangan: boolean;
   };
+}
+
+export interface KopSuratConfig {
+  logoKiriUrl: string;
+  logoKananUrl: string;
+  namaOrganisasi: string;
+  namaInstansi: string;
+  alamat: string;
 }
 
 export const DEFAULT_MEMBERS: Member[] = [
@@ -150,12 +160,12 @@ export function generateNextNpa(members: Member[], year: number = new Date().get
 }
 
 // Backend sync helper
-function syncToServer(key: string, value: any) {
+function syncToServer(key: string, value: any): Promise<void> {
   if (typeof window !== "undefined") {
     // Notify UI that a sync has started
     window.dispatchEvent(new CustomEvent("simpa_sync_status", { detail: { status: "syncing" } }));
 
-    fetch("/api/db-sync", {
+    return fetch("/api/db-sync", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key, value })
@@ -177,6 +187,7 @@ function syncToServer(key: string, value: any) {
       window.dispatchEvent(new CustomEvent("simpa_sync_status", { detail: { status: "error", error: e.message || "Gagal menghubungi server." } }));
     });
   }
+  return Promise.resolve();
 }
 
 export async function syncDatabaseFromServer(): Promise<boolean> {
@@ -293,14 +304,16 @@ export const DEFAULT_ACL: AclRule[] = [
       manageCalonAnggota: true,
       viewJadwalKegiatan: true,
       manageJadwalKegiatan: true,
-      viewPengaturan: true,
-      managePengaturan: true,
+      viewPengaturanSistem: true,
+      managePengaturanSistem: true,
+      viewPengaturanWa: true,
+      managePengaturanWa: true,
       viewKeuangan: true,
       manageKeuangan: true
     }
   },
   {
-    role: "PIMHAR",
+    role: "Ketua",
     permissions: {
       dashboard: true,
       viewDataAnggota: true,
@@ -311,11 +324,33 @@ export const DEFAULT_ACL: AclRule[] = [
       manageCalonAnggota: true,
       viewJadwalKegiatan: true,
       manageJadwalKegiatan: true,
-      viewPengaturan: false,
-      managePengaturan: false,
+      viewPengaturanSistem: false,
+      managePengaturanSistem: false,
+      viewPengaturanWa: false,
+      managePengaturanWa: false,
       viewKeuangan: true,
       manageKeuangan: true
     }
+  },
+  {
+    role: "Wakil Ketua",
+    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewPengaturanWa: false, managePengaturanWa: false, viewKeuangan: true, manageKeuangan: true }
+  },
+  {
+    role: "Sekretaris",
+    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewPengaturanWa: false, managePengaturanWa: false, viewKeuangan: true, manageKeuangan: true }
+  },
+  {
+    role: "Wakil Sekretaris",
+    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewPengaturanWa: false, managePengaturanWa: false, viewKeuangan: true, manageKeuangan: true }
+  },
+  {
+    role: "Bendahara",
+    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewPengaturanWa: false, managePengaturanWa: false, viewKeuangan: true, manageKeuangan: true }
+  },
+  {
+    role: "Wakil Bendahara",
+    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewPengaturanWa: false, managePengaturanWa: false, viewKeuangan: true, manageKeuangan: true }
   },
   {
     role: "Anggota",
@@ -329,8 +364,10 @@ export const DEFAULT_ACL: AclRule[] = [
       manageCalonAnggota: false,
       viewJadwalKegiatan: true,
       manageJadwalKegiatan: false,
-      viewPengaturan: false,
-      managePengaturan: false,
+      viewPengaturanSistem: false,
+      managePengaturanSistem: false,
+      viewPengaturanWa: false,
+      managePengaturanWa: false,
       viewKeuangan: true,
       manageKeuangan: false
     }
@@ -384,20 +421,46 @@ export function getStoredAcl(): AclRule[] {
         changed = true;
       }
       
-      // Migration: Ensure PIMHAR has Keuangan access
+      // Migration: Remove legacy PIMHAR and add individual pimhar roles
       const pimharIndex = parsed.findIndex(r => r.role === "PIMHAR");
-      if (pimharIndex !== -1 && !parsed[pimharIndex].permissions.viewKeuangan) {
-        parsed[pimharIndex].permissions.viewKeuangan = true;
-        parsed[pimharIndex].permissions.manageKeuangan = true;
+      if (pimharIndex !== -1) {
+        const oldPimharPerms = parsed[pimharIndex].permissions;
+        parsed.splice(pimharIndex, 1);
+        
+        const pimharRoles = ["Ketua", "Wakil Ketua", "Sekretaris", "Wakil Sekretaris", "Bendahara", "Wakil Bendahara"];
+        pimharRoles.forEach(roleName => {
+          if (!parsed.some(r => r.role === roleName)) {
+            parsed.push({
+              role: roleName,
+              permissions: { ...oldPimharPerms } // Inherit previous PIMHAR permissions
+            });
+          }
+        });
         changed = true;
       }
-
       // Migration: Ensure Anggota has Keuangan view access
       const anggotaIndex = parsed.findIndex(r => r.role === "Anggota");
       if (anggotaIndex !== -1 && !parsed[anggotaIndex].permissions.viewKeuangan) {
         parsed[anggotaIndex].permissions.viewKeuangan = true;
         changed = true;
       }
+      
+      // Migration: Split Pengaturan into PengaturanSistem and PengaturanWa
+      parsed.forEach(r => {
+        const perms: any = r.permissions;
+        if (perms.hasOwnProperty("viewPengaturan")) {
+          perms.viewPengaturanSistem = perms.viewPengaturan;
+          perms.viewPengaturanWa = perms.viewPengaturan;
+          delete perms.viewPengaturan;
+          changed = true;
+        }
+        if (perms.hasOwnProperty("managePengaturan")) {
+          perms.managePengaturanSistem = perms.managePengaturan;
+          perms.managePengaturanWa = perms.managePengaturan;
+          delete perms.managePengaturan;
+          changed = true;
+        }
+      });
     } catch (e) {
       parsed = [...DEFAULT_ACL];
       changed = true;
@@ -422,8 +485,10 @@ export function getStoredAcl(): AclRule[] {
           manageCalonAnggota: false,
           viewJadwalKegiatan: true,
           manageJadwalKegiatan: false,
-          viewPengaturan: false,
-          managePengaturan: false,
+          viewPengaturanSistem: false,
+          managePengaturanSistem: false,
+          viewPengaturanWa: false,
+          managePengaturanWa: false,
           viewKeuangan: false,
           manageKeuangan: false
         }
@@ -435,7 +500,8 @@ export function getStoredAcl(): AclRule[] {
   // Clean up legacy roles not present in default ACL or current Tasykil Bidang names
   const validRoles = new Set([
     "Super Admin",
-    "PIMHAR",
+    "Ketua", "Wakil Ketua", "Sekretaris", "Wakil Sekretaris", "Bendahara", "Wakil Bendahara",
+    "Anggota",
     "Anggota",
     ...tasykil.bidang.map(b => b.name)
   ]);
@@ -486,12 +552,42 @@ export function getStoredAccounts(): LoginAccount[] {
       localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(DEFAULT_LOGIN_ACCOUNTS));
       return DEFAULT_LOGIN_ACCOUNTS;
     }
-    // Auto-migrate: Ensure Super Admin is linked to the member record and has new password
+    let accountsChanged = false;
+
+    // Auto-migrate: Ensure ALL accounts have linkedAnggotaId
+    parsed.forEach(acc => {
+      if (!acc.linkedAnggotaId) {
+        acc.linkedAnggotaId = acc.npa;
+        accountsChanged = true;
+      }
+    });
+
+    // Auto-migrate PIMHAR accounts to specific roles based on Tasykil
+    const tasykil = getStoredTasykil();
+    parsed.forEach(acc => {
+      if (acc.role === "PIMHAR") {
+        const id = acc.npa;
+        if (tasykil.pimhar.ketua === id) acc.role = "Ketua";
+        else if (tasykil.pimhar.wakilKetua === id) acc.role = "Wakil Ketua";
+        else if (tasykil.pimhar.sekretaris === id) acc.role = "Sekretaris";
+        else if (tasykil.pimhar.wakilSekretaris === id) acc.role = "Wakil Sekretaris";
+        else if (tasykil.pimhar.bendahara === id) acc.role = "Bendahara";
+        else if (tasykil.pimhar.wakilBendahara === id) acc.role = "Wakil Bendahara";
+        else acc.role = "Anggota";
+        accountsChanged = true;
+      }
+    });
+
     const adminAcc = parsed.find(a => a.npa === "26.0000");
     if (adminAcc && (!adminAcc.linkedAnggotaId || adminAcc.passwordHash === "cirengit23")) {
       adminAcc.linkedAnggotaId = "26.0000";
       adminAcc.passwordHash = "#h1ppa23";
+      accountsChanged = true;
+    }
+    
+    if (accountsChanged) {
       localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(parsed));
+      syncToServer(ACCOUNTS_KEY, parsed);
     }
     return parsed;
   } catch (e) {
@@ -499,10 +595,10 @@ export function getStoredAccounts(): LoginAccount[] {
   }
 }
 
-export function saveStoredAccounts(accounts: LoginAccount[]) {
+export async function saveStoredAccounts(accounts: LoginAccount[]) {
   if (typeof window !== "undefined") {
     localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
-    syncToServer(ACCOUNTS_KEY, accounts)
+    await syncToServer(ACCOUNTS_KEY, accounts)
   }
 }
 
@@ -549,16 +645,21 @@ export function deleteMember(memberId: string) {
   }
 }
 
-export function saveStoredTasykil(state: TasykilState) {
+export async function saveStoredTasykil(state: TasykilState) {
   if (typeof window !== "undefined") {
     localStorage.setItem(TASYKIL_KEY, JSON.stringify(state));
-    syncToServer(TASYKIL_KEY, state)
+    await syncToServer(TASYKIL_KEY, state)
+    
+    // Force ACL rules to be generated for new Bidangs and sync to server BEFORE updating accounts
+    const aclRules = getStoredAcl();
+    await syncToServer("simpa_acl_rules", aclRules);
+
     // Automatically synchronize account roles
-    syncAccountRolesFromTasykil(state);
+    await syncAccountRolesFromTasykil(state);
   }
 }
 
-export function syncAccountRolesFromTasykil(tasykil: TasykilState) {
+export async function syncAccountRolesFromTasykil(tasykil: TasykilState) {
   if (typeof window === "undefined") return;
 
   const accounts = getStoredAccounts();
@@ -574,17 +675,12 @@ export function syncAccountRolesFromTasykil(tasykil: TasykilState) {
     }
 
     // Check if the member is in PIMHAR roles
-    const isPimhar = 
-      tasykil.pimhar.ketua === memberId ||
-      tasykil.pimhar.wakilKetua === memberId ||
-      tasykil.pimhar.sekretaris === memberId ||
-      tasykil.pimhar.wakilSekretaris === memberId ||
-      tasykil.pimhar.bendahara === memberId ||
-      tasykil.pimhar.wakilBendahara === memberId;
-
-    if (isPimhar) {
-      return { ...acc, role: "PIMHAR" };
-    }
+    if (tasykil.pimhar.ketua === memberId) return { ...acc, role: "Ketua" };
+    if (tasykil.pimhar.wakilKetua === memberId) return { ...acc, role: "Wakil Ketua" };
+    if (tasykil.pimhar.sekretaris === memberId) return { ...acc, role: "Sekretaris" };
+    if (tasykil.pimhar.wakilSekretaris === memberId) return { ...acc, role: "Wakil Sekretaris" };
+    if (tasykil.pimhar.bendahara === memberId) return { ...acc, role: "Bendahara" };
+    if (tasykil.pimhar.wakilBendahara === memberId) return { ...acc, role: "Wakil Bendahara" };
 
     // Check if in any Bidang
     for (const b of tasykil.bidang) {
@@ -597,7 +693,7 @@ export function syncAccountRolesFromTasykil(tasykil: TasykilState) {
     return { ...acc, role: "Anggota" };
   });
 
-  saveStoredAccounts(updatedAccounts);
+  await saveStoredAccounts(updatedAccounts);
 }
 
 export function createMemberAccount(newMember: Member, adminWa: string) {
@@ -679,6 +775,16 @@ export function saveStoredAcl(acl: AclRule[]) {
 }
 
 export function getCurrentRole(): string {
+  if (typeof window === "undefined") return "Super Admin";
+  return localStorage.getItem("simpa_current_role") || "Anggota";
+}
+
+export function getActualRole(): string {
+  if (typeof window === "undefined") return "Super Admin";
+  return localStorage.getItem("simpa_actual_role") || "Anggota";
+}
+
+export function getCurrentRoleLegacy(): string {
   if (typeof window === "undefined") return "Super Admin";
   const sessionStored = localStorage.getItem("simpa_session");
   if (sessionStored) {
@@ -793,11 +899,41 @@ export function getRegistrationPrefix(): string {
   return stored;
 }
 
+export interface KopSuratConfig {
+  logoKiriUrl: string;
+  logoKananUrl: string;
+  namaOrganisasi: string;
+  namaInstansi: string;
+  alamat: string;
+}
+
 export function saveRegistrationPrefix(prefix: string) {
   if (typeof window !== "undefined") {
-    localStorage.setItem(REG_PREFIX_KEY, prefix);
+    localStorage.setItem("simpa_reg_prefix", prefix)
     syncToServer(REG_PREFIX_KEY, prefix)
     window.dispatchEvent(new Event("simpa_role_changed"));
+  }
+}
+
+export const DEFAULT_KOP_SURAT: KopSuratConfig = {
+  logoKiriUrl: "/logo.png",
+  logoKananUrl: "",
+  namaOrganisasi: "HIMPUNAN PELAJAR PERSATUAN ISLAM PUTRA (HIPPA)",
+  namaInstansi: "PIMPINAN JAMAAH CIRENGIT",
+  alamat: "Cirengit, Ds. Cangkuang, Kec. Cangkuang, Kab. Bandung",
+}
+
+export function getKopSuratConfig(): KopSuratConfig {
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem("simpa_kop_surat")
+    if (saved) return JSON.parse(saved)
+  }
+  return DEFAULT_KOP_SURAT
+}
+
+export function saveKopSuratConfig(config: KopSuratConfig) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("simpa_kop_surat", JSON.stringify(config))
   }
 }
 

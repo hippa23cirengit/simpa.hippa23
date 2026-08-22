@@ -7,10 +7,11 @@ interface DialogOptions {
   message: string
   type?: "info" | "warning" | "danger" | "success"
   defaultValue?: string
+  rawLog?: string
 }
 
 interface DialogContextType {
-  showAlert: (message: string, title?: string, type?: DialogOptions["type"]) => Promise<void>
+  showAlert: (message: string, title?: string, type?: DialogOptions["type"], rawLog?: string) => Promise<void>
   showConfirm: (message: string, title?: string, type?: DialogOptions["type"]) => Promise<boolean>
   showPrompt: (message: string, title?: string, defaultValue?: string) => Promise<string | null>
 }
@@ -32,6 +33,7 @@ type DialogState = {
   message: string
   type: DialogOptions["type"]
   defaultValue: string
+  rawLog?: string
   onResolve: ((value: any) => void) | null
 }
 
@@ -43,10 +45,12 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
     message: "",
     type: "info",
     defaultValue: "",
+    rawLog: undefined,
     onResolve: null,
   })
 
   const [promptInput, setPromptInput] = useState("")
+  const [showLog, setShowLog] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -55,8 +59,9 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.isOpen, state.mode])
 
-  const showAlert = useCallback((message: string, title = "Perhatian", type: DialogOptions["type"] = "info") => {
+  const showAlert = useCallback((message: string, title = "Perhatian", type: DialogOptions["type"] = "info", rawLog?: string) => {
     return new Promise<void>((resolve) => {
+      setShowLog(false)
       setState({
         isOpen: true,
         mode: "alert",
@@ -64,6 +69,7 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
         message,
         type,
         defaultValue: "",
+        rawLog,
         onResolve: resolve as any,
       })
     })
@@ -141,6 +147,37 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
                   }}
                   className="w-full px-3 py-2 text-sm font-mono border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
+              )}
+
+              {state.rawLog && (
+                <div className="mt-2 flex flex-col items-start">
+                  <button 
+                    onClick={() => setShowLog(!showLog)}
+                    className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 underline decoration-slate-300 underline-offset-2 transition flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">
+                      {showLog ? "visibility_off" : "visibility"}
+                    </span>
+                    {showLog ? "Sembunyikan Log Error" : "Tampilkan Log Error"}
+                  </button>
+                  
+                  {showLog && (
+                    <div className="mt-3 relative w-full group">
+                      <pre className="w-full p-3 bg-slate-800 text-slate-200 rounded-lg text-[10px] font-mono leading-relaxed overflow-x-auto max-h-[150px] overflow-y-auto shadow-inner">
+                        {state.rawLog}
+                      </pre>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(state.rawLog || "")
+                        }}
+                        title="Salin log"
+                        className="absolute top-2 right-2 p-1.5 bg-slate-700/80 hover:bg-slate-600 text-slate-300 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">content_copy</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 

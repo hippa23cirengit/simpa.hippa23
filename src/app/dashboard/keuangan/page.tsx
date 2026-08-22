@@ -1,12 +1,19 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import * as XLSX from "xlsx"
 import { KasTransaksi } from "@prisma/client"
 import { KelolaKategoriModal } from "./components/kelola-kategori-modal"
 import { TambahTransaksiModal } from "./components/tambah-transaksi-modal"
 import { getCurrentRole, getStoredAcl } from "@/common/lib/mock-db"
-import * as XLSX from "xlsx"
 import { useDialog } from "@/common/components/dialog-provider"
+import { ChartAreaInteractive } from "./components/finance-chart"
+import { useKasirSession } from "./hooks/use-kasir-session"
+import { KelolaPinModal } from "./components/kelola-pin-modal"
+import { UbahPinModal } from "./components/ubah-pin-modal"
+import { ExportDropdown } from "@/common/components/export-dropdown"
+import { generatePdf } from "@/common/utils/pdf-export-helper"
+import { ExportFilterModal, ExportRange } from "./components/export-filter-modal"
 
 export default function KeuanganPage() {
   const { showConfirm, showAlert } = useDialog()
@@ -18,11 +25,28 @@ export default function KeuanganPage() {
   // Permissions
   const [canManage, setCanManage] = useState(false)
 
-  // Modals
+  // Edit Session
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false)
+  const [isUbahPinModalOpen, setIsUbahPinModalOpen] = useState(false)
+
+  // Modals (declared here so useKasirSession callback can reference them)
   const [isKategoriModalOpen, setIsKategoriModalOpen] = useState(false)
   const [isTambahModalOpen, setIsTambahModalOpen] = useState(false)
+  const [editData, setEditData] = useState<KasTransaksi | null>(null)
   const [isEditSaldoOpen, setIsEditSaldoOpen] = useState(false)
   const [tempSaldoAwal, setTempSaldoAwal] = useState("")
+
+  const { isKasirMode: isEditUnlocked, activateKasir: unlockEdit, deactivateKasir: lockEdit } = useKasirSession(() => {
+    // on timeout, ensure modal is closed if it was open
+    setIsTambahModalOpen(false)
+    setIsKategoriModalOpen(false)
+    setEditData(null)
+    showAlert("Sesi edit telah berakhir karena tidak ada aktivitas.", "Sesi Terkunci", "info")
+  })
+
+  // Export Modal
+  const [isExportFilterOpen, setIsExportFilterOpen] = useState(false)
+  const [exportType, setExportType] = useState<"pdf" | "excel">("pdf")
 
   // Filter
   const [filterBulan, setFilterBulan] = useState<string>("Semua") // YYYY-MM
@@ -95,6 +119,11 @@ export default function KeuanganPage() {
     }
   }
 
+  const handleEditTransaksi = (t: KasTransaksi) => {
+    setEditData(t)
+    setIsTambahModalOpen(true)
+  }
+
   const formatRp = (num: number) => {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(num)
   }
@@ -121,8 +150,33 @@ export default function KeuanganPage() {
   // Get unique months for filter
   const uniqueMonths = Array.from(new Set(transaksiList.map(t => t.tanggal.substring(0, 7)))).sort().reverse()
 
-  const handleExport = () => {
-    const exportData = filteredTransaksi.map(t => ({
+  const filterByDateRange = (list: KasTransaksi[], range: ExportRange) => {
+    if (range === "semua") return list
+    
+    const now = new Date()
+    let thresholdDate = new Date()
+
+    switch(range) {
+      case "1_minggu": thresholdDate.setDate(now.getDate() - 7); break;
+      case "4_minggu": thresholdDate.setDate(now.getDate() - 28); break;
+      case "8_minggu": thresholdDate.setDate(now.getDate() - 56); break;
+      case "12_minggu": thresholdDate.setDate(now.getDate() - 84); break;
+      case "1_tahun": thresholdDate.setFullYear(now.getFullYear() - 1); break;
+      case "2_tahun": thresholdDate.setFullYear(now.getFullYear() - 2); break;
+    }
+
+    const thresholdIso = thresholdDate.toISOString().split("T")[0]
+    return list.filter(t => t.tanggal >= thresholdIso)
+  }
+
+  const handleExportExcel = (range: ExportRange) => {
+    const listToExport = filterByDateRange(filteredTransaksi, range)
+    if (listToExport.length === 0) {
+      showAlert("Tidak ada data dalam rentang waktu tersebut.", "Data Kosong", "warning")
+      return
+    }
+
+    const exportData = listToExport.map(t => ({
       Tanggal: t.tanggal,
       Tipe: t.tipe === 'pemasukan' ? 'Pemasukan' : 'Pengeluaran',
       Kategori: t.kategori,
@@ -137,6 +191,105 @@ export default function KeuanganPage() {
     XLSX.writeFile(wb, `Laporan_Kas_${new Date().getTime()}.xlsx`)
   }
 
+  // Export PDF
+  const handleExportPdf = async (range: ExportRange) => {
+    const listToExport = filterByDateRange(filteredTransaksi, range)
+    if (listToExport.length === 0) {
+      showAlert("Tidak ada data dalam rentang waktu tersebut.", "Data Kosong", "warning")
+      return
+    }
+
+    const columns = [
+      "No",
+      "Tanggal",
+      "Kategori",
+      "Keterangan",
+      "Jumlah (Rp)"
+    ]
+
+    let totalMasuk = 0;
+    let totalKeluar = 0;
+
+    const pemasukanList = listToExport.filter(t => t.tipe === "pemasukan")
+    const pengeluaranList = listToExport.filter(t => t.tipe === "pengeluaran")
+
+    const pemasukanRows = pemasukanList.map((t, index) => {
+      totalMasuk += t.jumlah;
+      return [
+        index + 1,
+        t.tanggal,
+        t.kategori,
+        t.deskripsi || "-",
+        t.jumlah.toLocaleString('id-ID')
+      ];
+    });
+
+    const pengeluaranRows = pengeluaranList.map((t, index) => {
+      totalKeluar += t.jumlah;
+      return [
+        index + 1,
+        t.tanggal,
+        t.kategori,
+        t.deskripsi || "-",
+        t.jumlah.toLocaleString('id-ID')
+      ];
+    });
+
+    const tables = []
+    
+    if (pemasukanList.length > 0) {
+      tables.push({
+        subtitle: "A. Tabel Pemasukan",
+        columns,
+        rows: pemasukanRows
+      })
+    }
+
+    if (pengeluaranList.length > 0) {
+      tables.push({
+        subtitle: "B. Tabel Pengeluaran",
+        columns,
+        rows: pengeluaranRows
+      })
+    }
+
+    const saldoAkhir = saldoAwal + totalMasuk - totalKeluar;
+
+    const summaryRows = [
+      ["SALDO AWAL", "", "", "", `Rp ${saldoAwal.toLocaleString('id-ID')}`],
+      ["TOTAL PEMASUKAN", "", "", "", `Rp ${totalMasuk.toLocaleString('id-ID')}`],
+      ["TOTAL PENGELUARAN", "", "", "", `Rp ${totalKeluar.toLocaleString('id-ID')}`],
+      ["SALDO AKHIR", "", "", "", `Rp ${saldoAkhir.toLocaleString('id-ID')}`]
+    ];
+
+    let rangeText = "Semua Waktu"
+    switch(range) {
+      case "1_minggu": rangeText = "1 Minggu Terakhir"; break;
+      case "4_minggu": rangeText = "4 Minggu Terakhir"; break;
+      case "8_minggu": rangeText = "8 Minggu Terakhir"; break;
+      case "12_minggu": rangeText = "12 Minggu Terakhir"; break;
+      case "1_tahun": rangeText = "1 Tahun Terakhir"; break;
+      case "2_tahun": rangeText = "2 Tahun Terakhir"; break;
+    }
+
+    await generatePdf({
+      title: "LAPORAN KAS & KEUANGAN ORGANISASI",
+      subtitle: `Rentang Filter: ${rangeText}\nTotal Pemasukan: Rp ${totalMasuk.toLocaleString('id-ID')} | Total Pengeluaran: Rp ${totalKeluar.toLocaleString('id-ID')} | Sisa Saldo: Rp ${saldoAkhir.toLocaleString('id-ID')}`,
+      tables,
+      summaryRows,
+      filename: `Laporan_Kas_HIPPA_Cirengit_${new Date().toISOString().split("T")[0]}.pdf`,
+    })
+  }
+
+  const onProcessExport = (range: ExportRange) => {
+    setIsExportFilterOpen(false)
+    if (exportType === "pdf") {
+      handleExportPdf(range)
+    } else {
+      handleExportExcel(range)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6 max-w-[1200px] mx-auto w-full pb-10">
       {/* Header */}
@@ -146,24 +299,56 @@ export default function KeuanganPage() {
           <p className="text-sm font-medium text-slate-500 mt-1">Laporan arus kas dan keuangan organisasi</p>
         </div>
         
-        {canManage && (
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setIsKategoriModalOpen(true)}
-              className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-50 transition shadow-sm flex items-center gap-2"
-            >
-              <span className="material-symbols-outlined text-[18px]">category</span>
-              Kelola Kategori
-            </button>
-            <button
-              onClick={() => setIsTambahModalOpen(true)}
-              className="bg-[#F7A440] hover:bg-[#e09132] text-white px-4 py-2 rounded-xl font-bold text-sm transition shadow-sm flex items-center gap-2"
-            >
-              <span className="material-symbols-outlined text-[18px]">add</span>
-              Catat Transaksi
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <ExportDropdown 
+            onExportExcel={() => { setExportType("excel"); setIsExportFilterOpen(true) }}
+            onExportPdf={() => { setExportType("pdf"); setIsExportFilterOpen(true) }}
+          />
+          {canManage && (
+            isEditUnlocked ? (
+              <button 
+                onClick={lockEdit}
+                className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl font-bold text-sm hover:bg-emerald-200 transition flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">lock_open</span>
+                Akses Edit Aktif
+              </button>
+            ) : (
+              <button 
+                onClick={() => setIsPinModalOpen(true)}
+                className="bg-slate-100 text-slate-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-200 transition flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">lock</span>
+                Buka Akses Edit
+              </button>
+            )
+          )}
+          {canManage && isEditUnlocked && (
+            <>
+              <button 
+                onClick={() => setIsUbahPinModalOpen(true)}
+                className="text-slate-400 hover:text-amber-500 transition px-2 flex items-center justify-center"
+                title="Pengaturan Keamanan PIN"
+              >
+                <span className="material-symbols-outlined text-[24px]">settings</span>
+              </button>
+              <button 
+                onClick={() => setIsKategoriModalOpen(true)}
+                className="bg-slate-100 text-slate-700 px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-200 transition flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">category</span>
+                Kategori
+              </button>
+              <button 
+                onClick={() => setIsTambahModalOpen(true)}
+                className="bg-[#F7A440] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-[#e09132] transition flex items-center gap-2 shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[18px]">add</span>
+                Catat Transaksi
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -209,7 +394,7 @@ export default function KeuanganPage() {
                   </div>
                   <h3 className="font-bold text-slate-500 text-xs uppercase tracking-wider">Saldo Awal</h3>
                 </div>
-                {canManage && (
+                {canManage && isEditUnlocked && (
                   <button onClick={() => { setTempSaldoAwal(saldoAwal.toString()); setIsEditSaldoOpen(true); }} className="text-slate-400 hover:text-blue-600">
                     <span className="material-symbols-outlined text-[16px]">edit</span>
                   </button>
@@ -269,6 +454,10 @@ export default function KeuanganPage() {
               Pastikan Anda mencatat setiap pengeluaran dan pemasukan dengan teliti. Angka <strong className="font-black">Sisa Saldo Kas</strong> harus sama dengan jumlah uang fisik atau saldo rekening bank organisasi Anda saat ini.
             </p>
           </div>
+
+          <div className="mt-4">
+            <ChartAreaInteractive transaksiList={transaksiList} saldoAwal={saldoAwal} />
+          </div>
         </div>
       ) : (
         /* TAB 2: TRANSAKSI */
@@ -296,15 +485,6 @@ export default function KeuanganPage() {
                 ))}
               </select>
             </div>
-            {canManage && (
-              <button 
-                onClick={handleExport}
-                className="flex items-center gap-2 text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition"
-              >
-                <span className="material-symbols-outlined text-[18px]">download</span>
-                Export Excel
-              </button>
-            )}
           </div>
 
           {/* Table */}
@@ -318,13 +498,13 @@ export default function KeuanganPage() {
                     <th className="py-3 px-4 font-bold text-xs text-slate-500 uppercase tracking-wider">Kategori</th>
                     <th className="py-3 px-4 font-bold text-xs text-slate-500 uppercase tracking-wider">Keterangan</th>
                     <th className="py-3 px-4 font-bold text-xs text-slate-500 uppercase tracking-wider text-right">Nominal</th>
-                    {canManage && <th className="py-3 px-4 font-bold text-xs text-slate-500 uppercase tracking-wider text-center">Aksi</th>}
+                    {canManage && isEditUnlocked && <th className="py-3 px-4 font-bold text-xs text-slate-500 uppercase tracking-wider text-center">Aksi</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredTransaksi.length === 0 ? (
                     <tr>
-                      <td colSpan={canManage ? 6 : 5} className="py-8 text-center text-slate-400 font-medium">
+                      <td colSpan={canManage && isEditUnlocked ? 6 : 5} className="py-8 text-center text-slate-400 font-medium">
                         Tidak ada data transaksi.
                       </td>
                     </tr>
@@ -347,14 +527,24 @@ export default function KeuanganPage() {
                         <td className={`py-3 px-4 text-sm font-bold text-right whitespace-nowrap ${t.tipe === 'pemasukan' ? 'text-emerald-600' : 'text-slate-800'}`}>
                           {t.tipe === 'pemasukan' ? '+' : '-'}{formatRp(t.jumlah)}
                         </td>
-                        {canManage && (
+                        {canManage && isEditUnlocked && (
                           <td className="py-3 px-4 text-center">
-                            <button 
-                              onClick={() => handleDeleteTransaksi(t.id)}
-                              className="text-rose-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-md transition"
-                            >
-                              <span className="material-symbols-outlined text-[18px]">delete</span>
-                            </button>
+                            <div className="flex items-center justify-center gap-1">
+                              <button 
+                                onClick={() => handleEditTransaksi(t)}
+                                className="text-blue-500 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-md transition"
+                                title="Edit Transaksi"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">edit</span>
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteTransaksi(t.id)}
+                                className="text-rose-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-md transition"
+                                title="Hapus Transaksi"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">delete</span>
+                              </button>
+                            </div>
                           </td>
                         )}
                       </tr>
@@ -398,8 +588,30 @@ export default function KeuanganPage() {
       />
       <TambahTransaksiModal 
         isOpen={isTambahModalOpen} 
-        onClose={() => setIsTambahModalOpen(false)} 
+        onClose={() => {
+          setIsTambahModalOpen(false)
+          setEditData(null)
+        }} 
         onSuccess={fetchData}
+        editData={editData}
+      />
+      <KelolaPinModal 
+        isOpen={isPinModalOpen} 
+        onClose={() => setIsPinModalOpen(false)} 
+        onSuccess={() => {
+          setIsPinModalOpen(false)
+          unlockEdit()
+        }} 
+      />
+      <UbahPinModal 
+        isOpen={isUbahPinModalOpen}
+        onClose={() => setIsUbahPinModalOpen(false)}
+      />
+      <ExportFilterModal
+        isOpen={isExportFilterOpen}
+        onClose={() => setIsExportFilterOpen(false)}
+        onExport={onProcessExport}
+        exportType={exportType}
       />
     </div>
   )

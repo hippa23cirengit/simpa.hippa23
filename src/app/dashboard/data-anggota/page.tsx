@@ -6,6 +6,8 @@ import Link from "next/link"
 import { getStoredMembers, saveStoredMembers, getStoredTasykil, syncRoles, Member, getCurrentRole, getStoredAcl, deleteMember } from "@/common/lib/mock-db"
 import { customAlert, customConfirm, showToast } from "@/common/lib/alert"
 import ImportExcelModal from "./components/import-excel-modal"
+import { ExportDropdown } from "@/common/components/export-dropdown"
+import { generatePdf } from "@/common/utils/pdf-export-helper"
 
 export default function DataAnggota() {
   const [members, setMembers] = useState<Member[]>([])
@@ -86,7 +88,12 @@ export default function DataAnggota() {
   const handleExportExcel = () => {
     if (members.length === 0) return
 
+    // Filter out Alumni and separate by status
+    const aktifMembers = filteredMembers.filter(m => m.status === "Aktif")
+    const tidakAktifMembers = filteredMembers.filter(m => m.status === "Tidak Aktif")
+
     const headers = [
+      "No",
       "NPA",
       "Nama Lengkap",
       "Jabatan",
@@ -99,7 +106,8 @@ export default function DataAnggota() {
       "Email"
     ]
 
-    const rows = filteredMembers.map(m => [
+    const getRowData = (m: Member, index: number) => [
+      index + 1,
       `"${m.id}"`,
       `"${(m.name || "").replace(/"/g, '""')}"`,
       `"${m.role}"`,
@@ -110,9 +118,29 @@ export default function DataAnggota() {
       `"${(m.pekerjaan || "").replace(/"/g, '""')}"`,
       `"${m.whatsapp || ""}"`,
       `"${m.email || ""}"`
-    ])
+    ]
 
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+    let csvContent = "\uFEFF"
+
+    // Section: Aktif
+    if (aktifMembers.length > 0) {
+      csvContent += "DATA ANGGOTA AKTIF\n"
+      csvContent += headers.join(",") + "\n"
+      csvContent += aktifMembers.map((m, i) => getRowData(m, i).join(",")).join("\n") + "\n\n"
+    }
+
+    // Section: Tidak Aktif
+    if (tidakAktifMembers.length > 0) {
+      csvContent += "DATA ANGGOTA TIDAK AKTIF\n"
+      csvContent += headers.join(",") + "\n"
+      csvContent += tidakAktifMembers.map((m, i) => getRowData(m, i).join(",")).join("\n") + "\n"
+    }
+
+    if (!aktifMembers.length && !tidakAktifMembers.length) {
+      showToast({ message: "Tidak ada data Aktif/Tidak Aktif untuk diekspor", type: "warning" })
+      return
+    }
+
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
@@ -121,6 +149,66 @@ export default function DataAnggota() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+  }
+
+  // Export PDF
+  const handleExportPdf = async () => {
+    if (members.length === 0) return
+
+    const aktifMembers = filteredMembers.filter(m => m.status === "Aktif")
+    const tidakAktifMembers = filteredMembers.filter(m => m.status === "Tidak Aktif")
+    const totalMembers = aktifMembers.length + tidakAktifMembers.length;
+
+    if (!aktifMembers.length && !tidakAktifMembers.length) {
+      showToast({ message: "Tidak ada data Aktif/Tidak Aktif untuk diekspor", type: "warning" })
+      return
+    }
+
+    const columns = [
+      "No",
+      "NPA",
+      "Nama Lengkap",
+      "Jabatan",
+      "Status",
+      "No. WhatsApp",
+      "Alamat"
+    ]
+
+    const getRowData = (m: Member, index: number) => [
+      index + 1,
+      m.id,
+      m.name || "-",
+      m.role,
+      m.status,
+      m.whatsapp || "-",
+      [m.alamat, m.rtRw ? `RT/RW ${m.rtRw}` : null, m.kelDesa ? `Kel. ${m.kelDesa}` : null, m.kecamatan ? `Kec. ${m.kecamatan}` : null, m.kabKota].filter(Boolean).join(", ") || "-"
+    ]
+
+    const tables = []
+
+    if (aktifMembers.length > 0) {
+      tables.push({
+        subtitle: "A. Data Anggota Aktif",
+        columns,
+        rows: aktifMembers.map((m, i) => getRowData(m, i))
+      })
+    }
+
+    if (tidakAktifMembers.length > 0) {
+      tables.push({
+        subtitle: "B. Tabel Anggota Tidak Aktif",
+        columns,
+        rows: tidakAktifMembers.map((m, i) => getRowData(m, i))
+      })
+    }
+
+    await generatePdf({
+      title: "DATA ANGGOTA",
+      subtitle: `Total Anggota: ${totalMembers} Orang | Aktif: ${aktifMembers.length} | Tidak Aktif: ${tidakAktifMembers.length}`,
+      tables,
+      filename: `Data_Anggota_HIPPA_Cirengit_${new Date().toISOString().split("T")[0]}.pdf`,
+      orientation: "portrait",
+    })
   }
 
   return (
@@ -140,13 +228,10 @@ export default function DataAnggota() {
             <span className="material-symbols-outlined text-[18px]">print</span>
             Cetak Massal KTA
           </Link>
-          <button
-            onClick={handleExportExcel}
-            className="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-2.5 px-4 rounded-lg flex items-center gap-1.5 transition duration-300 shadow-sm text-xs"
-          >
-            <span className="material-symbols-outlined text-[18px]">download</span>
-            Export Excel
-          </button>
+          <ExportDropdown
+            onExportExcel={handleExportExcel}
+            onExportPdf={handleExportPdf}
+          />
 
           {!isReadOnly && (
             <>

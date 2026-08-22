@@ -16,6 +16,7 @@ import {
   getPeriodeJabatan,
   savePeriodeJabatan
 } from "@/common/lib/mock-db"
+import { getSessionUser } from "@/common/lib/auth"
 import { customConfirm, showToast } from "@/common/lib/alert"
 
 export default function Tasykil() {
@@ -23,6 +24,9 @@ export default function Tasykil() {
   const [tasykil, setTasykil] = useState<TasykilState | null>(null)
   const [currentRole, setCurrentRole] = useState("Super Admin")
   
+  const user = getSessionUser()
+  const myNpa = user?.npa
+
   const [pimharModalOpen, setPimharModalOpen] = useState(false)
   const [selectedPimharRole, setSelectedPimharRole] = useState<string | null>(null)
   
@@ -506,19 +510,25 @@ export default function Tasykil() {
                         <td className="py-3.5 px-4 text-center">
                           {assignee ? (
                             <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={() => { setSelectedPimharRole(role.key); setPimharModalOpen(true); }}
-                                className="text-[#F7A440] hover:text-[#e09132] font-bold text-[11px] transition-colors"
-                              >
-                                Ganti
-                              </button>
-                              <span className="text-slate-300">|</span>
-                              <button
-                                onClick={() => handleRemovePimhar(role.key)}
-                                className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
-                              >
-                                Hapus
-                              </button>
+                              {assigneeId === myNpa ? (
+                                <span className="text-slate-400 font-bold text-[10px] italic">Sesi Anda</span>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => { setSelectedPimharRole(role.key); setPimharModalOpen(true); }}
+                                    className="text-[#F7A440] hover:text-[#e09132] font-bold text-[11px] transition-colors"
+                                  >
+                                    Ganti
+                                  </button>
+                                  <span className="text-slate-300">|</span>
+                                  <button
+                                    onClick={() => handleRemovePimhar(role.key)}
+                                    className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
+                                  >
+                                    Hapus
+                                  </button>
+                                </>
+                              )}
                             </div>
                           ) : (
                             <button
@@ -611,12 +621,16 @@ export default function Tasykil() {
                               + Anggota
                             </button>
                             <span className="text-slate-300">|</span>
-                            <button
-                              onClick={() => handleDeleteBidang(b.id)}
-                              className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
-                            >
-                              Hapus
-                            </button>
+                            {b.members.includes(myNpa || "") ? (
+                              <span className="text-slate-400 font-bold text-[10px] italic" title="Anda berada di bidang ini">Sesi Anda</span>
+                            ) : (
+                              <button
+                                onClick={() => handleDeleteBidang(b.id)}
+                                className="text-red-500 hover:text-red-700 font-bold text-[11px] transition-colors"
+                              >
+                                Hapus
+                              </button>
+                            )}
                           </div>
                         </td>
                       )}
@@ -810,17 +824,18 @@ export default function Tasykil() {
                   return (
                     <label
                       key={m.id}
-                      className="w-full flex items-center justify-between py-3 px-2 rounded-lg hover:bg-slate-50 cursor-pointer select-none transition"
+                      className={`w-full flex items-center justify-between py-3 px-2 rounded-lg transition select-none ${m.id === myNpa ? "opacity-50 cursor-not-allowed bg-slate-50" : "hover:bg-slate-50 cursor-pointer"}`}
                     >
                       <div>
-                        <p className="font-bold text-xs text-slate-800">{m.name}</p>
+                        <p className="font-bold text-xs text-slate-800">{m.name} {m.id === myNpa && "(Anda)"}</p>
                         <p className="text-[10px] text-slate-400 mt-0.5">{m.id}</p>
                       </div>
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        onChange={handleCheckboxChange}
-                        className="w-4 h-4 rounded text-[#F7A440] border-slate-300 focus:ring-[#F7A440]"
+                        disabled={m.id === myNpa}
+                        onChange={m.id === myNpa ? undefined : handleCheckboxChange}
+                        className="w-4 h-4 rounded text-[#F7A440] border-slate-300 focus:ring-[#F7A440] disabled:opacity-50"
                       />
                     </label>
                   )

@@ -142,4 +142,57 @@ export class EmailService {
       html: htmlContent,
     });
   }
+
+  async sendPinOtpEmail(email: string, otp: string, name: string) {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>OTP Reset PIN Keuangan</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+          .header { background-color: #f7a440; padding: 30px 20px; text-align: center; }
+          .header h1 { color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; }
+          .content { padding: 40px 30px; color: #334155; line-height: 1.6; }
+          .content p { margin: 0 0 16px 0; font-size: 16px; }
+          .otp-container { text-align: center; margin: 30px 0; }
+          .otp-code { display: inline-block; background-color: #f1f5f9; color: #0f172a; font-size: 32px; font-weight: 800; padding: 15px 30px; border-radius: 8px; letter-spacing: 4px; }
+          .warning { margin-top: 30px; padding: 15px; background-color: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; font-size: 14px; border-radius: 0 8px 8px 0; }
+          .footer { background-color: #f8fafc; padding: 20px; text-align: center; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Reset PIN Keuangan SIMPA</h1>
+          </div>
+          <div class="content">
+            <p>Halo <strong>${name}</strong>,</p>
+            <p>Kami menerima permintaan untuk mereset PIN Keuangan di akun SIMPA Anda. Berikut adalah kode OTP Anda:</p>
+            <div class="otp-container">
+              <span class="otp-code">${otp}</span>
+            </div>
+            <p>Kode ini hanya berlaku selama <strong>5 menit</strong>. Jangan berikan kode ini kepada siapapun.</p>
+            <div class="warning">
+              Jika Anda tidak meminta reset PIN, segera periksa aktivitas akun Anda.
+            </div>
+          </div>
+          <div class="footer">
+            Sistem Informasi Manajemen Pengurus & Anggota (SIMPA)<br>
+            HIPPA Cirengit &copy; ${new Date().getFullYear()}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    await this.transporter.sendMail({
+      from: `"SIMPA HIPPA Cirengit" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "[SIMPA] OTP Reset PIN Keuangan",
+      html: htmlContent,
+    });
+  }
 }

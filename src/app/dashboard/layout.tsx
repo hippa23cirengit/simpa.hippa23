@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { getCurrentRole, getStoredAcl, syncDatabaseFromServer, getStoredAccounts, getStoredMembers, getStoredEvents, getStoredApplicants } from "@/common/lib/mock-db"
+import { getCurrentRole, getActualRole, getStoredAcl, syncDatabaseFromServer, getStoredAccounts, getStoredMembers, getStoredEvents, getStoredApplicants } from "@/common/lib/mock-db"
 import { isLoggedIn, getSessionUser, clearSession } from "@/common/lib/auth"
 import { useDialog } from "@/common/components/dialog-provider"
 import { useSessionTimeout } from "@/modules/auth/hooks/use-session-timeout"
@@ -31,6 +31,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   useSessionTimeout();
 
   const [currentRole, setCurrentRoleState] = React.useState("Super Admin");
+  const [actualRole, setActualRoleState] = React.useState("Super Admin");
   const [aclRules, setAclRules] = React.useState<any[]>([]);
   const [authorized, setAuthorized] = React.useState(false);
   const [userName, setUserName] = React.useState("");
@@ -132,6 +133,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       await syncDatabaseFromServer();
       loadUserData();
       setCurrentRoleState(getCurrentRole());
+      setActualRoleState(getActualRole());
       setAclRules(getStoredAcl());
       setInitialLoading(false);
     };
@@ -145,6 +147,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       }
       loadUserData();
       setCurrentRoleState(getCurrentRole());
+      setActualRoleState(getActualRole());
       setAclRules(getStoredAcl());
     };
 
@@ -157,7 +160,8 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         loadUserData();
       } else if (detail.status === "error") {
         setIsSyncing(false);
-        showAlert(`Gagal sinkronisasi data ke Database:\n${detail.error}`, "Sinkronisasi Gagal", "danger");
+        const humanMessage = "Aduh, sepertinya koneksi ke database sedang terganggu atau ada data yang sedikit bentrok saat disimpan. Jangan panik, sistem kami sedang menanganinya.";
+        showAlert(humanMessage, "Sinkronisasi Gagal", "danger", detail.error);
       }
     };
 
@@ -257,10 +261,8 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   });
 
   const getSubLabel = () => {
-    if (currentRole === "Super Admin") return "Administrator";
-    if (currentRole === "PIMHAR") return "Pimpinan Harian";
-    if (currentRole.startsWith("Bidang")) return currentRole;
-    return "Anggota Biasa";
+    if (currentRole === "Anggota") return "Anggota";
+    return currentRole;
   };
 
   if (initialLoading || !authorized) {
@@ -490,6 +492,42 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                 </>
               )}
             </div>
+            
+            
+            {actualRole === "Super Admin" && (
+              <div className="hidden sm:flex flex-col pl-4 border-l border-slate-200 justify-center">
+                <span className="text-[9px] font-semibold text-slate-800 tracking-wide mb-0.5 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[10px]">masks</span>
+                  Simulator Mode
+                </span>
+                <select
+                  value={currentRole}
+                  onChange={(e) => {
+                    localStorage.setItem("simpa_current_role", e.target.value);
+                    window.dispatchEvent(new Event("simpa_role_changed"));
+                  }}
+                  className="text-xs font-bold text-slate-600 bg-transparent border-none outline-none cursor-pointer focus:ring-0 p-0"
+                >
+                  {[...aclRules].sort((a, b) => {
+                    if (a.role === "Anggota") return 1;
+                    if (b.role === "Anggota") return -1;
+                    const order = ["Super Admin", "Ketua", "Wakil Ketua", "Sekretaris", "Wakil Sekretaris", "Bendahara", "Wakil Bendahara"];
+                    const indexA = order.indexOf(a.role);
+                    const indexB = order.indexOf(b.role);
+                    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                    if (indexA !== -1) return -1;
+                    if (indexB !== -1) return 1;
+                    return aclRules.indexOf(a) - aclRules.indexOf(b);
+                  }).map(rule => (
+                    <option key={rule.role} value={rule.role}>
+                      {rule.role === "Super Admin" ? "Super Admin" : 
+                       rule.role === "Anggota" ? "Anggota Biasa" : 
+                       rule.role}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             
             <div className="hidden sm:flex flex-col pl-4 border-l border-slate-200 justify-center">
               <span className="text-[9px] font-semibold text-slate-800 tracking-wide mb-0.5">Anda Login Sebagai</span>

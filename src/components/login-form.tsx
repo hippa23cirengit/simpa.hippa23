@@ -70,12 +70,16 @@ export function LoginForm({
         resolvedRole = "Super Admin";
       } else if (account.linkedAnggotaId) {
         const tasykil = getStoredTasykil();
-        const isPimhar = Object.values(tasykil.pimhar).includes(account.linkedAnggotaId);
-        if (isPimhar) {
-          resolvedRole = "PIMHAR";
-        } else {
+        const memberId = account.linkedAnggotaId;
+        if (tasykil.pimhar.ketua === memberId) resolvedRole = "Ketua";
+        else if (tasykil.pimhar.wakilKetua === memberId) resolvedRole = "Wakil Ketua";
+        else if (tasykil.pimhar.sekretaris === memberId) resolvedRole = "Sekretaris";
+        else if (tasykil.pimhar.wakilSekretaris === memberId) resolvedRole = "Wakil Sekretaris";
+        else if (tasykil.pimhar.bendahara === memberId) resolvedRole = "Bendahara";
+        else if (tasykil.pimhar.wakilBendahara === memberId) resolvedRole = "Wakil Bendahara";
+        else {
           const activeBidang = tasykil.bidang.find((b) =>
-            b.members.includes(account.linkedAnggotaId!)
+            b.members.includes(memberId)
           );
           if (activeBidang) {
             resolvedRole = activeBidang.name;

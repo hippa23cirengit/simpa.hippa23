@@ -732,3 +732,9 @@ When adding or modifying data fields in the frontend (mock-db, local storage, co
 2. Run `npx prisma db push` to push the changes to Supabase.
 3. Update the synchronization API (`src/app/api/db-sync/route.ts`) to ensure the new fields are included in the `create` and `update` queries.
 Never leave database modifications hanging only in local storage!
+
+---
+
+# Interaction Rule
+
+If the user explicitly types **"jawab dlu"** or **"jangan dlu eksekusi"** (or similar phrases), you MUST NOT write or edit any code, run terminal commands that modify state, or execute any changes. You must ONLY answer the question or provide an analysis/plan. You must wait until the user explicitly says **"gas"**, **"eksekusi"**, or gives the green light before you proceed to execute the proposed changes.

@@ -190,8 +190,11 @@ model KasKategori {
 }
 
 model KasSetting {
-  id          String @id @default("default")
-  saldoAwal   Int    @default(0) @map("saldo_awal")
+  id          String  @id @default("default")
+  saldoAwal   Int     @default(0) @map("saldo_awal")
+  pinHash     String? @map("pin_hash")
+  otpCode     String? @map("otp_code")
+  otpExpiry   DateTime? @map("otp_expiry")
 
   @@map("kas_setting")
 }

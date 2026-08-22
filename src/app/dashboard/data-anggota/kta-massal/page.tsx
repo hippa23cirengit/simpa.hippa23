@@ -233,7 +233,7 @@ export default function CetakMassalKtaPage() {
         <div className="lg:col-span-3 flex flex-col items-center gap-6 pb-8 overflow-x-auto">
           <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-xs w-full max-w-[190mm] flex gap-2 no-print">
             <span className="material-symbols-outlined text-[18px]">info</span>
-            <p><strong>Tips Cetak:</strong> Saat mencetak (CTRL+P), pastikan opsi <strong>"Background graphics"</strong> tercentang, dan ukuran kertas diset ke <strong>A4 Portrait</strong> dengan margin <strong>Minimum</strong> atau <strong>Default</strong>.</p>
+            <p><strong>Tips Cetak:</strong> Saat mencetak (CTRL+P), pastikan opsi <strong>&quot;Background graphics&quot;</strong> tercentang, dan ukuran kertas diset ke <strong>A4 Portrait</strong> dengan margin <strong>Minimum</strong> atau <strong>Default</strong>.</p>
           </div>
           
           {/* Ini adalah kanvas A4 yang sesungguhnya saat di-print */}

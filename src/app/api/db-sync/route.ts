@@ -696,7 +696,9 @@ async function compilePayload(
       viewJadwalKegiatan: a.viewJadwalKegiatan,
       manageJadwalKegiatan: a.manageJadwalKegiatan,
       viewPengaturan: a.viewPengaturan,
-      managePengaturan: a.managePengaturan
+      managePengaturan: a.managePengaturan,
+      viewKeuangan: a.viewKeuangan,
+      manageKeuangan: a.manageKeuangan
     }
   }))
 

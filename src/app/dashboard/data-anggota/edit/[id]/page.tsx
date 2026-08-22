@@ -7,6 +7,7 @@ import Link from "next/link"
 import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl } from "@/common/lib/mock-db"
 import { customConfirm, showToast } from "@/common/lib/alert"
 import { useDialog } from "@/common/components/dialog-provider"
+import { getSessionUser } from "@/common/lib/auth"
 
 export default function EditAnggotaPage() {
   const router = useRouter()
@@ -17,6 +18,9 @@ export default function EditAnggotaPage() {
   const [currentRole, setCurrentRole] = useState("Super Admin")
   const [existingMembers, setExistingMembers] = useState<Member[]>([])
   const [targetMember, setTargetMember] = useState<Member | null>(null)
+  
+  const user = getSessionUser()
+  const myNpa = user?.npa
 
   // Form State
   const [name, setName] = useState("")
@@ -241,13 +245,19 @@ export default function EditAnggotaPage() {
                 )}
               </div>
               
-              {(currentRole === "Super Admin" || currentRole === "PIMHAR") ? (
-                <div className="flex flex-col items-center gap-2.5">
-                  <div className="flex items-center gap-2">
-                    <label className="cursor-pointer bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 transition flex items-center gap-1.5 shadow-sm">
-                      <span className="material-symbols-outlined text-[16px]">upload_file</span>
-                      Ubah Foto Profil
-                      <input
+              {(() => {
+                const isPimharRole = ["Ketua", "Wakil Ketua", "Sekretaris", "Wakil Sekretaris", "Bendahara", "Wakil Bendahara"].includes(currentRole);
+                const isMyProfile = myNpa === targetMember.id;
+                const canEditPhoto = currentRole === "Super Admin" || isPimharRole || isMyProfile;
+                
+                if (canEditPhoto) {
+                  return (
+                    <div className="flex flex-col items-center gap-2.5">
+                      <div className="flex items-center gap-2">
+                        <label className="cursor-pointer bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 transition flex items-center gap-1.5 shadow-sm">
+                          <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                          Ubah Foto Profil
+                          <input
                         type="file"
                         accept="image/*"
                         onChange={handleUploadPhoto}
@@ -267,14 +277,18 @@ export default function EditAnggotaPage() {
                       </button>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-400 font-semibold">Format JPG/PNG, maks. 2MB. Hanya Super Admin & PIMHAR.</p>
+                  <p className="text-[10px] text-slate-400 font-semibold italic">Format JPG/PNG/WEBP (Otomatis terkompresi)</p>
                 </div>
-              ) : (
-                <p className="text-[10px] text-slate-400 font-semibold italic">Hanya Super Admin & PIMHAR yang dapat mengubah foto profil.</p>
-              )}
+              );
+              } else {
+                return (
+                  <p className="text-[10px] text-slate-400 font-semibold italic mt-2 text-center max-w-[200px]">Hanya Super Admin, Pimpinan Harian, atau pemilik akun yang dapat mengubah foto profil.</p>
+                );
+              }
+            })()}
             </div>
 
-            {/* Nama Lengkap */}
+            {/* Input Nama Lengkap */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Nama Lengkap *</label>
               <input

@@ -23,6 +23,8 @@ export function setSession(session: AuthSession) {
   if (typeof window !== "undefined") {
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     localStorage.setItem("simpa_last_activity", Date.now().toString());
+    localStorage.setItem("simpa_actual_role", session.role);
+    localStorage.setItem("simpa_current_role", session.role);
     // Dispatch a custom event to notify listeners of role or session changes
     window.dispatchEvent(new Event("simpa_role_changed"));
   }
@@ -32,6 +34,8 @@ export function clearSession() {
   if (typeof window !== "undefined") {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem("simpa_last_activity");
+    localStorage.removeItem("simpa_actual_role");
+    localStorage.removeItem("simpa_current_role");
     window.dispatchEvent(new Event("simpa_role_changed"));
   }
 }

@@ -73,7 +73,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { title: "Jadwal Kegiatan", url: "/dashboard/jadwal-kegiatan", icon: "calendar_month" },
     { title: "Keuangan", url: "/dashboard/keuangan", icon: "account_balance_wallet" },
     { title: "Role & Akses", url: "/dashboard/role-akses", icon: "admin_panel_settings" },
-    { title: "Pengaturan", url: "/dashboard/pengaturan", icon: "settings" },
+    { title: "Pengaturan Sistem", url: "/dashboard/pengaturan-sistem", icon: "settings_applications" },
+    { title: "Pengaturan WhatsApp", url: "/dashboard/pengaturan-wa", icon: "chat" },
   ];
 
   const filteredNavItems = navItems.filter(item => {
@@ -90,15 +91,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     if (item.url === "/dashboard/calon-anggota") return activeAcl.permissions.viewCalonAnggota;
     if (item.url === "/dashboard/jadwal-kegiatan") return activeAcl.permissions.viewJadwalKegiatan;
     if (item.url === "/dashboard/keuangan") return activeAcl.permissions.viewKeuangan;
-    if (item.url === "/dashboard/pengaturan") return activeAcl.permissions.viewPengaturan;
+    if (item.url === "/dashboard/pengaturan-sistem") return activeAcl.permissions.viewPengaturanSistem;
+    if (item.url === "/dashboard/pengaturan-wa") return activeAcl.permissions.viewPengaturanWa;
     return true;
   });
 
   const getSubLabel = () => {
-    if (currentRole === "Super Admin") return "Administrator";
-    if (currentRole === "PIMHAR") return "Pimpinan Harian";
-    if (currentRole.startsWith("Bidang")) return currentRole;
-    return "Anggota Biasa";
+    if (currentRole === "Anggota") return "Anggota";
+    return currentRole;
   };
 
   return (

@@ -1,15 +1,16 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { KasKategori } from "@prisma/client"
+import { KasKategori, KasTransaksi } from "@prisma/client"
 
 interface TambahTransaksiModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  editData?: KasTransaksi | null
 }
 
-export function TambahTransaksiModal({ isOpen, onClose, onSuccess }: TambahTransaksiModalProps) {
+export function TambahTransaksiModal({ isOpen, onClose, onSuccess, editData }: TambahTransaksiModalProps) {
   const [tipe, setTipe] = useState<"pemasukan" | "pengeluaran">("pemasukan")
   const [kategoris, setKategoris] = useState<KasKategori[]>([])
   
@@ -21,46 +22,64 @@ export function TambahTransaksiModal({ isOpen, onClose, onSuccess }: TambahTrans
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (isOpen) {
-      // Set default date to today
-      const today = new Date().toISOString().split("T")[0]
-      setTanggal(today)
-      setJumlah("")
-      setDeskripsi("")
-      setErrorMsg(null)
-      fetchKategori()
-    }
-  }, [isOpen])
-
   const fetchKategori = async () => {
     try {
       const res = await fetch("/api/kas/kategori")
       if (res.ok) {
         const data = await res.json()
         setKategoris(data)
-        // Auto select first category based on current type if available
-        const filtered = data.filter((k: KasKategori) => k.tipe === tipe)
-        if (filtered.length > 0) {
-          setKategoriId(filtered[0].nama)
-        } else {
-          setKategoriId("")
+        
+        // Auto select first category if not editing and category is empty
+        if (!editData) {
+          const currentTipe = editData ? (editData as KasTransaksi).tipe : tipe
+          const filtered = data.filter((k: KasKategori) => k.tipe === currentTipe)
+          if (filtered.length > 0) {
+            setKategoriId(filtered[0].nama)
+          } else {
+            setKategoriId("")
+          }
         }
       }
-    } catch (error) {
-      console.error(error)
+    } catch {
+      // silently fail
     }
   }
 
+  useEffect(() => {
+    if (isOpen) {
+      if (editData) {
+        setTipe(editData.tipe as "pemasukan" | "pengeluaran")
+        setTanggal(editData.tanggal)
+        setJumlah(editData.jumlah.toString())
+        setDeskripsi(editData.deskripsi)
+        setKategoriId(editData.kategori)
+      } else {
+        const today = new Date().toISOString().split("T")[0]
+        setTanggal(today)
+        setJumlah("")
+        setDeskripsi("")
+        setKategoriId("")
+      }
+      setErrorMsg(null)
+      fetchKategori()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, editData])
+
   // Update default category when type changes
   useEffect(() => {
-    const filtered = kategoris.filter((k) => k.tipe === tipe)
-    if (filtered.length > 0) {
-      setKategoriId(filtered[0].nama)
-    } else {
-      setKategoriId("")
+    if (editData && editData.tipe === tipe && !kategoriId) {
+      setKategoriId(editData.kategori)
+    } else if (!editData || (editData && editData.tipe !== tipe)) {
+      const filtered = kategoris.filter((k) => k.tipe === tipe)
+      if (filtered.length > 0) {
+        setKategoriId(filtered[0].nama)
+      } else {
+        setKategoriId("")
+      }
     }
-  }, [tipe, kategoris])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tipe, kategoris]) // Exclude editData & kategoriId to avoid loops
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -73,13 +92,16 @@ export function TambahTransaksiModal({ isOpen, onClose, onSuccess }: TambahTrans
     setErrorMsg(null)
 
     try {
-      const res = await fetch("/api/kas/transaksi", {
-        method: "POST",
+      const method = editData ? "PUT" : "POST"
+      const url = editData ? `/api/kas/transaksi/${editData.id}` : "/api/kas/transaksi"
+      
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tipe,
           tanggal,
-          jumlah,
+          jumlah: parseInt(jumlah.replace(/\D/g, ""), 10),
           kategori: kategoriId,
           deskripsi
         })
@@ -107,15 +129,17 @@ export function TambahTransaksiModal({ isOpen, onClose, onSuccess }: TambahTrans
 
   if (!isOpen) return null
 
+  const isEditing = !!editData
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/50">
           <h2 className="font-bold text-slate-800 flex items-center gap-2">
             <span className={`material-symbols-outlined ${tipe === 'pemasukan' ? 'text-emerald-500' : 'text-rose-500'}`}>
-              {tipe === 'pemasukan' ? 'trending_up' : 'trending_down'}
+              {isEditing ? 'edit' : (tipe === 'pemasukan' ? 'trending_up' : 'trending_down')}
             </span>
-            Catat Transaksi
+            {isEditing ? 'Edit Transaksi' : 'Catat Transaksi'}
           </h2>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-200 text-slate-500 transition">
             <span className="material-symbols-outlined text-[20px]">close</span>
@@ -214,7 +238,7 @@ export function TambahTransaksiModal({ isOpen, onClose, onSuccess }: TambahTrans
             ) : (
               <>
                 <span className="material-symbols-outlined text-[18px]">save</span>
-                Simpan Transaksi
+                {isEditing ? 'Simpan Perubahan' : 'Simpan Transaksi'}
               </>
             )}
           </button>
