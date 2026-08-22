@@ -22,6 +22,7 @@ export function getSession(): AuthSession | null {
 export function setSession(session: AuthSession) {
   if (typeof window !== "undefined") {
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    localStorage.setItem("simpa_last_activity", Date.now().toString());
     // Dispatch a custom event to notify listeners of role or session changes
     window.dispatchEvent(new Event("simpa_role_changed"));
   }
@@ -30,6 +31,7 @@ export function setSession(session: AuthSession) {
 export function clearSession() {
   if (typeof window !== "undefined") {
     localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem("simpa_last_activity");
     window.dispatchEvent(new Event("simpa_role_changed"));
   }
 }

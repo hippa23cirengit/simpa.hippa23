@@ -18,6 +18,7 @@ import {
 import { getCurrentRole, getStoredAcl, syncDatabaseFromServer, getStoredAccounts, getStoredMembers, getStoredEvents, getStoredApplicants } from "@/common/lib/mock-db"
 import { isLoggedIn, getSessionUser, clearSession } from "@/common/lib/auth"
 import { useDialog } from "@/common/components/dialog-provider"
+import { useSessionTimeout } from "@/modules/auth/hooks/use-session-timeout"
 
 // Child content wrapper to access useSidebar safely
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
@@ -25,6 +26,9 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { toggleSidebar, openMobile } = useSidebar();
   const { showAlert } = useDialog();
+
+  // Activate session timeout check
+  useSessionTimeout();
 
   const [currentRole, setCurrentRoleState] = React.useState("Super Admin");
   const [aclRules, setAclRules] = React.useState<any[]>([]);
