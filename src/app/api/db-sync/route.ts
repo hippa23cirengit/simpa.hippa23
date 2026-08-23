@@ -70,10 +70,15 @@ export async function GET() {
                   tempatLahir: m.tempatLahir || null,
                   tanggalLahir: m.tanggalLahir || null,
                   alamat: m.alamat || null,
+                  rtRw: m.rtRw || null,
+                  kelDesa: m.kelDesa || null,
+                  kecamatan: m.kecamatan || null,
+                  kabKota: m.kabKota || null,
                   pekerjaan: m.pekerjaan || null,
                   whatsapp: m.whatsapp || null,
                   email: m.email || "",
-                  profilePhoto: m.profilePhoto || null
+                  profilePhoto: m.profilePhoto || null,
+                  bergabungTahun: m.bergabungTahun || null
                 }
               })
             }
@@ -634,6 +639,7 @@ async function compilePayload(
     rtRw: a.rtRw || "",
     kelDesa: a.kelDesa || "",
     kecamatan: a.kecamatan || "",
+    kabKota: a.kabKota || "",
     pekerjaan: a.pekerjaan || "",
     whatsapp: a.whatsapp || "",
     email: a.email || "",
