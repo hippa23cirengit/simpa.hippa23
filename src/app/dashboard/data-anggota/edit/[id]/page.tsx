@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { getStoredMembers, saveStoredMembers, getCurrentRole, Member, getStoredAcl } from "@/common/lib/mock-db"
-import { customConfirm, showToast } from "@/common/lib/alert"
+import { customAlert, customConfirm, showToast } from "@/common/lib/alert"
 import { useDialog } from "@/common/components/dialog-provider"
 import { getSessionUser } from "@/common/lib/auth"
 
