@@ -46,6 +46,13 @@ export default function EditAnggotaPage() {
     const role = getCurrentRole()
     setCurrentRole(role)
     const activeAcl = getStoredAcl().find(r => r.role === role)
+    
+    // Protect Super Admin from being edited by others
+    if (memberId === "26.0000" && role !== "Super Admin") {
+      router.replace(`/dashboard/data-anggota/${memberId}`)
+      return
+    }
+
     if (activeAcl && !activeAcl.permissions.manageDataAnggota) {
       router.replace(`/dashboard/data-anggota/${memberId}`)
       return
@@ -132,6 +139,16 @@ export default function EditAnggotaPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim() || !npa.trim() || !email.trim() || !alamat.trim() || !rtRw.trim() || !kelDesa.trim() || !kecamatan.trim() || !kabKota.trim()) return
+
+    const freshRole = getCurrentRole()
+    if (memberId === "26.0000" && freshRole !== "Super Admin") {
+      await customAlert({
+        type: "error",
+        title: "Aksi Ditolak",
+        message: "Hanya Super Admin yang dapat menyimpan perubahan pada profil ini!"
+      })
+      return
+    }
 
     const confirmed = await customConfirm({
       title: "Simpan Perubahan Profil",

@@ -241,7 +241,8 @@ export default function KeuanganPage() {
       tables.push({
         subtitle: "A. Tabel Pemasukan",
         columns,
-        rows: pemasukanRows
+        rows: pemasukanRows,
+        foot: [["", "", "", "TOTAL PEMASUKAN", totalMasuk.toLocaleString('id-ID')]]
       })
     }
 
@@ -249,18 +250,14 @@ export default function KeuanganPage() {
       tables.push({
         subtitle: "B. Tabel Pengeluaran",
         columns,
-        rows: pengeluaranRows
+        rows: pengeluaranRows,
+        foot: [["", "", "", "TOTAL PENGELUARAN", totalKeluar.toLocaleString('id-ID')]]
       })
     }
 
     const saldoAkhir = saldoAwal + totalMasuk - totalKeluar;
 
-    const summaryRows = [
-      ["SALDO AWAL", "", "", "", `Rp ${saldoAwal.toLocaleString('id-ID')}`],
-      ["TOTAL PEMASUKAN", "", "", "", `Rp ${totalMasuk.toLocaleString('id-ID')}`],
-      ["TOTAL PENGELUARAN", "", "", "", `Rp ${totalKeluar.toLocaleString('id-ID')}`],
-      ["SALDO AKHIR", "", "", "", `Rp ${saldoAkhir.toLocaleString('id-ID')}`]
-    ];
+    // Removed global summary table at the bottom as requested by the user
 
     let rangeText = "Semua Waktu"
     switch(range) {
@@ -274,9 +271,8 @@ export default function KeuanganPage() {
 
     await generatePdf({
       title: "LAPORAN KAS & KEUANGAN ORGANISASI",
-      subtitle: `Rentang Filter: ${rangeText}\nTotal Pemasukan: Rp ${totalMasuk.toLocaleString('id-ID')} | Total Pengeluaran: Rp ${totalKeluar.toLocaleString('id-ID')} | Sisa Saldo: Rp ${saldoAkhir.toLocaleString('id-ID')}`,
+      subtitle: `Rentang Filter: ${rangeText}\nSaldo Awal: Rp ${saldoAwal.toLocaleString('id-ID')} | Total Pemasukan: Rp ${totalMasuk.toLocaleString('id-ID')} | Total Pengeluaran: Rp ${totalKeluar.toLocaleString('id-ID')} | Sisa Saldo: Rp ${saldoAkhir.toLocaleString('id-ID')}`,
       tables,
-      summaryRows,
       filename: `Laporan_Kas_HIPPA_Cirengit_${new Date().toISOString().split("T")[0]}.pdf`,
     })
   }

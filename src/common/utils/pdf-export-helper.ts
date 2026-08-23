@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable, { UserOptions } from "jspdf-autotable";
 import { getKopSuratConfig } from "../lib/mock-db";
+import { customAlert } from "../lib/alert";
 
 export interface PdfExportOptions {
   title: string;
@@ -12,6 +13,7 @@ export interface PdfExportOptions {
     subtitle?: string;
     columns: string[];
     rows: (string | number)[][];
+    foot?: (string | number)[][];
     summaryRows?: (string | number)[][];
   }[];
   filename?: string;
@@ -55,20 +57,40 @@ export const generatePdf = async ({
     if (!url) return "";
     try {
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Gagal memuat gambar: ${response.status}`);
+      }
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.startsWith("image/")) {
+        throw new Error("Format bukan gambar");
+      }
       const blob = await response.blob();
-      return await new Promise<string>((resolve) => {
+      return await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
         reader.readAsDataURL(blob);
       });
     } catch (error) {
       console.warn("Failed to load image:", url, error);
-      return "";
+      throw error;
     }
   };
 
-  const logoKiriBase64 = await loadBase64Image(config.logoKiriUrl);
-  const logoKananBase64 = await loadBase64Image(config.logoKananUrl);
+  let logoKiriBase64 = "";
+  let logoKananBase64 = "";
+
+  try {
+    logoKiriBase64 = await loadBase64Image(config.logoKiriUrl);
+    logoKananBase64 = await loadBase64Image(config.logoKananUrl);
+  } catch (error) {
+    await customAlert({
+      title: "Gagal Ekspor PDF",
+      message: "Gambar Kop Surat rusak atau hilang dari database (kemungkinan storage telah dibersihkan).\n\nHarap upload ulang gambar logo di menu Pengaturan Sistem sebelum melakukan ekspor.",
+      type: "error"
+    });
+    return;
+  }
 
   // Kop Surat Header
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -149,10 +171,16 @@ export const generatePdf = async ({
       startY: currentY,
       head: [table.columns],
       body: table.rows,
+      foot: table.foot,
       theme: "striped",
       headStyles: {
         fillColor: [247, 164, 64], // #F7A440 - Amber/Orange Theme
         textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+      footStyles: {
+        fillColor: [240, 240, 240], // Light gray
+        textColor: [0, 0, 0],
         fontStyle: "bold",
       },
       styles: {
@@ -189,6 +217,25 @@ export const generatePdf = async ({
       currentY = (doc as any).lastAutoTable.finalY;
     }
   });
+
+  // Render global summary if tables were provided (if not provided, it was already handled in allTables[0])
+  if (tables && tables.length > 0 && summaryRows && summaryRows.length > 0) {
+    autoTable(doc, {
+      startY: currentY,
+      body: summaryRows,
+      theme: "plain",
+      styles: {
+        font: "helvetica",
+        fontSize: 9,
+        fontStyle: "bold",
+        cellPadding: 3,
+      },
+      columnStyles: {
+        0: { cellWidth: 100 },
+      },
+      margin: { top: 15, right: 15, bottom: 20, left: 15 },
+    });
+  }
 
   // Footer with Page Numbers
   const pageCount = (doc as any).internal.getNumberOfPages();

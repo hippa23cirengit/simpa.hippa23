@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { getStoredMembers, getStoredTasykil, syncRoles, Member, getStoredKtaSettings, saveStoredKtaSettings, KtaSettings } from "@/common/lib/mock-db"
-import { showToast } from "@/common/lib/alert"
+import { showToast, customAlert } from "@/common/lib/alert"
 import { useDialog } from "@/common/components/dialog-provider"
 import { KtaCard } from "@/components/KtaCard"
 
@@ -87,7 +87,24 @@ export default function CetakMassalKtaPage() {
     showToast({ message: "Pengaturan KTA berhasil disimpan!", type: "success" })
   }
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    if (ktaSettings?.signatureUrl) {
+      const exists = await new Promise<boolean>((resolve) => {
+        const img = new Image()
+        img.onload = () => resolve(true)
+        img.onerror = () => resolve(false)
+        img.src = ktaSettings.signatureUrl
+      })
+
+      if (!exists) {
+        await customAlert({
+          title: "Gagal Mencetak",
+          message: "Gambar Tanda Tangan (Signature) rusak atau hilang dari database (kemungkinan storage telah dibersihkan).\n\nHarap hapus dan UPLOAD ULANG tanda tangan di panel Pengaturan KTA sebelum mencetak.",
+          type: "error"
+        })
+        return
+      }
+    }
     window.print()
   }
 

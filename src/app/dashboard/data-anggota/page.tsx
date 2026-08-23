@@ -14,6 +14,7 @@ export default function DataAnggota() {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentRole, setCurrentRole] = useState("Super Admin")
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [sortMode, setSortMode] = useState<"name" | "npa">("name")
 
   const loadData = () => {
     const rawMembers = getStoredMembers()
@@ -38,8 +39,13 @@ export default function DataAnggota() {
   const activeAcl = getStoredAcl().find(r => r.role === currentRole)
   const isReadOnly = !activeAcl?.permissions.manageDataAnggota
 
-  // Sort members A-Z by name
-  const sortedMembers = [...members].sort((a, b) => a.name.localeCompare(b.name))
+  // Sort members based on sort mode
+  const sortedMembers = [...members].sort((a, b) => {
+    if (sortMode === "name") {
+      return a.name.localeCompare(b.name)
+    }
+    return a.id.localeCompare(b.id)
+  })
 
   // Filter based on search query
   const filteredMembers = sortedMembers.filter(m =>
@@ -267,13 +273,17 @@ export default function DataAnggota() {
           />
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
+          <select 
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as "name" | "npa")}
+            className="flex-1 sm:flex-none border border-slate-200 px-3 py-2 rounded-lg font-body-md text-xs font-bold text-slate-600 hover:bg-slate-50 transition duration-300 focus:outline-none appearance-none cursor-pointer bg-white"
+          >
+            <option value="name">Urutkan: A-Z (Nama)</option>
+            <option value="npa">Urutkan: Berdasarkan NPA</option>
+          </select>
           <button className="flex-1 sm:flex-none border border-slate-200 px-4 py-2 rounded-lg font-body-md text-xs font-bold text-slate-600 hover:bg-slate-50 transition duration-300 flex items-center justify-center gap-2">
             <span className="material-symbols-outlined text-[18px]">filter_list</span>
             Filter
-          </button>
-          <button className="flex-1 sm:flex-none border border-slate-200 px-4 py-2 rounded-lg font-body-md text-xs font-bold text-slate-600 hover:bg-slate-50 transition duration-300 flex items-center justify-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">download</span>
-            Export
           </button>
         </div>
       </div>
@@ -338,12 +348,14 @@ export default function DataAnggota() {
                     {!isReadOnly && (
                       <td className="py-4 px-4 text-center pr-6">
                         <div className="flex justify-center gap-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Link
-                            href={`/dashboard/data-anggota/edit/${member.id}`}
-                            className="text-slate-400 hover:text-[#F7A440] transition-colors p-1 flex items-center"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">edit</span>
-                          </Link>
+                          {(member.id !== "26.0000" || currentRole === "Super Admin") && (
+                            <Link
+                              href={`/dashboard/data-anggota/edit/${member.id}`}
+                              className="text-slate-400 hover:text-[#F7A440] transition-colors p-1 flex items-center"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">edit</span>
+                            </Link>
+                          )}
                           {member.id !== "26.0000" && (
                             <button
                               onClick={() => handleDeleteMember(member.id, member.name)}
