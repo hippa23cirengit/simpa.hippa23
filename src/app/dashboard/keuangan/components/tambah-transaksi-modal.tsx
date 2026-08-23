@@ -21,6 +21,11 @@ export function TambahTransaksiModal({ isOpen, onClose, onSuccess, editData }: T
   const [deskripsi, setDeskripsi] = useState("")
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  
+  // Inline Add Category State
+  const [isAddingKategori, setIsAddingKategori] = useState(false)
+  const [newKategoriName, setNewKategoriName] = useState("")
+  const [addingKategoriLoading, setAddingKategoriLoading] = useState(false)
 
   const fetchKategori = async () => {
     try {
@@ -121,6 +126,32 @@ export function TambahTransaksiModal({ isOpen, onClose, onSuccess, editData }: T
     }
   }
 
+  const handleAddKategori = async () => {
+    if (!newKategoriName.trim()) return
+    setAddingKategoriLoading(true)
+    setErrorMsg(null)
+    try {
+      const res = await fetch("/api/kas/kategori", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nama: newKategoriName.trim(), tipe })
+      })
+      if (res.ok) {
+        await fetchKategori()
+        setKategoriId(newKategoriName.trim())
+        setIsAddingKategori(false)
+        setNewKategoriName("")
+      } else {
+        const err = await res.json()
+        setErrorMsg(err.error || "Gagal menambah kategori")
+      }
+    } catch (error: any) {
+      setErrorMsg(error.message)
+    } finally {
+      setAddingKategoriLoading(false)
+    }
+  }
+
   // Format currency on typing
   const handleJumlahChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/\D/g, "")
@@ -201,18 +232,65 @@ export function TambahTransaksiModal({ isOpen, onClose, onSuccess, editData }: T
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kategori</label>
-            <select
-              required
-              value={kategoriId}
-              onChange={(e) => setKategoriId(e.target.value)}
-              className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition bg-white"
-            >
-              <option value="" disabled>-- Pilih Kategori --</option>
-              {kategoris.filter(k => k.tipe === tipe).map(kat => (
-                <option key={kat.id} value={kat.nama}>{kat.nama}</option>
-              ))}
-            </select>
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kategori</label>
+              {!isAddingKategori && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddingKategori(true)}
+                  className="text-[10px] font-bold text-amber-500 hover:text-amber-600 flex items-center gap-0.5 transition"
+                >
+                  <span className="material-symbols-outlined text-[14px]">add</span> Tambah Kategori
+                </button>
+              )}
+            </div>
+            
+            {isAddingKategori ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newKategoriName}
+                  onChange={(e) => setNewKategoriName(e.target.value)}
+                  placeholder="Nama kategori baru..."
+                  className="flex-1 text-sm border border-amber-300 rounded-xl px-3 py-2 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={handleAddKategori}
+                  disabled={addingKategoriLoading || !newKategoriName.trim()}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-3 py-2 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center"
+                >
+                  {addingKategoriLoading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    "Simpan"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingKategori(false)
+                    setNewKategoriName("")
+                  }}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl px-3 py-2 font-bold text-sm transition"
+                >
+                  Batal
+                </button>
+              </div>
+            ) : (
+              <select
+                required
+                value={kategoriId}
+                onChange={(e) => setKategoriId(e.target.value)}
+                className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition bg-white"
+              >
+                <option value="" disabled>-- Pilih Kategori --</option>
+                {kategoris.filter(k => k.tipe === tipe).map(kat => (
+                  <option key={kat.id} value={kat.nama}>{kat.nama}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">
