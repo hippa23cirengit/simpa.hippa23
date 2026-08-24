@@ -63,7 +63,10 @@ export async function GET(req: Request) {
     // 3. Load active members list from Supabase
     const dbMembers = await prisma.anggota.findMany({
       where: {
-        status: "Aktif"
+        OR: [
+          { status: "Aktif" },
+          { akunLogin: { role: "Super Admin" } }
+        ]
       }
     })
     const membersWithWa = dbMembers.filter(

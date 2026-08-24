@@ -27,7 +27,10 @@ export class KegiatanRepository {
   async getActiveMembers() {
     return prisma.anggota.findMany({
       where: {
-        status: "Aktif",
+        OR: [
+          { status: "Aktif" },
+          { akunLogin: { role: "Super Admin" } }
+        ],
         NOT: [
           { whatsapp: null },
           { whatsapp: "" }
