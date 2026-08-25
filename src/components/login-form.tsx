@@ -118,6 +118,9 @@ export function LoginForm({
                 <p className="text-balance text-sm font-medium text-slate-500">
                   Himpunan Pelajar Persatuan Islam Putra (HIPPA) Cirengit
                 </p>
+                <p className="text-xs text-red-500 italic mt-2">
+                  *Catatan: Hanya anggota/pengurus HIPPA yang sudah didaftarkan oleh admin yang dapat login ke dalam sistem. Jika Anda anggota tetapi belum terdaftar, silakan hubungi PIMHAR (Ketua hingga Bendahara) untuk meminta akses.
+                </p>
               </div>
 
               {error && (

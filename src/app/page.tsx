@@ -81,13 +81,22 @@ export default function PublicPortal() {
               <p className="text-[11px] text-slate-500 font-medium tracking-wide uppercase">Cirengit</p>
             </div>
           </div>
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 bg-[#F7A440] hover:bg-[#e09132] text-white font-bold text-sm px-5 py-2.5 rounded-lg shadow-sm transition-all active:scale-95"
-          >
-            <span className="material-symbols-outlined text-[18px]">login</span>
-            Masuk Aplikasi
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/wiki"
+              className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm px-4 py-2.5 rounded-lg transition-all"
+            >
+              <span className="material-symbols-outlined text-[18px]">menu_book</span>
+              Wiki
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 bg-[#F7A440] hover:bg-[#e09132] text-white font-bold text-sm px-5 py-2.5 rounded-lg shadow-sm transition-all active:scale-95"
+            >
+              <span className="material-symbols-outlined text-[18px]">login</span>
+              Masuk Aplikasi
+            </Link>
+          </div>
         </div>
       </header>
 
