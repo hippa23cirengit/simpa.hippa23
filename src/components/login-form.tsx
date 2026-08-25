@@ -205,6 +205,17 @@ export function LoginForm({
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-center mt-6 mb-2">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 font-medium text-sm transition-colors bg-white/50 hover:bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm"
+        >
+          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+          Kembali ke Halaman Utama
+        </Link>
+      </div>
+
       <FieldDescription className="px-6 text-center text-xs text-slate-400 font-medium">
         SIMPA HIPPA © {new Date().getFullYear()} Cirengit.<br/>
         Sistem internal khusus anggota.
