@@ -18,6 +18,13 @@ export interface Member {
   createdAt?: string;
 }
 
+export interface RecentLogin {
+  npa: string;
+  name: string;
+  role: string;
+  timestamp: number;
+}
+
 export interface Bidang {
   id: string;
   name: string;
@@ -537,6 +544,23 @@ export const DEFAULT_LOGIN_ACCOUNTS: LoginAccount[] = [
 ];
 
 const ACCOUNTS_KEY = "simpa_login_accounts";
+const RECENT_LOGINS_KEY = "simpa_recent_logins";
+
+export function getRecentLogins(): RecentLogin[] {
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem(RECENT_LOGINS_KEY);
+  return stored ? JSON.parse(stored) : [];
+}
+
+export function logRecentLogin(npa: string, name: string, role: string) {
+  if (typeof window === "undefined") return;
+  const logins = getRecentLogins();
+  // Filter out the current user if they exist in the history, then prepend
+  const newLogin: RecentLogin = { npa, name, role, timestamp: Date.now() };
+  const updatedLogins = [newLogin, ...logins.filter(l => l.npa !== npa)].slice(0, 5); // Keep top 5 unique
+  localStorage.setItem(RECENT_LOGINS_KEY, JSON.stringify(updatedLogins));
+  syncToServer(RECENT_LOGINS_KEY, updatedLogins);
+}
 
 export function getStoredAccounts(): LoginAccount[] {
   if (typeof window === "undefined") return DEFAULT_LOGIN_ACCOUNTS;

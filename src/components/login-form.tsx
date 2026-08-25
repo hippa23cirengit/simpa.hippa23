@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { getStoredAccounts, getStoredTasykil } from "@/common/lib/mock-db";
+import { getStoredAccounts, getStoredTasykil, logRecentLogin } from "@/common/lib/mock-db";
 import { setSession } from "@/common/lib/auth";
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -96,6 +96,8 @@ export function LoginForm({
         role: resolvedRole,
         loginAt: Date.now(),
       });
+
+      logRecentLogin(account.npa, account.name, resolvedRole);
 
       router.replace("/dashboard");
     }, 800);

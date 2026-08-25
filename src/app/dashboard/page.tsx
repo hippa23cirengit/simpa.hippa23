@@ -7,7 +7,9 @@ import {
   getStoredTasykil,
   getStoredEvents,
   getPeriodeJabatan,
-  ScheduledEvent
+  getRecentLogins,
+  ScheduledEvent,
+  RecentLogin
 } from "@/common/lib/mock-db";
 
 interface Member {
@@ -32,6 +34,7 @@ export default function AdminDashboard() {
   const [ketuaName, setKetuaName] = useState("-");
   const [sekretarisName, setSekretarisName] = useState("-");
   const [bendaharaName, setBendaharaName] = useState("-");
+  const [recentLogins, setRecentLogins] = useState<RecentLogin[]>([]);
   const [ketuaPhoto, setKetuaPhoto] = useState<string | undefined>(undefined);
   const [sekretarisPhoto, setSekretarisPhoto] = useState<string | undefined>(undefined);
   const [bendaharaPhoto, setBendaharaPhoto] = useState<string | undefined>(undefined);
@@ -62,6 +65,7 @@ export default function AdminDashboard() {
 
     setEvents(getStoredEvents());
     setPeriodeJabatan(getPeriodeJabatan());
+    setRecentLogins(getRecentLogins());
     setLoading(false);
   };
 
@@ -147,6 +151,18 @@ export default function AdminDashboard() {
     if (parts.length < 2) return "Agt";
     const mIdx = parseInt(parts[1], 10) - 1;
     return monthShortNames[mIdx] || "Agt";
+  };
+
+  const formatRelativeTime = (timestamp: number) => {
+    const rtf = new Intl.RelativeTimeFormat('id', { numeric: 'auto' });
+    const diffMs = timestamp - Date.now();
+    const diffMins = Math.round(diffMs / 60000);
+    
+    if (Math.abs(diffMins) < 60) return rtf.format(diffMins, 'minute');
+    const diffHours = Math.round(diffMins / 60);
+    if (Math.abs(diffHours) < 24) return rtf.format(diffHours, 'hour');
+    const diffDays = Math.round(diffHours / 24);
+    return rtf.format(diffDays, 'day');
   };
 
   const formatDayNum = (dateStr: string) => {
@@ -347,6 +363,37 @@ export default function AdminDashboard() {
             >
               Lihat Struktur Lengkap
             </Link>
+          </div>
+
+          {/* Aktivitas Login Terakhir */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+              <h3 className="font-title-lg text-base font-bold text-slate-900 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px] text-sky-500">history</span>
+                Aktivitas Login
+              </h3>
+            </div>
+            <div className="flex flex-col gap-3">
+              {recentLogins.map((login, idx) => (
+                <div key={`${login.npa}-${idx}`} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100">
+                  <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center shrink-0 border border-sky-200">
+                    <span className="material-symbols-outlined text-[16px]">login</span>
+                  </div>
+                  <div className="flex-grow min-w-0">
+                    <h4 className="font-bold text-slate-800 text-xs truncate">{login.name}</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5 truncate font-medium">
+                      {login.role}
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-400 shrink-0 bg-slate-100 px-2 py-1 rounded-md">
+                    {formatRelativeTime(login.timestamp)}
+                  </span>
+                </div>
+              ))}
+              {recentLogins.length === 0 && (
+                <p className="text-xs text-slate-400 italic text-center py-4">Belum ada aktivitas login.</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
