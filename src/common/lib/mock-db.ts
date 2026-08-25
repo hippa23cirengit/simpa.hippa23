@@ -718,53 +718,30 @@ export function createMemberAccount(newMember: Member, adminWa: string) {
   const updatedAccounts = [...accounts, newAccount];
   saveStoredAccounts(updatedAccounts);
 
-  // Send WhatsApp notification
-  const waConfig = getWaConfig();
-  if (!waConfig || !waConfig.token || waConfig.token === DEFAULT_WA_CONFIG.token) {
-    console.log("Fonnte WA Config is not set or using placeholder token, skip sending notification.");
-    return;
-  }
-
-  const hasMemberWa = newMember.whatsapp && newMember.whatsapp.trim() !== "";
-  const targetNumber = (newMember.whatsapp && newMember.whatsapp.trim() !== "") ? newMember.whatsapp.trim() : adminWa;
-
-  if (!targetNumber || targetNumber.trim() === "") {
-    console.log("No valid WA number to send to.");
-    return;
-  }
-
-  let message = "";
-  if (hasMemberWa) {
-    message = `Assalamu'alaikum, *${newMember.name}*.\n\nSelamat datang di Pemuda Persis Cirengit! Akun SIMPA Anda telah aktif.\n\n🔑 *NPA Login:* ${newMember.id}\n🔒 *Password:* #h1ppa23\n\nSilakan login untuk melengkapi profil dan mengecek jadwal kegiatan.\n\nWassalamu'alaikum.`;
-  } else {
-    message = `[INFO AKUN BARU]\n\nAnggota: *${newMember.name}*\nNPA: ${newMember.id}\nPassword: #h1ppa23\n\nNomor WA anggota tidak terdaftar / kosong. Sampaikan info login ini secara langsung kepada yang bersangkutan.`;
-  }
-
-  fetch("/api/send-wa", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      target: targetNumber,
-      message: message,
-      provider: waConfig.provider || "fonnte",
-      token: waConfig.token,
-      endpoint: waConfig.endpoint,
-      metaToken: waConfig.metaToken || "",
-      metaPhoneId: waConfig.metaPhoneId || "",
-      metaTemplateName: waConfig.metaTemplateWelcome || "welcome_simpa",
-      metaTemplateLanguage: "id",
-      metaParams: [newMember.name, newMember.id, "#h1ppa23"]
+  // Send Welcome Email Notification via Gmail
+  // In `calon-anggota/page.tsx`, we pass a fallback email based on name if they didn't provide one.
+  const targetEmail = newMember.email;
+  if (targetEmail) {
+    fetch("/api/send-email-welcome", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: targetEmail,
+        name: newMember.name,
+        npa: newMember.id,
+        pass: "#h1ppa23"
+      })
     })
-  })
-  .then(res => res.json())
-  .then(data => {
-    console.log("Notification send result:", data);
-  })
-  .catch(e => {
-    console.error("Gagal mengirim WA notifikasi:", e);
-  });
+    .then(res => res.json())
+    .then(data => {
+      console.log("Welcome Email send result:", data);
+    })
+    .catch(e => {
+      console.error("Gagal mengirim email welcome:", e);
+    });
+  }
 }
 
 export function saveStoredAcl(acl: AclRule[]) {
