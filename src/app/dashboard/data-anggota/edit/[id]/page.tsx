@@ -27,6 +27,7 @@ export default function EditAnggotaPage() {
   const [npa, setNpa] = useState("")
   const [status, setStatus] = useState<"Aktif" | "Tidak Aktif" | "Alumni">("Aktif")
   const [email, setEmail] = useState("")
+  const [isEmailActive, setIsEmailActive] = useState(true)
   const [tempatLahir, setTempatLahir] = useState("")
   const [tanggalLahir, setTanggalLahir] = useState("")
   const [alamat, setAlamat] = useState("")
@@ -68,6 +69,7 @@ export default function EditAnggotaPage() {
       setNpa(member.id)
       setStatus(member.status)
       setEmail(member.email || "")
+      setIsEmailActive(typeof member.isEmailActive === "boolean" ? member.isEmailActive : true)
       setTempatLahir(member.tempatLahir || "")
       setTanggalLahir(member.tanggalLahir || "")
       setAlamat(member.alamat || "")
@@ -177,6 +179,7 @@ export default function EditAnggotaPage() {
           pekerjaan: pekerjaan.trim(),
           whatsapp: whatsapp.trim(),
           email: email.trim(),
+          isEmailActive: isEmailActive,
           profilePhoto: profilePhoto || undefined,
           bergabungTahun: bergabungTahun.trim() || undefined
         }
@@ -340,6 +343,32 @@ export default function EditAnggotaPage() {
                 placeholder="Contoh: nama.anggota@gmail.com"
                 className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
               />
+
+              {/* Toggle Notifikasi Email Aktif */}
+              <div className="flex items-center justify-between p-3 mt-1.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                <div className="flex items-center gap-2.5">
+                  <span className={`material-symbols-outlined text-[20px] ${isEmailActive ? "text-emerald-600" : "text-slate-400"}`}>
+                    {isEmailActive ? "mark_email_read" : "unsubscribe"}
+                  </span>
+                  <div>
+                    <span className="text-xs font-bold text-slate-700 block">
+                      {isEmailActive ? "Notifikasi Email: Aktif" : "Notifikasi Email: Nonaktif"}
+                    </span>
+                    <span className="text-[10px] text-slate-500 block">
+                      {isEmailActive ? "Anggota ini akan menerima pengingat agenda via email" : "Email dinonaktifkan / tidak akan menerima email agenda"}
+                    </span>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isEmailActive}
+                    onChange={(e) => setIsEmailActive(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2E7D32]"></div>
+                </label>
+              </div>
             </div>
 
             {/* Status */}

@@ -324,9 +324,25 @@ export default function DataAnggota() {
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <Link href={`/dashboard/data-anggota/${member.id}`} className="font-bold text-slate-800 hover:text-[#F7A440] transition-colors hover:underline">
-                        {member.name}
-                      </Link>
+                      <div className="flex flex-col">
+                        <Link href={`/dashboard/data-anggota/${member.id}`} className="font-bold text-slate-800 hover:text-[#F7A440] transition-colors hover:underline">
+                          {member.name}
+                        </Link>
+                        {member.email && (
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[11px] text-slate-400 font-medium truncate max-w-[170px]">{member.email}</span>
+                            {member.isEmailActive !== false ? (
+                              <span className="inline-flex items-center px-1.5 py-0.2 text-[9px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200" title="Notifikasi Email Aktif">
+                                Aktif
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-1.5 py-0.2 text-[9px] font-bold rounded bg-slate-100 text-slate-500 border border-slate-200" title="Notifikasi Email Nonaktif">
+                                Off
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="py-4 px-4 text-slate-500 font-semibold">{member.id}</td>
                     <td className="py-4 px-4">

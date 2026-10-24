@@ -76,6 +76,7 @@ export async function GET() {
                   pekerjaan: m.pekerjaan || null,
                   whatsapp: m.whatsapp || null,
                   email: m.email || "",
+                  isEmailActive: typeof m.isEmailActive === "boolean" ? m.isEmailActive : true,
                   profilePhoto: m.profilePhoto || null,
                   bergabungTahun: m.bergabungTahun || null
                 }
@@ -272,6 +273,7 @@ export async function POST(req: Request) {
             pekerjaan: m.pekerjaan || null,
             whatsapp: m.whatsapp || null,
             email: m.email || "",
+            isEmailActive: typeof m.isEmailActive === "boolean" ? m.isEmailActive : true,
             profilePhoto: m.profilePhoto || null,
             bergabungTahun: m.bergabungTahun || null
           },
@@ -289,6 +291,7 @@ export async function POST(req: Request) {
             pekerjaan: m.pekerjaan || null,
             whatsapp: m.whatsapp || null,
             email: m.email || "",
+            isEmailActive: typeof m.isEmailActive === "boolean" ? m.isEmailActive : true,
             profilePhoto: m.profilePhoto || null,
             bergabungTahun: m.bergabungTahun || null,
             createdAt: m.createdAt ? new Date(m.createdAt) : new Date()
@@ -624,6 +627,7 @@ async function compilePayload(
     pekerjaan: a.pekerjaan || "",
     whatsapp: a.whatsapp || "",
     email: a.email || "",
+    isEmailActive: typeof a.isEmailActive === "boolean" ? a.isEmailActive : true,
     profilePhoto: a.profilePhoto || "",
     bergabungTahun: a.bergabungTahun || "",
     createdAt: a.createdAt ? a.createdAt.toISOString() : new Date().toISOString()

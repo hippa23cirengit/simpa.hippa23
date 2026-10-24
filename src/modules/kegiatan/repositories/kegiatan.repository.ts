@@ -13,6 +13,15 @@ export class KegiatanRepository {
     });
   }
 
+  async getTodayPendingEvents(dateStr: string) {
+    return prisma.scheduledEvent.findMany({
+      where: {
+        date: dateStr,
+        notificationCount: 0
+      }
+    });
+  }
+
   async incrementNotificationCount(id: string) {
     return prisma.scheduledEvent.update({
       where: { id },
@@ -31,10 +40,43 @@ export class KegiatanRepository {
           { status: "Aktif" },
           { akunLogin: { role: "Super Admin" } }
         ],
-        NOT: [
-          { whatsapp: null },
-          { whatsapp: "" }
+        AND: [
+          { email: { not: "" } },
+          { isEmailActive: true }
         ]
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        status: true,
+        isEmailActive: true
+      },
+      orderBy: {
+        name: "asc"
+      }
+    });
+  }
+
+  async deactivateMemberEmail(memberId: string) {
+    try {
+      return await prisma.anggota.update({
+        where: { id: memberId },
+        data: {
+          isEmailActive: false
+        }
+      });
+    } catch (error) {
+      console.error(`Gagal menonaktifkan email anggota ID ${memberId}:`, error);
+      return null;
+    }
+  }
+
+  async updateMemberEmailStatus(memberId: string, isActive: boolean) {
+    return prisma.anggota.update({
+      where: { id: memberId },
+      data: {
+        isEmailActive: isActive
       }
     });
   }

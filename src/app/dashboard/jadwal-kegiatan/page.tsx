@@ -10,6 +10,7 @@ import {
   getStoredAcl
 } from "@/common/lib/mock-db"
 import { useDialog } from "@/common/components/dialog-provider"
+import { BroadcastEmailModal } from "./components/broadcast-email-modal"
 
 export default function JadwalKegiatan() {
   const daysOfWeek = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"]
@@ -29,6 +30,8 @@ export default function JadwalKegiatan() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<ScheduledEvent | null>(null)
+  const [broadcastEvent, setBroadcastEvent] = useState<ScheduledEvent | null>(null)
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false)
   
   // Form State
   const [formTitle, setFormTitle] = useState("")
@@ -319,6 +322,11 @@ export default function JadwalKegiatan() {
       saveStoredEvents(filtered)
       loadData()
     }
+  }
+
+  const handleOpenBroadcast = (event: ScheduledEvent) => {
+    setBroadcastEvent(event)
+    setIsBroadcastModalOpen(true)
   }
 
   // Filter side activities
@@ -645,21 +653,36 @@ export default function JadwalKegiatan() {
 
                 {/* Actions */}
                 {!isReadOnly && (
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end items-center gap-2">
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
                     <button
-                      onClick={() => handleOpenEdit(event)}
-                      className="text-slate-400 hover:text-[#F7A440] transition-colors p-1 flex items-center gap-1"
+                      onClick={() => handleOpenBroadcast(event)}
+                      className="transition-colors flex items-center gap-1.5 text-[11px] text-blue-600 hover:text-blue-700 font-bold px-1.5 py-1 rounded-md hover:bg-blue-50"
+                      title="Kirim pengingat email ke seluruh anggota aktif"
                     >
-                      <span className="material-symbols-outlined text-[16px]">edit</span>
-                      <span className="text-[10px] font-bold">Edit</span>
+                      <span className="material-symbols-outlined text-[16px]">mail</span>
+                      <span>
+                        {event.notificationCount && event.notificationCount > 0
+                          ? `Kirim Ulang (${event.notificationCount})`
+                          : "Kirim Pengingat"}
+                      </span>
                     </button>
-                    <button
-                      onClick={() => handleDeleteEvent(event.id, event.title)}
-                      className="text-slate-400 hover:text-red-600 transition-colors p-1 flex items-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">delete</span>
-                      <span className="text-[10px] font-bold">Hapus</span>
-                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleOpenEdit(event)}
+                        className="text-slate-400 hover:text-[#F7A440] transition-colors p-1 flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">edit</span>
+                        <span className="text-[10px] font-bold">Edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEvent(event.id, event.title)}
+                        className="text-slate-400 hover:text-red-600 transition-colors p-1 flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                        <span className="text-[10px] font-bold">Hapus</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -841,6 +864,19 @@ export default function JadwalKegiatan() {
           </div>
         </div>
       )}
+
+      {/* Broadcast Email Modal */}
+      <BroadcastEmailModal
+        isOpen={isBroadcastModalOpen}
+        onClose={() => {
+          setIsBroadcastModalOpen(false)
+          setBroadcastEvent(null)
+        }}
+        event={broadcastEvent}
+        onSuccess={() => {
+          loadData()
+        }}
+      />
     </div>
   )
 }

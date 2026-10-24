@@ -168,7 +168,22 @@ export default function DetailAnggota() {
                 </div>
                 <div>
                   <p className="text-slate-400 font-medium mb-1">Alamat Email (Gmail)</p>
-                  <p className="font-bold text-[#F7A440] font-semibold">{member.email || "-"}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-bold text-[#F7A440] font-semibold">{member.email || "-"}</p>
+                    {member.email && (
+                      member.isEmailActive !== false ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          Notifikasi Aktif
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          Notifikasi Nonaktif
+                        </span>
+                      )
+                    )}
+                  </div>
                 </div>
                 <div>
                   <p className="text-slate-400 font-medium mb-1">Tahun Bergabung</p>

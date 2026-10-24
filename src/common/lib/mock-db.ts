@@ -13,6 +13,7 @@ export interface Member {
   pekerjaan?: string;
   whatsapp?: string;
   email?: string;
+  isEmailActive?: boolean;
   profilePhoto?: string;
   bergabungTahun?: string;
   createdAt?: string;
@@ -235,7 +236,10 @@ export function getStoredMembers(): Member[] {
       localStorage.setItem(TASYKIL_KEY, JSON.stringify(DEFAULT_TASYKIL))
       return DEFAULT_MEMBERS
     }
-    return parsed
+    return parsed.map(m => ({
+      ...m,
+      isEmailActive: typeof m.isEmailActive === "boolean" ? m.isEmailActive : true
+    }))
   } catch (e) {
     return DEFAULT_MEMBERS
   }

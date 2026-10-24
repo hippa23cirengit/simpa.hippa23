@@ -48,6 +48,7 @@ Fitur untuk memproses pendaftar (applicant) baru yang ingin bergabung menjadi an
 Pengelolaan agenda organisasi yang terintegrasi.
 
 *   **Manajemen Jadwal**: Pembuatan kalender kegiatan, kajian, rapat, atau acara organisasi.
+*   **Pengingat Email (Gmail SMTP)**: Mengirimkan undangan/pengingat agenda ke seluruh anggota aktif secara personal dalam batch chunking yang aman dan transparan langsung dari dashboard.
 
 ---
 

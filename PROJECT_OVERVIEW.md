@@ -215,14 +215,10 @@ simpa/
 | Grup | Endpoint | Method | Fungsi / Deskripsi |
 |------|----------|--------|---------------------|
 | **Sinkronisasi** | `/api/db-sync` | `GET`, `POST` | Sinkronisasi data antara cache lokal dan Supabase PostgreSQL |
-| **Kegiatan** | `/api/kegiatan` | `GET`, `POST`, `PUT`, `DELETE` | Operasi CRUD master jadwal kegiatan |
-| | `/api/kegiatan/[id]/notify` | `POST` | Memasukkan agenda ke antrean pesan broadcast WA |
-| **WhatsApp** | `/api/check-wa` | `GET` | Memeriksa status koneksi QR / Client WhatsApp Gateway |
-| | `/api/send-wa` | `POST` | Mengirim pesan WhatsApp instan ke nomor tujuan |
-| | `/api/logout-wa` | `POST` | Memutus sesi login WhatsApp aktif |
-| | `/api/restart-wa` | `POST` | Merestart proses service WhatsApp Gateway |
-| | `/api/cron/send-daily-wa` | `GET`, `POST` | Job terjadwal untuk broadcast pengingat kegiatan harian |
-| | `/api/cron/process-queue` | `GET`, `POST` | Menjalankan eksekusi pengiriman antrean pesan tertunda |
+| **Kegiatan** | `/api/kegiatan/[id]/recipients` | `GET` | Mengambil daftar anggota aktif yang memiliki email valid |
+| | `/api/kegiatan/[id]/send-email-batch` | `POST` | Mengirim batch notifikasi email agenda via Gmail SMTP |
+| **Email SMTP** | `/api/test-email` | `GET`, `POST` | Memeriksa status SMTP dan mengirim email uji coba |
+| **Cron Job** | `/api/cron/daily-reminder` | `GET`, `POST` | Pengingat harian otomatis agenda hari-H (pukul 06:00 WIB) |
 | **Keuangan** | `/api/kas/transaksi` | `GET`, `POST` | Mengambil riwayat dan mencatat transaksi kas |
 | | `/api/kas/transaksi/[id]` | `PUT`, `DELETE` | Memperbarui atau menghapus transaksi kas tertentu |
 | | `/api/kas/kategori` | `GET`, `POST` | Mengelola master kategori keuangan |

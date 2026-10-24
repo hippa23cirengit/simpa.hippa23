@@ -20,6 +20,7 @@ model Anggota {
   pekerjaan    String?
   whatsapp     String?
   email        String
+  isEmailActive Boolean        @default(true) @map("is_email_active")
   profilePhoto String?         @map("profile_photo")
   bergabungTahun String?       @map("bergabung_tahun")
   createdAt    DateTime        @default(now()) @map("created_at")

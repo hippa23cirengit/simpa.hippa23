@@ -312,4 +312,47 @@ export class EmailService {
       html: htmlContent,
     });
   }
+
+  async sendNotificationEmail(email: string, subject: string, bodyText: string) {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${subject.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0; }
+          .header { background-color: #f7a440; padding: 24px 20px; text-align: center; }
+          .header h1 { color: #ffffff; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.025em; }
+          .content { padding: 32px 24px; color: #334155; line-height: 1.7; font-size: 15px; }
+          .message-body { background-color: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; white-space: pre-wrap; word-break: break-word; color: #1e293b; font-size: 14px; line-height: 1.6; }
+          .footer { background-color: #f1f5f9; padding: 20px; text-align: center; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>SIMPA HIPPA CIRENGIT</h1>
+          </div>
+          <div class="content">
+            <div class="message-body">${bodyText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+          </div>
+          <div class="footer">
+            Sistem Informasi Manajemen Pengurus & Anggota (SIMPA)<br>
+            HIPPA Cirengit &copy; ${new Date().getFullYear()}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    await this.transporter.sendMail({
+      from: `"SIMPA HIPPA Cirengit" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: subject,
+      text: bodyText,
+      html: htmlContent,
+    });
+  }
 }
