@@ -17,7 +17,16 @@ export class KegiatanRepository {
     return prisma.scheduledEvent.findMany({
       where: {
         date: dateStr,
-        notificationCount: 0
+        isAutoNotified: false
+      }
+    });
+  }
+
+  async markEventAutoNotified(id: string) {
+    return prisma.scheduledEvent.update({
+      where: { id },
+      data: {
+        isAutoNotified: true
       }
     });
   }

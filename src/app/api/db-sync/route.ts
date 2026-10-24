@@ -683,7 +683,8 @@ async function compilePayload(
     type: e.type || "umum",
     speaker: e.speaker || undefined,
     theme: e.theme || undefined,
-    notificationCount: e.notificationCount
+    notificationCount: e.notificationCount,
+    isAutoNotified: e.isAutoNotified
   }))
 
   // ACL Rules

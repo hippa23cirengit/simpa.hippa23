@@ -654,18 +654,40 @@ export default function JadwalKegiatan() {
                 {/* Actions */}
                 {!isReadOnly && (
                   <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
-                    <button
-                      onClick={() => handleOpenBroadcast(event)}
-                      className="transition-colors flex items-center gap-1.5 text-[11px] text-blue-600 hover:text-blue-700 font-bold px-1.5 py-1 rounded-md hover:bg-blue-50"
-                      title="Kirim pengingat email ke seluruh anggota aktif"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">mail</span>
-                      <span>
-                        {event.notificationCount && event.notificationCount > 0
-                          ? `Kirim Ulang (${event.notificationCount})`
-                          : "Kirim Pengingat"}
-                      </span>
-                    </button>
+                    {/* Tombol Kirim Pengingat dengan Batas 2x */}
+                    {(() => {
+                      const count = event.notificationCount || 0
+                      const isMaxReached = count >= 2
+                      return (
+                        <button
+                          onClick={() => !isMaxReached && handleOpenBroadcast(event)}
+                          disabled={isMaxReached}
+                          className={`transition-colors flex items-center gap-1.5 text-[11px] font-bold px-2 py-1 rounded-md ${
+                            isMaxReached
+                              ? "text-slate-400 bg-slate-50 cursor-not-allowed"
+                              : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          }`}
+                          title={
+                            isMaxReached
+                              ? "Batas pengiriman manual telah tercapai (maksimal 2x)"
+                              : count > 0
+                              ? `Kirim ulang pengingat agenda (${count}/2)`
+                              : "Kirim pengingat email ke seluruh anggota"
+                          }
+                        >
+                          <span className="material-symbols-outlined text-[16px]">
+                            {isMaxReached ? "check_circle" : "mail"}
+                          </span>
+                          <span>
+                            {isMaxReached
+                              ? "Batas Terkirim (2/2)"
+                              : count > 0
+                              ? `Kirim Ulang (${count}/2)`
+                              : "Kirim Pengingat"}
+                          </span>
+                        </button>
+                      )
+                    })()}
 
                     <div className="flex items-center gap-2">
                       <button

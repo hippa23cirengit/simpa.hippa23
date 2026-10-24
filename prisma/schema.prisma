@@ -121,6 +121,7 @@ model ScheduledEvent {
   speaker           String?
   theme             String?
   notificationCount Int     @default(0) @map("notification_count")
+  isAutoNotified    Boolean @default(false) @map("is_auto_notified")
 
   @@map("scheduled_event")
 }

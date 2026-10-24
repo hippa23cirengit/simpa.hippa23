@@ -96,9 +96,9 @@ export class SendDailyReminderUseCase {
         }
       }
 
-      // Tandai agenda bahwa pengingat hari-H sudah dikirim
+      // Tandai agenda bahwa pengingat hari-H sudah dikirim secara otomatis
       if (eventSentCount > 0) {
-        await this.repository.incrementNotificationCount(event.id);
+        await this.repository.markEventAutoNotified(event.id);
       }
 
       processedEventsDetails.push({

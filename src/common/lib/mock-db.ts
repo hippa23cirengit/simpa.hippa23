@@ -57,6 +57,7 @@ export interface ScheduledEvent {
   speaker?: string;        // Nama pemateri (opsional)
   theme?: string;          // Tema kajian (opsional)
   notificationCount?: number; // Jumlah notifikasi terkirim (maks 2)
+  isAutoNotified?: boolean;   // Status pengingat otomatis harian sistem terkirim
 }
 
 export interface AclRule {
