@@ -29,6 +29,7 @@ export function LoginForm({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,9 +94,6 @@ export function LoginForm({
                 <p className="text-balance text-sm font-medium text-slate-500">
                   Himpunan Pelajar Persatuan Islam Putra (HIPPA) Cirengit
                 </p>
-                <p className="text-xs text-red-500 italic mt-2">
-                  *Catatan: Hanya anggota/pengurus HIPPA yang sudah didaftarkan oleh admin yang dapat login ke dalam sistem. Jika Anda anggota tetapi belum terdaftar, silakan hubungi PIMHAR (Ketua hingga Bendahara) untuk meminta akses.
-                </p>
               </div>
 
               {error && (
@@ -118,15 +116,7 @@ export function LoginForm({
                 />
               </Field>
               <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <Link
-                    href="/forgot-password"
-                    className="ml-auto text-xs font-semibold text-[#F7A440] hover:underline"
-                  >
-                    Lupa password?
-                  </Link>
-                </div>
+                <FieldLabel htmlFor="password">Password</FieldLabel>
                 <div className="relative">
                   <Input 
                     id="password" 
@@ -147,6 +137,25 @@ export function LoginForm({
                       lightbulb
                     </span>
                   </button>
+                </div>
+                
+                {/* Aksi di bawah input password */}
+                <div className="flex items-center justify-between mt-2 pt-0.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setShowHelpModal(true)}
+                    className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-800 font-medium transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[15px] text-[#F7A440]">help</span>
+                    Butuh bantuan login?
+                  </button>
+
+                  <Link
+                    href="/forgot-password"
+                    className="font-semibold text-[#F7A440] hover:text-[#e59333] hover:underline transition-colors"
+                  >
+                    Lupa password?
+                  </Link>
                 </div>
               </Field>
               <Field className="pt-2">
@@ -195,6 +204,59 @@ export function LoginForm({
         SIMPA HIPPA © {new Date().getFullYear()} Cirengit.<br/>
         Sistem internal khusus anggota.
       </FieldDescription>
+
+      {/* Modal Popup Bantuan Login */}
+      {showHelpModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden animate-scaleIn flex flex-col p-6 space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-amber-500/10 text-[#F7A440] flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[24px]">contact_support</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-slate-800">
+                    Bantuan Akses Login
+                  </h3>
+                  <p className="text-xs text-slate-400 font-medium">
+                    SIMPA HIPPA Cirengit
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHelpModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 space-y-2.5 leading-relaxed">
+              <div className="flex items-center gap-1.5 text-amber-700 font-bold">
+                <span className="material-symbols-outlined text-[16px]">info</span>
+                <span>Ketentuan Akses Pengguna:</span>
+              </div>
+              <p>
+                Hanya anggota atau pengurus HIPPA yang sudah didaftarkan oleh admin yang dapat login ke dalam sistem SIMPA.
+              </p>
+              <p>
+                Jika Anda adalah anggota atau alumni tetapi belum terdaftar memiliki akun, silakan hubungi <strong>PIMHAR (Ketua hingga Bendahara)</strong> untuk meminta pembukaan akses login akun Anda.
+              </p>
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={() => setShowHelpModal(false)}
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
+              >
+                Saya Mengerti
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
