@@ -106,6 +106,7 @@ model AkunLogin {
   roleAkses       RoleAkses @relation(fields: [role], references: [roleName], onDelete: Restrict)
   resetToken       String?   @unique @map("reset_token")
   resetTokenExpiry DateTime? @map("reset_token_expiry")
+  lastLoginAt      DateTime? @map("last_login_at")
 
   @@map("akun_login")
 }

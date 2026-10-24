@@ -11,6 +11,7 @@ import {
   ScheduledEvent,
   RecentLogin
 } from "@/common/lib/mock-db";
+import { getRecentLoginsAction } from "@/modules/auth/actions/get-recent-logins.action";
 
 interface Member {
   id: string;
@@ -66,6 +67,17 @@ export default function AdminDashboard() {
     setEvents(getStoredEvents());
     setPeriodeJabatan(getPeriodeJabatan());
     setRecentLogins(getRecentLogins());
+
+    // Fetch live recent logins from Supabase across all devices
+    getRecentLoginsAction(5).then((res) => {
+      if (res.success && res.logins.length > 0) {
+        setRecentLogins(res.logins);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("simpa_recent_logins", JSON.stringify(res.logins));
+        }
+      }
+    });
+
     setLoading(false);
   };
 

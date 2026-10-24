@@ -687,6 +687,18 @@ async function compilePayload(
     isAutoNotified: e.isAutoNotified
   }))
 
+  // Recent logins (Live from AkunLogin.lastLoginAt)
+  const simpa_recent_logins = dbAkun
+    .filter(a => a.lastLoginAt)
+    .sort((a, b) => new Date(b.lastLoginAt).getTime() - new Date(a.lastLoginAt).getTime())
+    .slice(0, 5)
+    .map(a => ({
+      npa: a.npa,
+      name: a.name,
+      role: a.role,
+      timestamp: new Date(a.lastLoginAt).getTime()
+    }))
+
   // ACL Rules
   const simpa_acl_rules = dbAcl.map(a => ({
     role: a.roleName,
@@ -754,6 +766,7 @@ async function compilePayload(
     simpa_kta_settings: dbKtaSettings ? { ketuaName: dbKtaSettings.ketuaName, ketuaNpa: dbKtaSettings.ketuaNpa, signatureUrl: dbKtaSettings.signatureUrl } : { ketuaName: "", ketuaNpa: "", signatureUrl: "" },
     simpa_periode_jabatan: settingsMap["simpa_periode_jabatan"] || "",
     simpa_reg_prefix: settingsMap["simpa_reg_prefix"] || "REG",
-    simpa_email_templates: emailTemplates
+    simpa_email_templates: emailTemplates,
+    simpa_recent_logins
   }
 }

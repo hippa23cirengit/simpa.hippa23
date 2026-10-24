@@ -58,4 +58,40 @@ export class AuthRepository {
     });
     return { pimharList, bidangList };
   }
+
+  async updateLastLogin(npa: string, date: Date = new Date()) {
+    return prisma.akunLogin.update({
+      where: { npa },
+      data: {
+        lastLoginAt: date,
+      },
+    });
+  }
+
+  async getRecentLogins(limit: number = 5) {
+    const records = await prisma.akunLogin.findMany({
+      where: {
+        lastLoginAt: {
+          not: null,
+        },
+      },
+      orderBy: {
+        lastLoginAt: "desc",
+      },
+      take: limit,
+      select: {
+        npa: true,
+        name: true,
+        role: true,
+        lastLoginAt: true,
+      },
+    });
+
+    return records.map((r) => ({
+      npa: r.npa,
+      name: r.name,
+      role: r.role,
+      timestamp: r.lastLoginAt ? new Date(r.lastLoginAt).getTime() : Date.now(),
+    }));
+  }
 }

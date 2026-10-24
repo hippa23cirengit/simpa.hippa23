@@ -61,6 +61,13 @@ export class LoginUseCase {
       }
     }
 
+    // 6. Update last login timestamp di Supabase (Real-time & Zero overhead)
+    try {
+      await this.repository.updateLastLogin(account.npa);
+    } catch (err) {
+      console.error(`[AUTH] Gagal mengupdate lastLoginAt untuk ${account.npa}:`, err);
+    }
+
     return {
       success: true,
       user: {
