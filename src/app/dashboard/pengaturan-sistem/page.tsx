@@ -13,6 +13,7 @@ import {
   KopSuratConfig
 } from "@/common/lib/mock-db"
 import { customAlert, customConfirm, showToast } from "@/common/lib/alert"
+import { GmailSettingsCard } from "./components/gmail-settings-card"
 
 export default function PengaturanPage() {
   const [currentRole, setCurrentRole] = useState("Super Admin")
@@ -186,7 +187,7 @@ export default function PengaturanPage() {
           Pengaturan Sistem
         </h2>
         <p className="font-body-md text-sm text-slate-500 mt-1">
-          Konfigurasi integrasi Whatsapp API Gateway & parameter organisasi Himpunan.
+          Konfigurasi notifikasi email Gmail, kop surat & laporan PDF, serta parameter organisasi.
         </p>
       </div>
 
@@ -385,6 +386,9 @@ export default function PengaturanPage() {
           </div>
         </form>
       </div>
+
+      {/* Pengaturan Pesan Gmail Card */}
+      <GmailSettingsCard canManage={canManage} />
     </div>
   )
 }

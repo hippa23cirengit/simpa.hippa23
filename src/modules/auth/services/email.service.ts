@@ -265,4 +265,51 @@ export class EmailService {
       html: htmlContent,
     });
   }
+
+  async sendTestEmail(email: string) {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Uji Coba Pengiriman Email SIMPA</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; }
+          .header { background-color: #f7a440; padding: 24px; text-align: center; }
+          .header h1 { color: #ffffff; margin: 0; font-size: 22px; font-weight: 700; }
+          .content { padding: 32px; color: #334155; line-height: 1.6; }
+          .status-badge { display: inline-block; background-color: #ecfdf5; color: #047857; font-weight: 700; padding: 6px 14px; border-radius: 9999px; font-size: 14px; margin-bottom: 16px; }
+          .footer { background-color: #f8fafc; padding: 20px; text-align: center; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>SIMPA HIPPA Cirengit</h1>
+          </div>
+          <div class="content">
+            <div class="status-badge">✓ Koneksi SMTP Berhasil</div>
+            <p>Assalamu'alaikum Wr. Wb.,</p>
+            <p>Ini adalah email uji coba untuk memverifikasi bahwa konfigurasi SMTP Gmail pada aplikasi <strong>SIMPA</strong> telah berfungsi dengan benar.</p>
+            <p>Waktu pengujian: <strong>${new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} WIB</strong></p>
+            <p>Terima kasih atas dedikasi rekan-rekan pengurus dalam mengelola sistem organisasi.</p>
+            <p>Wassalamu'alaikum Wr. Wb.</p>
+          </div>
+          <div class="footer">
+            Sistem Informasi Manajemen Pengurus & Anggota (SIMPA)<br>
+            HIPPA Cirengit &copy; ${new Date().getFullYear()}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    await this.transporter.sendMail({
+      from: `"SIMPA HIPPA Cirengit" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: "[SIMPA] Uji Coba Konfigurasi SMTP Gmail",
+      html: htmlContent,
+    });
+  }
 }

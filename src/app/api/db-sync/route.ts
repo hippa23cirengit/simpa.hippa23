@@ -229,7 +229,7 @@ export async function POST(req: Request) {
     console.log(`POST /api/db-sync: Updating key "${key}" in Supabase...`)
 
     // Sync to Supabase relational tables or system setting table based on the key
-    if (["simpa_periode_jabatan", "simpa_reg_prefix"].includes(key)) {
+    if (["simpa_periode_jabatan", "simpa_reg_prefix", "simpa_email_templates"].includes(key)) {
       await prisma.systemSetting.upsert({
         where: { key },
         update: {
@@ -718,6 +718,14 @@ async function compilePayload(
     pekerjaan: a.pekerjaan
   }))
 
+  // Email Templates
+  let emailTemplates = null
+  if (settingsMap["simpa_email_templates"]) {
+    try {
+      emailTemplates = JSON.parse(settingsMap["simpa_email_templates"])
+    } catch (e) {}
+  }
+
   return {
     simpa_members_state,
     simpa_login_accounts,
@@ -727,6 +735,7 @@ async function compilePayload(
     simpa_calon_anggota,
     simpa_kta_settings: dbKtaSettings ? { ketuaName: dbKtaSettings.ketuaName, ketuaNpa: dbKtaSettings.ketuaNpa, signatureUrl: dbKtaSettings.signatureUrl } : { ketuaName: "", ketuaNpa: "", signatureUrl: "" },
     simpa_periode_jabatan: settingsMap["simpa_periode_jabatan"] || "",
-    simpa_reg_prefix: settingsMap["simpa_reg_prefix"] || "REG"
+    simpa_reg_prefix: settingsMap["simpa_reg_prefix"] || "REG",
+    simpa_email_templates: emailTemplates
   }
 }

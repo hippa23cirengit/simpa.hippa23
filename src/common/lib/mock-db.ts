@@ -866,6 +866,69 @@ export function saveKopSuratConfig(config: KopSuratConfig) {
   }
 }
 
+export interface EmailTemplateConfig {
+  subjectKajian: string;
+  bodyKajian: string;
+  subjectUmum: string;
+  bodyUmum: string;
+}
+
+export const DEFAULT_EMAIL_TEMPLATES: EmailTemplateConfig = {
+  subjectKajian: "[SIMPA] Pengingat Kajian: {{KEGIATAN}}",
+  bodyKajian: `Assalamu'alaikum Wr. Wb. Rekan {{NAMA}},
+
+Kami mengundang Anda untuk menghadiri agenda kajian Pemuda Persis Cirengit:
+
+📌 Judul Kegiatan: {{KEGIATAN}}
+📖 Tema: {{TEMA}}
+🎙️ Pemateri: {{PEMATERI}}
+📅 Tanggal: {{TANGGAL}}
+⏰ Waktu: {{JAM}} WIB
+📍 Tempat: {{LOKASI}}
+
+Kehadiran dan kebersamaan rekan-rekan sangat kami harapkan demi memakmurkan majelis ilmu.
+
+Wassalamu'alaikum Wr. Wb.
+SIMPA HIPPA Cirengit`,
+  subjectUmum: "[SIMPA] Undangan Agenda: {{KEGIATAN}}",
+  bodyUmum: `Assalamu'alaikum Wr. Wb. Rekan {{NAMA}},
+
+Kami menginformasikan bahwa akan dilaksanakan agenda Pemuda Persis Cirengit:
+
+📌 Agenda: {{KEGIATAN}}
+📅 Tanggal: {{TANGGAL}}
+⏰ Waktu: {{JAM}} WIB
+📍 Lokasi: {{LOKASI}}
+
+Diharapkan seluruh rekan-rekan dapat hadir tepat waktu. Atas perhatian dan kerjasamanya kami ucapkan terima kasih.
+
+Wassalamu'alaikum Wr. Wb.
+SIMPA HIPPA Cirengit`
+};
+
+const EMAIL_TEMPLATES_KEY = "simpa_email_templates";
+
+export function getEmailTemplates(): EmailTemplateConfig {
+  if (typeof window === "undefined") return DEFAULT_EMAIL_TEMPLATES;
+  const stored = localStorage.getItem(EMAIL_TEMPLATES_KEY);
+  if (!stored || stored === "null") {
+    return DEFAULT_EMAIL_TEMPLATES;
+  }
+  try {
+    const parsed = JSON.parse(stored);
+    return { ...DEFAULT_EMAIL_TEMPLATES, ...parsed };
+  } catch (e) {
+    return DEFAULT_EMAIL_TEMPLATES;
+  }
+}
+
+export function saveEmailTemplates(config: EmailTemplateConfig) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(EMAIL_TEMPLATES_KEY, JSON.stringify(config));
+    syncToServer(EMAIL_TEMPLATES_KEY, config);
+  }
+}
+
 export interface Applicant {
   id: string;
   name: string;
