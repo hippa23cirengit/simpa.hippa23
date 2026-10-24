@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { getStoredAccounts, getStoredTasykil, logRecentLogin } from "@/common/lib/mock-db";
+import { logRecentLogin, syncDatabaseFromServer } from "@/common/lib/mock-db";
 import { setSession } from "@/common/lib/auth";
+import { loginAction } from "@/modules/auth/actions/login.action";
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -29,12 +30,12 @@ export function LoginForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    let trimmedNpa = npa.trim();
+    const trimmedNpa = npa.trim();
     const trimmedPassword = password.trim();
 
     if (!trimmedNpa || !trimmedPassword) {
@@ -43,64 +44,36 @@ export function LoginForm({
       return;
     }
 
-    if (/^\d{6}$/.test(trimmedNpa)) {
-      trimmedNpa = trimmedNpa.slice(0, 2) + "." + trimmedNpa.slice(2);
-    }
+    try {
+      const res = await loginAction({
+        npa: trimmedNpa,
+        password: trimmedPassword,
+      });
 
-    setTimeout(() => {
-      const accounts = getStoredAccounts();
-      const account = accounts.find(
-        (acc) => acc.npa.toLowerCase() === trimmedNpa.toLowerCase()
-      );
-
-      if (!account) {
+      if (!res.success || !res.user) {
         setLoading(false);
-        setError("NPA tidak terdaftar di database.");
+        setError(res.error || "Gagal masuk. Periksa kembali NPA dan password Anda.");
         return;
-      }
-
-      if (trimmedPassword !== account.passwordHash) {
-        setLoading(false);
-        setError("Password yang Anda masukkan salah.");
-        return;
-      }
-
-      let resolvedRole = account.role;
-      if (account.npa === "26.0000") {
-        resolvedRole = "Super Admin";
-      } else if (account.linkedAnggotaId) {
-        const tasykil = getStoredTasykil();
-        const memberId = account.linkedAnggotaId;
-        if (tasykil.pimhar.ketua === memberId) resolvedRole = "Ketua";
-        else if (tasykil.pimhar.wakilKetua === memberId) resolvedRole = "Wakil Ketua";
-        else if (tasykil.pimhar.sekretaris === memberId) resolvedRole = "Sekretaris";
-        else if (tasykil.pimhar.wakilSekretaris === memberId) resolvedRole = "Wakil Sekretaris";
-        else if (tasykil.pimhar.bendahara === memberId) resolvedRole = "Bendahara";
-        else if (tasykil.pimhar.wakilBendahara === memberId) resolvedRole = "Wakil Bendahara";
-        else {
-          const activeBidang = tasykil.bidang.find((b) =>
-            b.members.includes(memberId)
-          );
-          if (activeBidang) {
-            resolvedRole = activeBidang.name;
-          } else {
-            resolvedRole = "Anggota";
-          }
-        }
       }
 
       setSession({
         isLoggedIn: true,
-        npa: account.npa,
-        name: account.name,
-        role: resolvedRole,
+        npa: res.user.npa,
+        name: res.user.name,
+        role: res.user.role,
         loginAt: Date.now(),
       });
 
-      logRecentLogin(account.npa, account.name, resolvedRole);
+      logRecentLogin(res.user.npa, res.user.name, res.user.role);
+
+      // Sinkronkan data database ke background client
+      syncDatabaseFromServer().catch(console.error);
 
       router.replace("/dashboard");
-    }, 800);
+    } catch (err: any) {
+      setLoading(false);
+      setError(err.message || "Terjadi kesalahan koneksi saat verifikasi login.");
+    }
   };
   return (
     <div className={cn("flex flex-col gap-6 w-full max-w-4xl mx-auto", className)} {...props}>

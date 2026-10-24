@@ -15,6 +15,7 @@ import {
   Member
 } from "@/common/lib/mock-db"
 import { customConfirm, showToast } from "@/common/lib/alert"
+import { adminResetPasswordAction } from "@/modules/auth/actions/admin-reset-password.action"
 
 export default function RoleAksesPage() {
   const { showConfirm, showPrompt, showAlert } = useDialog()
@@ -229,16 +230,30 @@ export default function RoleAksesPage() {
       await showAlert("Password tidak boleh kosong!", "Peringatan", "warning")
       return
     }
-    
-    const updated = accounts.map(acc => {
-      if (acc.npa === npa) {
-        return { ...acc, passwordHash: newPass.trim() }
+
+    try {
+      const res = await adminResetPasswordAction({
+        npa,
+        newPassword: newPass.trim(),
+      })
+
+      if (!res.success) {
+        await showAlert(res.error || "Gagal mereset password di database.", "Gagal", "danger")
+        return
       }
-      return acc
-    })
-    setAccounts(updated)
-    saveStoredAccounts(updated)
-    await showAlert("Password berhasil di-reset!", "Sukses", "success")
+
+      const updated = accounts.map(acc => {
+        if (acc.npa === npa) {
+          return { ...acc, passwordHash: newPass.trim() }
+        }
+        return acc
+      })
+      setAccounts(updated)
+      saveStoredAccounts(updated)
+      await showAlert("Password berhasil di-reset langsung di database!", "Sukses", "success")
+    } catch (e: any) {
+      await showAlert(e.message || "Terjadi kesalahan saat mereset password.", "Gagal", "danger")
+    }
   }
 
   const openEditRoleModal = (account: LoginAccount) => {

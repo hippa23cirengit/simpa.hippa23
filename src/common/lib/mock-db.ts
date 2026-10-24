@@ -199,7 +199,7 @@ function syncToServer(key: string, value: any): Promise<void> {
 export async function syncDatabaseFromServer(): Promise<boolean> {
   if (typeof window === "undefined") return false
   try {
-    const res = await fetch("/api/db-sync")
+    const res = await fetch("/api/db-sync", { cache: "no-store" })
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }

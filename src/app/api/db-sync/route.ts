@@ -3,6 +3,9 @@ import { prisma } from "@/infrastructure/prisma/prisma-client"
 import fs from "fs"
 import path from "path"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export async function GET() {
   try {
     // 1. Fetch tables from Supabase via Prisma
@@ -211,7 +214,14 @@ export async function GET() {
       dbKtaSettings
     )
 
-    return NextResponse.json({ status: true, data: compiledData })
+    return NextResponse.json(
+      { status: true, data: compiledData },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    )
   } catch (error: any) {
     console.error("GET /api/db-sync error:", error)
     return NextResponse.json({ status: false, error: error.message }, { status: 500 })
@@ -327,14 +337,13 @@ export async function POST(req: Request) {
           update: {
             name: a.name,
             role: a.role,
-            passwordHash: a.passwordHash,
             linkedAnggotaId: validLinkedId
           },
           create: {
             npa: a.npa,
             name: a.name,
             role: a.role,
-            passwordHash: a.passwordHash,
+            passwordHash: a.passwordHash || "#h1ppa23",
             linkedAnggotaId: validLinkedId
           }
         })

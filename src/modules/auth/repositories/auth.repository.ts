@@ -39,4 +39,23 @@ export class AuthRepository {
       },
     });
   }
+
+  async updatePasswordDirect(npa: string, passwordHash: string) {
+    return prisma.akunLogin.update({
+      where: { npa },
+      data: {
+        passwordHash,
+      },
+    });
+  }
+
+  async getTasykilStructure() {
+    const pimharList = await prisma.pimhar.findMany();
+    const bidangList = await prisma.bidang.findMany({
+      include: {
+        members: true,
+      },
+    });
+    return { pimharList, bidangList };
+  }
 }
