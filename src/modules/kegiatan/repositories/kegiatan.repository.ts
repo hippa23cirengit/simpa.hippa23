@@ -36,13 +36,20 @@ export class KegiatanRepository {
   async getActiveMembers() {
     return prisma.anggota.findMany({
       where: {
-        OR: [
-          { status: "Aktif" },
-          { akunLogin: { role: "Super Admin" } }
-        ],
         AND: [
           { email: { not: "" } },
-          { isEmailActive: true }
+          { isEmailActive: true },
+          {
+            OR: [
+              { status: { in: ["Aktif", "Tidak Aktif"] } },
+              {
+                AND: [
+                  { status: "Alumni" },
+                  { isAlumniNotifActive: true }
+                ]
+              }
+            ]
+          }
         ]
       },
       select: {
@@ -50,7 +57,8 @@ export class KegiatanRepository {
         name: true,
         email: true,
         status: true,
-        isEmailActive: true
+        isEmailActive: true,
+        isAlumniNotifActive: true
       },
       orderBy: {
         name: "asc"

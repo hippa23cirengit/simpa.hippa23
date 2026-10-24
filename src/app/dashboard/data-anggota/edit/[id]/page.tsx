@@ -28,6 +28,7 @@ export default function EditAnggotaPage() {
   const [status, setStatus] = useState<"Aktif" | "Tidak Aktif" | "Alumni">("Aktif")
   const [email, setEmail] = useState("")
   const [isEmailActive, setIsEmailActive] = useState(true)
+  const [isAlumniNotifActive, setIsAlumniNotifActive] = useState(false)
   const [tempatLahir, setTempatLahir] = useState("")
   const [tanggalLahir, setTanggalLahir] = useState("")
   const [alamat, setAlamat] = useState("")
@@ -70,6 +71,7 @@ export default function EditAnggotaPage() {
       setStatus(member.status)
       setEmail(member.email || "")
       setIsEmailActive(typeof member.isEmailActive === "boolean" ? member.isEmailActive : true)
+      setIsAlumniNotifActive(typeof member.isAlumniNotifActive === "boolean" ? member.isAlumniNotifActive : false)
       setTempatLahir(member.tempatLahir || "")
       setTanggalLahir(member.tanggalLahir || "")
       setAlamat(member.alamat || "")
@@ -180,6 +182,7 @@ export default function EditAnggotaPage() {
           whatsapp: whatsapp.trim(),
           email: email.trim(),
           isEmailActive: isEmailActive,
+          isAlumniNotifActive: status === "Alumni" ? isAlumniNotifActive : false,
           profilePhoto: profilePhoto || undefined,
           bergabungTahun: bergabungTahun.trim() || undefined
         }
@@ -344,7 +347,7 @@ export default function EditAnggotaPage() {
                 className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F7A440] transition-colors"
               />
 
-              {/* Toggle Notifikasi Email Aktif */}
+              {/* Toggle Status Keaktifan Email */}
               <div className="flex items-center justify-between p-3 mt-1.5 rounded-xl bg-slate-50 border border-slate-200/80">
                 <div className="flex items-center gap-2.5">
                   <span className={`material-symbols-outlined text-[20px] ${isEmailActive ? "text-emerald-600" : "text-slate-400"}`}>
@@ -352,10 +355,10 @@ export default function EditAnggotaPage() {
                   </span>
                   <div>
                     <span className="text-xs font-bold text-slate-700 block">
-                      {isEmailActive ? "Notifikasi Email: Aktif" : "Notifikasi Email: Nonaktif"}
+                      {isEmailActive ? "Status Email: Aktif & Valid" : "Status Email: Nonaktif / Tidak Valid"}
                     </span>
                     <span className="text-[10px] text-slate-500 block">
-                      {isEmailActive ? "Anggota ini akan menerima pengingat agenda via email" : "Email dinonaktifkan / tidak akan menerima email agenda"}
+                      {isEmailActive ? "Kotak email aktif dan siap menerima korespondensi sistem" : "Alamat email dinonaktifkan atau belum diverifikasi"}
                     </span>
                   </div>
                 </div>
@@ -369,6 +372,34 @@ export default function EditAnggotaPage() {
                   <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2E7D32]"></div>
                 </label>
               </div>
+
+              {/* Toggle Khusus Alumni (Kondisional jika status === 'Alumni') */}
+              {status === "Alumni" && (
+                <div className="flex items-center justify-between p-3 mt-2 rounded-xl bg-amber-500/10 border border-amber-200">
+                  <div className="flex items-center gap-2.5">
+                    <span className={`material-symbols-outlined text-[20px] ${isAlumniNotifActive ? "text-amber-600" : "text-slate-400"}`}>
+                      {isAlumniNotifActive ? "notifications_active" : "notifications_off"}
+                    </span>
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">
+                        {isAlumniNotifActive ? "Persetujuan Notifikasi Agenda: Diizinkan" : "Persetujuan Notifikasi Agenda: Ditolak"}
+                      </span>
+                      <span className="text-[10px] text-slate-600 block">
+                        {isAlumniNotifActive ? "Alumni berkenan menerima pengingat agenda kegiatan via email" : "Alumni tidak akan dikirimi email notifikasi agenda"}
+                      </span>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isAlumniNotifActive}
+                      onChange={(e) => setIsAlumniNotifActive(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F7A440]"></div>
+                  </label>
+                </div>
+              )}
             </div>
 
             {/* Status */}

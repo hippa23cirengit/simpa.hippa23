@@ -80,6 +80,7 @@ export async function GET() {
                   whatsapp: m.whatsapp || null,
                   email: m.email || "",
                   isEmailActive: typeof m.isEmailActive === "boolean" ? m.isEmailActive : true,
+                  isAlumniNotifActive: typeof m.isAlumniNotifActive === "boolean" ? m.isAlumniNotifActive : false,
                   profilePhoto: m.profilePhoto || null,
                   bergabungTahun: m.bergabungTahun || null
                 }
@@ -284,6 +285,7 @@ export async function POST(req: Request) {
             whatsapp: m.whatsapp || null,
             email: m.email || "",
             isEmailActive: typeof m.isEmailActive === "boolean" ? m.isEmailActive : true,
+            isAlumniNotifActive: typeof m.isAlumniNotifActive === "boolean" ? m.isAlumniNotifActive : false,
             profilePhoto: m.profilePhoto || null,
             bergabungTahun: m.bergabungTahun || null
           },
@@ -302,6 +304,7 @@ export async function POST(req: Request) {
             whatsapp: m.whatsapp || null,
             email: m.email || "",
             isEmailActive: typeof m.isEmailActive === "boolean" ? m.isEmailActive : true,
+            isAlumniNotifActive: typeof m.isAlumniNotifActive === "boolean" ? m.isAlumniNotifActive : false,
             profilePhoto: m.profilePhoto || null,
             bergabungTahun: m.bergabungTahun || null,
             createdAt: m.createdAt ? new Date(m.createdAt) : new Date()
@@ -637,6 +640,7 @@ async function compilePayload(
     whatsapp: a.whatsapp || "",
     email: a.email || "",
     isEmailActive: typeof a.isEmailActive === "boolean" ? a.isEmailActive : true,
+    isAlumniNotifActive: typeof a.isAlumniNotifActive === "boolean" ? a.isAlumniNotifActive : false,
     profilePhoto: a.profilePhoto || "",
     bergabungTahun: a.bergabungTahun || "",
     createdAt: a.createdAt ? a.createdAt.toISOString() : new Date().toISOString()

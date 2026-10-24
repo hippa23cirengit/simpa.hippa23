@@ -14,6 +14,7 @@ export interface Member {
   whatsapp?: string;
   email?: string;
   isEmailActive?: boolean;
+  isAlumniNotifActive?: boolean;
   profilePhoto?: string;
   bergabungTahun?: string;
   createdAt?: string;
@@ -238,7 +239,8 @@ export function getStoredMembers(): Member[] {
     }
     return parsed.map(m => ({
       ...m,
-      isEmailActive: typeof m.isEmailActive === "boolean" ? m.isEmailActive : true
+      isEmailActive: typeof m.isEmailActive === "boolean" ? m.isEmailActive : true,
+      isAlumniNotifActive: typeof m.isAlumniNotifActive === "boolean" ? m.isAlumniNotifActive : false
     }))
   } catch (e) {
     return DEFAULT_MEMBERS

@@ -27,6 +27,8 @@ export default function ProfilPage() {
   // Form State
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+  const [isEmailActive, setIsEmailActive] = useState(true)
+  const [isAlumniNotifActive, setIsAlumniNotifActive] = useState(false)
   const [whatsapp, setWhatsapp] = useState("")
   const [alamat, setAlamat] = useState("")
   const [rtRw, setRtRw] = useState("")
@@ -65,6 +67,8 @@ export default function ProfilPage() {
         if (mem) {
           setMember(mem)
           setEmail(mem.email || "")
+          setIsEmailActive(typeof mem.isEmailActive === "boolean" ? mem.isEmailActive : true)
+          setIsAlumniNotifActive(typeof mem.isAlumniNotifActive === "boolean" ? mem.isAlumniNotifActive : false)
           setWhatsapp(mem.whatsapp || "")
           setUserPhoto(mem.profilePhoto || "/default pic.webp")
           setAlamat(mem.alamat || "")
@@ -202,6 +206,8 @@ export default function ProfilPage() {
             ...m,
             name,
             email,
+            isEmailActive,
+            isAlumniNotifActive: m.status === "Alumni" ? isAlumniNotifActive : false,
             whatsapp,
             alamat,
             rtRw,
@@ -427,6 +433,61 @@ export default function ProfilPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full border border-slate-200 rounded-lg px-3.5 py-2 font-body-md text-sm text-slate-800 focus:outline-none focus:border-[#F7A440] transition-colors"
                     />
+
+                    {/* Toggle Status Email Pribadi & Khusus Alumni */}
+                    <div className="flex flex-col gap-2 p-3 mt-1 rounded-xl bg-slate-50 border border-slate-200/80">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className={`material-symbols-outlined text-[20px] ${isEmailActive ? "text-emerald-600" : "text-slate-400"}`}>
+                            {isEmailActive ? "mark_email_read" : "unsubscribe"}
+                          </span>
+                          <div>
+                            <span className="text-xs font-bold text-slate-700 block">
+                              {isEmailActive ? "Email Saya: Aktif & Valid" : "Email Saya: Nonaktif / Tidak Valid"}
+                            </span>
+                            <span className="text-[10px] text-slate-500 block">
+                              {isEmailActive ? "Alamat email Anda aktif dan siap menerima pesan sistem" : "Aktifkan jika alamat email di atas valid dan aktif"}
+                            </span>
+                          </div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isEmailActive}
+                            onChange={(e) => setIsEmailActive(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2E7D32]"></div>
+                        </label>
+                      </div>
+
+                      {member?.status === "Alumni" && (
+                        <div className="pt-2.5 mt-1 border-t border-slate-200/60 flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <span className={`material-symbols-outlined text-[20px] ${isAlumniNotifActive ? "text-amber-600" : "text-slate-400"}`}>
+                              {isAlumniNotifActive ? "notifications_active" : "notifications_off"}
+                            </span>
+                            <div>
+                              <span className="text-xs font-bold text-slate-800 block">
+                                {isAlumniNotifActive ? "Notifikasi Agenda HIPPA: Aktif" : "Notifikasi Agenda HIPPA: Ditolak"}
+                              </span>
+                              <span className="text-[10px] text-slate-600 block">
+                                Saya menyetujui untuk menerima pengingat agenda kegiatan via email
+                              </span>
+                            </div>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isAlumniNotifActive}
+                              onChange={(e) => setIsAlumniNotifActive(e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F7A440]"></div>
+                          </label>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">

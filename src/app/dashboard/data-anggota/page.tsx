@@ -332,12 +332,17 @@ export default function DataAnggota() {
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="text-[11px] text-slate-400 font-medium truncate max-w-[170px]">{member.email}</span>
                             {member.isEmailActive !== false ? (
-                              <span className="inline-flex items-center px-1.5 py-0.2 text-[9px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200" title="Notifikasi Email Aktif">
-                                Aktif
+                              <span className="inline-flex items-center px-1.5 py-0.2 text-[9px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200" title="Email Valid & Aktif">
+                                Email Aktif
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-1.5 py-0.2 text-[9px] font-bold rounded bg-slate-100 text-slate-500 border border-slate-200" title="Notifikasi Email Nonaktif">
-                                Off
+                              <span className="inline-flex items-center px-1.5 py-0.2 text-[9px] font-bold rounded bg-slate-100 text-slate-500 border border-slate-200" title="Email Nonaktif / Tidak Valid">
+                                Email Off
+                              </span>
+                            )}
+                            {member.status === "Alumni" && member.isAlumniNotifActive && (
+                              <span className="inline-flex items-center px-1.5 py-0.2 text-[9px] font-bold rounded bg-amber-50 text-amber-700 border border-amber-200" title="Alumni Mengizinkan Notifikasi Agenda">
+                                Notif Alumni
                               </span>
                             )}
                           </div>

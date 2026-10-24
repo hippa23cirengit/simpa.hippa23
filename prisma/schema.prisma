@@ -21,6 +21,7 @@ model Anggota {
   whatsapp     String?
   email        String
   isEmailActive Boolean        @default(true) @map("is_email_active")
+  isAlumniNotifActive Boolean  @default(false) @map("is_alumni_notif_active")
   profilePhoto String?         @map("profile_photo")
   bergabungTahun String?       @map("bergabung_tahun")
   createdAt    DateTime        @default(now()) @map("created_at")
