@@ -199,17 +199,6 @@ async function main() {
     });
   }
 
-  // 9. Seed WhatsApp template
-  console.log("Seeding WaTemplate...");
-  await prisma.waTemplate.upsert({
-    where: { id: "default" },
-    update: {},
-    create: {
-      id: "default",
-      content: "Yth. *{nama}*, Kami informasikan bahwa ada kegiatan *{kegiatan}* pada tanggal *{tanggal}* pukul *{waktu}* bertempat di *{lokasi}*. Kehadiran Anda sangat kami harapkan. Terima kasih.",
-    },
-  });
-
   console.log("Database seed completed successfully.");
 }
 

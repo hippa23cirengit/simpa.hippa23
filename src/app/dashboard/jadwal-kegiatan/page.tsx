@@ -7,11 +7,7 @@ import {
   saveStoredEvents,
   ScheduledEvent,
   getCurrentRole,
-  getStoredAcl,
-  getWaTemplateKajian,
-  getWaTemplateUmum,
-  getWaConfig,
-  syncDatabaseFromServer
+  getStoredAcl
 } from "@/common/lib/mock-db"
 import { useDialog } from "@/common/components/dialog-provider"
 
@@ -43,10 +39,6 @@ export default function JadwalKegiatan() {
   const [formType, setFormType] = useState<"kajian" | "umum">("umum")
   const [formSpeaker, setFormSpeaker] = useState("")
   const [formTheme, setFormTheme] = useState("")
-
-  // Broadcast state
-  const [broadcastingId, setBroadcastingId] = useState<string | null>(null)
-  const [cooldowns, setCooldowns] = useState<Record<string, number>>({})
 
   // Tooltip/Popover States
   const [hoveredDateStr, setHoveredDateStr] = useState<string | null>(null)
@@ -89,59 +81,6 @@ export default function JadwalKegiatan() {
       longPressTimeoutRef.current = null;
     }
     setLongPressedDateStr(null);
-  };
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCooldowns((prev) => {
-        const next = { ...prev };
-        let updated = false;
-        Object.keys(next).forEach((id) => {
-          if (next[id] > 0) {
-            next[id] -= 1;
-            updated = true;
-          } else {
-            delete next[id];
-            updated = true;
-          }
-        });
-        return updated ? next : prev;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const getNotificationStatus = (event: ScheduledEvent) => {
-    const notifCount = event.notificationCount || 0;
-    
-    // Parse time in WIB (UTC+7)
-    const eventTimeMs = new Date(`${event.date}T${event.time}:00+07:00`).getTime();
-    const nowMs = Date.now();
-    const diffMs = eventTimeMs - nowMs;
-    const twoHoursMs = 2 * 60 * 60 * 1000;
-
-    if (diffMs <= 0) {
-      return { status: "past", label: "Acara Selesai", disabled: true, color: "text-slate-400 hover:text-slate-400" };
-    }
-    
-    if (notifCount >= 2) {
-      return { status: "completed", label: "Notif Terkirim (2/2)", disabled: true, color: "text-emerald-600 font-bold hover:text-emerald-600" };
-    }
-
-    if (diffMs <= twoHoursMs) {
-      if (notifCount === 0) {
-        return { status: "system-active", label: "Sistem Otomatis Aktif", disabled: true, color: "text-amber-600 font-bold hover:text-amber-600" };
-      } else {
-        return { status: "completed-half", label: "Notif Terkirim (1/2)", disabled: true, color: "text-amber-500 font-bold hover:text-amber-500" };
-      }
-    }
-
-    // Waktu masih > 2 jam
-    if (notifCount === 0) {
-      return { status: "active-first", label: "Kirim Pemberitahuan", disabled: false, color: "text-blue-600 hover:text-blue-700 font-bold" };
-    } else {
-      return { status: "active-second", label: "Kirim Ulang (1/2)", disabled: false, color: "text-amber-600 hover:text-amber-700 font-bold" };
-    }
   };
 
   const loadData = () => {
@@ -379,42 +318,6 @@ export default function JadwalKegiatan() {
       const filtered = rawEvents.filter(evt => evt.id !== eventId)
       saveStoredEvents(filtered)
       loadData()
-    }
-  }
-
-  // Broadcast to WA Queue
-  const handleBroadcastEvent = async (event: ScheduledEvent) => {
-    const confirmed = await showConfirm(`Apakah Anda yakin ingin mengirim notifikasi WhatsApp untuk kegiatan "${event.title}" ke seluruh anggota aktif?`, "Kirim Notifikasi", "warning")
-    if (!confirmed) {
-      return
-    }
-
-    setBroadcastingId(event.id)
-
-    try {
-      const response = await fetch(`/api/kegiatan/${event.id}/notify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      })
-
-      const data = await response.json()
-      setBroadcastingId(null)
-
-      if (data.status === true) {
-        await showAlert("Notifikasi berhasil dimasukkan ke antrean! Pesan akan terkirim secara bertahap (1 menit per pesan) di latar belakang.", "Berhasil", "success")
-        
-        // Start 10s cooldown
-        setCooldowns((prev) => ({ ...prev, [event.id]: 10 }))
-        
-        // Sync database and reload
-        await syncDatabaseFromServer()
-        loadData()
-      } else {
-        await showAlert(`Gagal memicu notifikasi: ${data.reason || "Alasan tidak diketahui"}`, "Gagal", "danger")
-      }
-    } catch (err: any) {
-      setBroadcastingId(null)
-      await showAlert(`Terjadi kesalahan jaringan: ${err.message || err}`, "Kesalahan", "danger")
     }
   }
 
@@ -741,52 +644,24 @@ export default function JadwalKegiatan() {
                 </div>
 
                 {/* Actions */}
-                <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
-                  {(() => {
-                    const statusInfo = getNotificationStatus(event);
-                    const cd = cooldowns[event.id] || 0;
-                    const isDisabled = statusInfo.disabled || cd > 0 || broadcastingId === event.id;
-                    const displayLabel = cd > 0 ? `${statusInfo.label} (${cd}s)` : statusInfo.label;
-
-                    return (
-                      <button
-                        onClick={() => handleBroadcastEvent(event)}
-                        disabled={isDisabled}
-                        className={`transition-colors flex items-center gap-1 text-[10px] ${statusInfo.color} disabled:text-slate-400 disabled:opacity-75`}
-                      >
-                        <span className="material-symbols-outlined text-[16px]">
-                          {statusInfo.status === "past" 
-                            ? "block" 
-                            : statusInfo.status.startsWith("completed") 
-                            ? "check_circle" 
-                            : statusInfo.status === "system-active" 
-                            ? "history" 
-                            : "send_to_mobile"}
-                        </span>
-                        <span className="font-bold">{broadcastingId === event.id ? "Mengirim..." : displayLabel}</span>
-                      </button>
-                    )
-                  })()}
-
-                  {!isReadOnly && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleOpenEdit(event)}
-                        className="text-slate-400 hover:text-[#F7A440] transition-colors p-1 flex items-center gap-1"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">edit</span>
-                        <span className="text-[10px] font-bold">Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteEvent(event.id, event.title)}
-                        className="text-slate-400 hover:text-red-600 transition-colors p-1 flex items-center gap-1"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">delete</span>
-                        <span className="text-[10px] font-bold">Hapus</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {!isReadOnly && (
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end items-center gap-2">
+                    <button
+                      onClick={() => handleOpenEdit(event)}
+                      className="text-slate-400 hover:text-[#F7A440] transition-colors p-1 flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">edit</span>
+                      <span className="text-[10px] font-bold">Edit</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteEvent(event.id, event.title)}
+                      className="text-slate-400 hover:text-red-600 transition-colors p-1 flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                      <span className="text-[10px] font-bold">Hapus</span>
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -138,7 +138,7 @@ export default function GuideBookPage() {
               <ul className="list-disc pl-5 space-y-2 text-slate-600">
                 <li>Buka menu <strong>Jadwal Kegiatan</strong>.</li>
                 <li>Anda akan melihat kalender beserta daftar acara, rapat, atau pengajian yang akan datang.</li>
-                <li>Sistem juga akan otomatis mengirimkan pengingat ke nomor WhatsApp Anda menjelang kegiatan berlangsung.</li>
+                <li>Lihat rincian waktu, pemateri, tema kajian, dan lokasi pelaksanaan agenda.</li>
               </ul>
             </GuideSection>
 

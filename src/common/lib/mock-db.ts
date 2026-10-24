@@ -71,8 +71,6 @@ export interface AclRule {
     manageJadwalKegiatan: boolean;
     viewPengaturanSistem: boolean;
     managePengaturanSistem: boolean;
-    viewPengaturanWa: boolean;
-    managePengaturanWa: boolean;
     viewKeuangan: boolean;
     manageKeuangan: boolean;
   };
@@ -294,7 +292,6 @@ export function syncRoles(members: Member[], tasykil: TasykilState): Member[] {
 const EVENTS_KEY = "simpa_scheduled_events";
 const ACL_KEY = "simpa_acl_rules";
 const CURRENT_ROLE_KEY = "simpa_current_role";
-const WA_TEMPLATE_KEY = "simpa_wa_template";
 
 export const DEFAULT_EVENTS: ScheduledEvent[] = [];
 
@@ -313,8 +310,6 @@ export const DEFAULT_ACL: AclRule[] = [
       manageJadwalKegiatan: true,
       viewPengaturanSistem: true,
       managePengaturanSistem: true,
-      viewPengaturanWa: true,
-      managePengaturanWa: true,
       viewKeuangan: true,
       manageKeuangan: true
     }
@@ -333,31 +328,29 @@ export const DEFAULT_ACL: AclRule[] = [
       manageJadwalKegiatan: true,
       viewPengaturanSistem: false,
       managePengaturanSistem: false,
-      viewPengaturanWa: false,
-      managePengaturanWa: false,
       viewKeuangan: true,
       manageKeuangan: true
     }
   },
   {
     role: "Wakil Ketua",
-    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewPengaturanWa: false, managePengaturanWa: false, viewKeuangan: true, manageKeuangan: true }
+    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewKeuangan: true, manageKeuangan: true }
   },
   {
     role: "Sekretaris",
-    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewPengaturanWa: false, managePengaturanWa: false, viewKeuangan: true, manageKeuangan: true }
+    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewKeuangan: true, manageKeuangan: true }
   },
   {
     role: "Wakil Sekretaris",
-    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewPengaturanWa: false, managePengaturanWa: false, viewKeuangan: true, manageKeuangan: true }
+    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewKeuangan: true, manageKeuangan: true }
   },
   {
     role: "Bendahara",
-    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewPengaturanWa: false, managePengaturanWa: false, viewKeuangan: true, manageKeuangan: true }
+    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewKeuangan: true, manageKeuangan: true }
   },
   {
     role: "Wakil Bendahara",
-    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewPengaturanWa: false, managePengaturanWa: false, viewKeuangan: true, manageKeuangan: true }
+    permissions: { dashboard: true, viewDataAnggota: true, manageDataAnggota: true, viewTasykil: true, manageTasykil: true, viewCalonAnggota: true, manageCalonAnggota: true, viewJadwalKegiatan: true, manageJadwalKegiatan: true, viewPengaturanSistem: false, managePengaturanSistem: false, viewKeuangan: true, manageKeuangan: true }
   },
   {
     role: "Anggota",
@@ -373,22 +366,11 @@ export const DEFAULT_ACL: AclRule[] = [
       manageJadwalKegiatan: false,
       viewPengaturanSistem: false,
       managePengaturanSistem: false,
-      viewPengaturanWa: false,
-      managePengaturanWa: false,
       viewKeuangan: true,
       manageKeuangan: false
     }
   }
 ];
-
-export const DEFAULT_WA_TEMPLATE = `Assalamu'alaikum Wr. Wb. Rekan *{{NAMA}}*, mengingatkan hari ini ada agenda HIPPA Cirengit:
-
-📌 *Kegiatan*: {{KEGIATAN}}
-⏰ *Waktu*: {{JAM}} WIB
-📍 *Tempat*: {{LOKASI}}
-
-Kehadiran rekan-rekan sangat dinantikan. Terima kasih.
-_SIMPA HIPPA Cirengit_`;
 
 export function getStoredEvents(): ScheduledEvent[] {
   if (typeof window === "undefined") return DEFAULT_EVENTS;
@@ -452,19 +434,25 @@ export function getStoredAcl(): AclRule[] {
         changed = true;
       }
       
-      // Migration: Split Pengaturan into PengaturanSistem and PengaturanWa
+      // Migration: Split Pengaturan into PengaturanSistem
       parsed.forEach(r => {
         const perms: any = r.permissions;
         if (perms.hasOwnProperty("viewPengaturan")) {
           perms.viewPengaturanSistem = perms.viewPengaturan;
-          perms.viewPengaturanWa = perms.viewPengaturan;
           delete perms.viewPengaturan;
           changed = true;
         }
         if (perms.hasOwnProperty("managePengaturan")) {
           perms.managePengaturanSistem = perms.managePengaturan;
-          perms.managePengaturanWa = perms.managePengaturan;
           delete perms.managePengaturan;
+          changed = true;
+        }
+        if (perms.hasOwnProperty("viewPengaturanWa")) {
+          delete perms.viewPengaturanWa;
+          changed = true;
+        }
+        if (perms.hasOwnProperty("managePengaturanWa")) {
+          delete perms.managePengaturanWa;
           changed = true;
         }
       });
@@ -494,8 +482,6 @@ export function getStoredAcl(): AclRule[] {
           manageJadwalKegiatan: false,
           viewPengaturanSistem: false,
           managePengaturanSistem: false,
-          viewPengaturanWa: false,
-          managePengaturanWa: false,
           viewKeuangan: false,
           manageKeuangan: false
         }
@@ -811,66 +797,8 @@ export function setCurrentRole(role: string) {
   }
 }
 
-export function getWaTemplate(): string {
-  if (typeof window === "undefined") return DEFAULT_WA_TEMPLATE;
-  const stored = localStorage.getItem(WA_TEMPLATE_KEY);
-  if (!stored) {
-    localStorage.setItem(WA_TEMPLATE_KEY, DEFAULT_WA_TEMPLATE);
-    return DEFAULT_WA_TEMPLATE;
-  }
-  return stored;
-}
-
-export interface WaConfig {
-  provider?: "fonnte" | "self-hosted" | "meta";
-  endpoint: string;
-  deviceId: string;
-  token: string;
-  metaToken?: string;
-  metaPhoneId?: string;
-  metaTemplateWelcome?: string;
-  metaTemplateKajian?: string;
-  metaTemplateUmum?: string;
-}
-
-export const DEFAULT_WA_CONFIG: WaConfig = {
-  provider: "fonnte",
-  endpoint: "https://api.fonnte.com/send",
-  deviceId: "instance-fonnte-cirengit",
-  token: "t0k3n-s3cr3t-fonnt3-c1r3ng1t",
-  metaToken: "",
-  metaPhoneId: "",
-  metaTemplateWelcome: "welcome_simpa",
-  metaTemplateKajian: "event_kajian",
-  metaTemplateUmum: "event_umum"
-};
-
-const WA_CONFIG_KEY = "simpa_wa_config";
 const PERIODE_JABATAN_KEY = "simpa_periode_jabatan";
 const REG_PREFIX_KEY = "simpa_reg_prefix";
-
-export function getWaConfig(): WaConfig {
-  if (typeof window === "undefined") return DEFAULT_WA_CONFIG;
-  const stored = localStorage.getItem(WA_CONFIG_KEY);
-  if (!stored || stored === "null") {
-    localStorage.setItem(WA_CONFIG_KEY, JSON.stringify(DEFAULT_WA_CONFIG));
-    return DEFAULT_WA_CONFIG;
-  }
-  try {
-    const parsed = JSON.parse(stored);
-    if (!parsed) return DEFAULT_WA_CONFIG;
-    return parsed;
-  } catch (e) {
-    return DEFAULT_WA_CONFIG;
-  }
-}
-
-export function saveWaConfig(config: WaConfig) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(WA_CONFIG_KEY, JSON.stringify(config));
-    syncToServer(WA_CONFIG_KEY, config)
-  }
-}
 
 export function getPeriodeJabatan(): string {
   if (typeof window === "undefined") return "2026 - 2028";
@@ -935,74 +863,6 @@ export function getKopSuratConfig(): KopSuratConfig {
 export function saveKopSuratConfig(config: KopSuratConfig) {
   if (typeof window !== "undefined") {
     localStorage.setItem("simpa_kop_surat", JSON.stringify(config))
-  }
-}
-
-export function saveWaTemplate(template: string) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(WA_TEMPLATE_KEY, template);
-    syncToServer(WA_TEMPLATE_KEY, template)
-  }
-}
-
-const WA_TEMPLATE_KAJIAN_KEY = "simpa_wa_template_kajian";
-const WA_TEMPLATE_UMUM_KEY = "simpa_wa_template_umum";
-
-export const DEFAULT_WA_TEMPLATE_KAJIAN = `*Pengingat Kajian HIPPA Cirengit*
-
-Halo {{NAMA}},
-
-Hadirilah kajian dengan tema *{{TEMA}}* dan judul *{{KEGIATAN}}* bersama ustadz/pemateri *{{PEMATERI}}*.
-
-📅 Tanggal: {{TANGGAL}}
-🕒 Jam: {{JAM}} WIB
-📍 Lokasi: {{LOKASI}}
-
-Semoga Allah memudahkan langkah kita ke majelis ilmu.`;
-
-export const DEFAULT_WA_TEMPLATE_UMUM = `*Pengingat Agenda Pemuda HIPPA*
-
-Halo {{NAMA}},
-
-Diingatkan kembali bahwa ada agenda *{{KEGIATAN}}* yang akan dilaksanakan pada:
-
-📅 Tanggal: {{TANGGAL}}
-🕒 Jam: {{JAM}} WIB
-📍 Lokasi: {{LOKASI}}
-
-Kehadiran dan kontribusi rekan-rekan sangat diharapkan.`;
-
-export function getWaTemplateKajian(): string {
-  if (typeof window === "undefined") return DEFAULT_WA_TEMPLATE_KAJIAN;
-  const stored = localStorage.getItem(WA_TEMPLATE_KAJIAN_KEY);
-  if (!stored) {
-    localStorage.setItem(WA_TEMPLATE_KAJIAN_KEY, DEFAULT_WA_TEMPLATE_KAJIAN);
-    return DEFAULT_WA_TEMPLATE_KAJIAN;
-  }
-  return stored;
-}
-
-export function saveWaTemplateKajian(template: string) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(WA_TEMPLATE_KAJIAN_KEY, template);
-    syncToServer(WA_TEMPLATE_KAJIAN_KEY, template)
-  }
-}
-
-export function getWaTemplateUmum(): string {
-  if (typeof window === "undefined") return DEFAULT_WA_TEMPLATE_UMUM;
-  const stored = localStorage.getItem(WA_TEMPLATE_UMUM_KEY);
-  if (!stored) {
-    localStorage.setItem(WA_TEMPLATE_UMUM_KEY, DEFAULT_WA_TEMPLATE_UMUM);
-    return DEFAULT_WA_TEMPLATE_UMUM;
-  }
-  return stored;
-}
-
-export function saveWaTemplateUmum(template: string) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(WA_TEMPLATE_UMUM_KEY, template);
-    syncToServer(WA_TEMPLATE_UMUM_KEY, template)
   }
 }
 

@@ -45,10 +45,9 @@ Fitur untuk memproses pendaftar (applicant) baru yang ingin bergabung menjadi an
 ---
 
 ## 📅 6. Jadwal & Kegiatan (`/dashboard/jadwal-kegiatan`)
-Pengelolaan agenda organisasi yang terintegrasi dengan pengingat otomatis.
+Pengelolaan agenda organisasi yang terintegrasi.
 
-*   **Manajemen Jadwal**: Pembuatan kalender kegiatan, rapat, atau acara organisasi.
-*   **Notifikasi WhatsApp Otomatis**: Integrasi dengan WA Gateway untuk mengirimkan pesan pengingat kegiatan kepada anggota sesuai antrian (melalui *cron job* dan *WaQueue*).
+*   **Manajemen Jadwal**: Pembuatan kalender kegiatan, kajian, rapat, atau acara organisasi.
 
 ---
 
@@ -62,21 +61,12 @@ Pencatatan sirkulasi keuangan organisasi secara transparan.
 
 ---
 
-## 📱 8. Pengaturan WhatsApp Gateway (`/dashboard/pengaturan-wa`)
-Pusat kendali untuk bot/layanan WhatsApp notifikasi.
-
-*   **Cek Status Koneksi**: Melihat apakah WA Gateway aktif dan terhubung.
-*   **Manajemen Sesi (Logout/Restart)**: Merestart service Node.js atau memutuskan sesi WA jika diperlukan.
-*   **Manajemen Template Pesan**: Mengatur format (*template*) pesan WA yang akan dikirim otomatis.
-
----
-
-## ⚙️ 9. Pengaturan Sistem (`/dashboard/pengaturan-sistem`)
+## ⚙️ 8. Pengaturan Sistem (`/dashboard/pengaturan-sistem`)
 Pengaturan *environment* dan preferensi umum dari aplikasi SIMPA, termasuk pengaturan KTA (misalnya: nama ketua, tanda tangan). Disimpan dalam bentuk *Key-Value store*.
 
 ---
 
-## 🛡️ 10. Role & Akses (RBAC) (`/dashboard/role-akses`)
+## 🛡️ 9. Role & Akses (RBAC) (`/dashboard/role-akses`)
 Sistem hak akses berlapis (Role-Based Access Control) untuk menjaga keamanan data. Memiliki 14 *permission flags* granular, di antaranya:
 *   `allowDashboard`
 *   `viewDataAnggota` / `manageDataAnggota`
@@ -90,7 +80,7 @@ Hak akses ini memastikan hanya pengguna dengan role yang tepat (misal: Admin, Be
 
 ---
 
-## 👤 11. Profil Pengguna (`/dashboard/profil`)
+## 👤 10. Profil Pengguna (`/dashboard/profil`)
 Halaman di mana pengguna yang sedang login dapat memperbarui informasi akun pribadi, mengganti password, atau memperbarui foto profil mereka sendiri.
 
 ---

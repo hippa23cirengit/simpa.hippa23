@@ -123,19 +123,6 @@ model ScheduledEvent {
   @@map("scheduled_event")
 }
 
-model WaQueue {
-  id        String    @id @default(uuid())
-  eventId   String    @map("event_id")
-  to        String
-  message   String    @db.Text
-  status    String    @default("pending") // 'pending' | 'sent' | 'failed'
-  createdAt DateTime  @default(now()) @map("created_at")
-  sentAt    DateTime? @map("sent_at")
-  error     String?   @map("error")
-
-  @@map("wa_queue")
-}
-
 model Applicant {
   id           String @id @default(uuid())
   name         String
@@ -153,13 +140,6 @@ model Applicant {
   email        String?
 
   @@map("applicant")
-}
-
-model WaTemplate {
-  id      String @id @default("default")
-  content String
-
-  @@map("wa_template")
 }
 
 model SystemSetting {

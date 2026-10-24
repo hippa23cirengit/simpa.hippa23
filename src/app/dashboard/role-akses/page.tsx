@@ -304,13 +304,6 @@ export default function RoleAksesPage() {
       manageKey: "managePengaturanSistem" as keyof AclRule["permissions"],
     },
     {
-      label: "Pengaturan WhatsApp",
-      description: "Konfigurasi API Gateway & template notifikasi",
-      icon: "chat",
-      viewKey: "viewPengaturanWa" as keyof AclRule["permissions"],
-      manageKey: "managePengaturanWa" as keyof AclRule["permissions"],
-    },
-    {
       label: "Keuangan & Kas",
       description: "Pengelolaan pemasukan, pengeluaran, dan kas",
       icon: "payments",

@@ -10,7 +10,6 @@ export async function GET() {
     const dbAkun = await prisma.akunLogin.findMany()
     const dbEvent = await prisma.scheduledEvent.findMany()
     const dbAcl = await prisma.roleAkses.findMany()
-    const dbTemplate = await prisma.waTemplate.findFirst()
     const dbPenasehat = await prisma.penasehat.findMany({ orderBy: { sortOrder: "asc" } })
     const dbPimhar = await prisma.pimhar.findMany()
     const dbBidang = await prisma.bidang.findMany({
@@ -174,7 +173,7 @@ export async function GET() {
           }
 
           // Seed System Settings
-          const settingsToSeed = ["simpa_wa_config", "simpa_periode_jabatan", "simpa_wa_template_kajian", "simpa_wa_template_umum", "simpa_reg_prefix"]
+          const settingsToSeed = ["simpa_periode_jabatan", "simpa_reg_prefix"]
           for (const key of settingsToSeed) {
             if (seedData[key]) {
               await prisma.systemSetting.upsert({
@@ -204,7 +203,6 @@ export async function GET() {
       dbAkun,
       dbEvent,
       dbAcl,
-      dbTemplate,
       dbPenasehat,
       dbPimhar,
       dbBidang,
@@ -231,7 +229,7 @@ export async function POST(req: Request) {
     console.log(`POST /api/db-sync: Updating key "${key}" in Supabase...`)
 
     // Sync to Supabase relational tables or system setting table based on the key
-    if (["simpa_wa_config", "simpa_periode_jabatan", "simpa_wa_template_kajian", "simpa_wa_template_umum", "simpa_reg_prefix"].includes(key)) {
+    if (["simpa_periode_jabatan", "simpa_reg_prefix"].includes(key)) {
       await prisma.systemSetting.upsert({
         where: { key },
         update: {
@@ -530,20 +528,6 @@ export async function POST(req: Request) {
         create: { id: "default", ketuaName: s.ketuaName || "", ketuaNpa: s.ketuaNpa || "", signatureUrl: s.signatureUrl || "" }
       })
     }
-    else if (key === "simpa_wa_template") {
-      const content = value as string
-      const first = await prisma.waTemplate.findFirst()
-      if (first) {
-        await prisma.waTemplate.update({
-          where: { id: first.id },
-          data: { content }
-        })
-      } else {
-        await prisma.waTemplate.create({
-          data: { id: "default", content }
-        })
-      }
-    }
 
     return NextResponse.json({ status: true })
   } catch (error: any) {
@@ -558,7 +542,6 @@ async function fetchFreshData() {
   const dbAkun = await prisma.akunLogin.findMany()
   const dbEvent = await prisma.scheduledEvent.findMany()
   const dbAcl = await prisma.roleAkses.findMany()
-  const dbTemplate = await prisma.waTemplate.findFirst()
   const dbPenasehat = await prisma.penasehat.findMany({ orderBy: { sortOrder: "asc" } })
   const dbPimhar = await prisma.pimhar.findMany()
   const dbBidang = await prisma.bidang.findMany({ include: { members: true } })
@@ -570,7 +553,6 @@ async function fetchFreshData() {
     dbAkun,
     dbEvent,
     dbAcl,
-    dbTemplate,
     dbPenasehat,
     dbPimhar,
     dbBidang,
@@ -585,7 +567,6 @@ async function compilePayload(
   dbAkun: any[],
   dbEvent: any[],
   dbAcl: any[],
-  dbTemplate: any | null,
   dbPenasehat: any[],
   dbPimhar: any[],
   dbBidang: any[],
@@ -719,14 +700,6 @@ async function compilePayload(
     console.error("Error fetching system settings from Supabase:", e)
   }
 
-  // Parse config safely
-  let waConfig = null
-  if (settingsMap["simpa_wa_config"]) {
-    try {
-      waConfig = JSON.parse(settingsMap["simpa_wa_config"])
-    } catch (e) {}
-  }
-
   // Applicants
   const simpa_calon_anggota = dbApplicants.map(a => ({
     id: a.id,
@@ -753,11 +726,7 @@ async function compilePayload(
     simpa_acl_rules,
     simpa_calon_anggota,
     simpa_kta_settings: dbKtaSettings ? { ketuaName: dbKtaSettings.ketuaName, ketuaNpa: dbKtaSettings.ketuaNpa, signatureUrl: dbKtaSettings.signatureUrl } : { ketuaName: "", ketuaNpa: "", signatureUrl: "" },
-    simpa_wa_template: dbTemplate?.content || "",
-    simpa_wa_config: waConfig,
     simpa_periode_jabatan: settingsMap["simpa_periode_jabatan"] || "",
-    simpa_wa_template_kajian: settingsMap["simpa_wa_template_kajian"] || "",
-    simpa_wa_template_umum: settingsMap["simpa_wa_template_umum"] || "",
     simpa_reg_prefix: settingsMap["simpa_reg_prefix"] || "REG"
   }
 }
